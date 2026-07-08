@@ -19,6 +19,25 @@ open .build/SquishMac.app
 
 The bundle uses `Info.plist` with `LSUIElement=true`, so it launches as a menu bar app only.
 
+## Test
+
+```sh
+swift test
+```
+
+CI runs `swift build`, `swift test`, app bundle packaging, and bundle structure checks on macOS.
+
+## Release
+
+Push a tag like `v0.1.0` to build `SquishMac.app.zip` through GitHub Actions:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The generated release is unsigned. Add Apple Developer code signing and notarization before broad distribution.
+
 ## Sound packs
 
 Put additional `.wav`, `.mp3`, `.m4a`, `.aiff`, or `.aif` files in:

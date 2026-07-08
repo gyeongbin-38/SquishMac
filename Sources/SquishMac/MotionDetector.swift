@@ -52,16 +52,19 @@ final class MotionDetector: ObservableObject {
 
     @Published private(set) var state: DetectorState = .stopped
     @Published private(set) var activeSourceName: String = "None"
+    @Published private(set) var currentStrength: Double = 0
     @Published private(set) var lastStrength: Double = 0
+    @Published private(set) var lastSampleDate: Date?
+    @Published private(set) var lastImpactDate: Date?
 
     var onImpact: ((MotionImpact) -> Void)?
 
     private let settings: SettingsStore
+    private let analyzer = ImpactAnalyzer()
     private var source: AccelerometerSource?
-    private var baseline: AccelerationVector?
-    private var lastSample: AccelerationVector?
-    private var lastTriggerDate = Date.distantPast
+    private var lastMeterPublishTime = -Double.infinity
     private let updateInterval: TimeInterval = 1.0 / 80.0
+    private let meterPublishInterval: TimeInterval = 0.08
 
     init(settings: SettingsStore) {
         self.settings = settings
@@ -105,8 +108,13 @@ final class MotionDetector: ObservableObject {
     }
 
     func resetCalibration() {
-        baseline = nil
-        lastSample = nil
+        analyzer.reset()
+        lastMeterPublishTime = -Double.infinity
+
+        DispatchQueue.main.async {
+            self.currentStrength = 0
+            self.lastSampleDate = nil
+        }
     }
 
     private func process(_ sample: AccelerationVector) {
@@ -114,35 +122,32 @@ final class MotionDetector: ObservableObject {
             return
         }
 
-        if baseline == nil {
-            baseline = sample
-            lastSample = sample
-            return
-        }
-
-        let currentBaseline = baseline ?? sample
-        let highPassStrength = sample.distance(to: currentBaseline)
-        let jerkStrength = lastSample.map { sample.distance(to: $0) } ?? 0
-        let strength = max(highPassStrength, jerkStrength)
-
-        baseline = currentBaseline.mixed(with: sample, factor: 0.06)
-        lastSample = sample
-
-        let threshold = max(settings.sensitivity, 0.01)
-        guard strength >= threshold else {
-            return
-        }
-
         let now = Date()
-        guard now.timeIntervalSince(lastTriggerDate) >= settings.cooldown else {
-            return
+        let timestamp = now.timeIntervalSinceReferenceDate
+        let result = analyzer.process(
+            sample: sample,
+            sensitivity: settings.sensitivity,
+            cooldown: settings.cooldown,
+            timestamp: timestamp
+        )
+        let shouldPublishMeter = timestamp - lastMeterPublishTime >= meterPublishInterval
+        if shouldPublishMeter {
+            lastMeterPublishTime = timestamp
         }
-
-        lastTriggerDate = now
 
         DispatchQueue.main.async {
-            self.lastStrength = strength
-            self.onImpact?(MotionImpact(strength: strength, timestamp: now))
+            if shouldPublishMeter {
+                self.currentStrength = result.currentStrength
+                self.lastSampleDate = now
+            }
+
+            guard let impactStrength = result.impactStrength else {
+                return
+            }
+
+            self.lastStrength = impactStrength
+            self.lastImpactDate = now
+            self.onImpact?(MotionImpact(strength: impactStrength, timestamp: now))
         }
     }
 

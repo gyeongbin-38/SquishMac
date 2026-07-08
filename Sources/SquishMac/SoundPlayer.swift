@@ -11,8 +11,13 @@ final class SoundPlayer: NSObject, AVAudioPlayerDelegate {
         super.init()
     }
 
-    func playRandomSound(packID: String, impactStrength: Double, sensitivity: Double) {
-        let urls = packManager.soundURLs(for: packID)
+    func playRandomSound(
+        packID: String,
+        customDirectoryPath: String?,
+        impactStrength: Double,
+        sensitivity: Double
+    ) {
+        let urls = packManager.soundURLs(for: packID, customDirectoryPath: customDirectoryPath)
 
         guard let url = urls.randomElement() else {
             NSSound.beep()
@@ -32,8 +37,13 @@ final class SoundPlayer: NSObject, AVAudioPlayerDelegate {
         }
     }
 
-    func playPreview(packID: String, sensitivity: Double) {
-        playRandomSound(packID: packID, impactStrength: sensitivity * 2.2, sensitivity: sensitivity)
+    func playPreview(packID: String, customDirectoryPath: String?, sensitivity: Double) {
+        playRandomSound(
+            packID: packID,
+            customDirectoryPath: customDirectoryPath,
+            impactStrength: sensitivity * 2.2,
+            sensitivity: sensitivity
+        )
     }
 
     private func volume(for impactStrength: Double, sensitivity: Double) -> Float {

@@ -18,8 +18,13 @@ let package = Package(
             ],
             linkerSettings: [
                 .linkedFramework("AppKit"),
-                .linkedFramework("AVFoundation")
+                .linkedFramework("AVFoundation"),
+                .linkedFramework("ServiceManagement")
             ]
+        ),
+        .testTarget(
+            name: "SquishMacTests",
+            dependencies: ["SquishMac"]
         )
     ]
 )

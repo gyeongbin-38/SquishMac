@@ -21,6 +21,22 @@ final class SettingsStore: ObservableObject {
         didSet { defaults.set(selectedSoundPackID, forKey: Keys.selectedSoundPackID) }
     }
 
+    @Published var customSoundDirectoryPath: String? {
+        didSet {
+            if let customSoundDirectoryPath {
+                defaults.set(customSoundDirectoryPath, forKey: Keys.customSoundDirectoryPath)
+            } else {
+                defaults.removeObject(forKey: Keys.customSoundDirectoryPath)
+                if selectedSoundPackID == SoundPackManager.customPackID {
+                    selectedSoundPackID = SoundPackManager.defaultPackID
+                }
+            }
+        }
+    }
+
+    @Published private(set) var launchAtLoginStatus: LaunchAtLoginStatus = .unknown
+    @Published private(set) var launchAtLoginError: String?
+
     @Published private(set) var todaysCount: Int {
         didSet { defaults.set(todaysCount, forKey: Keys.todaysCount) }
     }
@@ -35,8 +51,27 @@ final class SettingsStore: ObservableObject {
         self.cooldown = (defaults.object(forKey: Keys.cooldown) as? Double ?? 0.80)
             .clamped(to: Self.cooldownRange)
         self.selectedSoundPackID = defaults.string(forKey: Keys.selectedSoundPackID) ?? "bubble"
+        self.customSoundDirectoryPath = defaults.string(forKey: Keys.customSoundDirectoryPath)
         self.todaysCount = defaults.integer(forKey: Keys.todaysCount)
+
+        if selectedSoundPackID == SoundPackManager.customPackID && customSoundDirectoryPath == nil {
+            selectedSoundPackID = SoundPackManager.defaultPackID
+        }
+
         resetDailyCounterIfNeeded()
+    }
+
+    var customSoundDirectoryDisplayName: String {
+        guard let customSoundDirectoryPath else {
+            return "No folder selected"
+        }
+
+        return URL(fileURLWithPath: customSoundDirectoryPath).lastPathComponent
+    }
+
+    func updateLaunchAtLoginStatus(_ status: LaunchAtLoginStatus, error: String? = nil) {
+        launchAtLoginStatus = status
+        launchAtLoginError = error
     }
 
     func recordPlay() {
@@ -73,6 +108,7 @@ private enum Keys {
     static let sensitivity = "settings.sensitivity"
     static let cooldown = "settings.cooldown"
     static let selectedSoundPackID = "settings.selectedSoundPackID"
+    static let customSoundDirectoryPath = "settings.customSoundDirectoryPath"
     static let todaysCount = "stats.todaysCount"
     static let countDate = "stats.countDate"
 }

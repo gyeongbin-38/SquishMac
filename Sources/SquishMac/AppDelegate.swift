@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        refreshLaunchAtLoginStatus()
         setupMenuBar()
         bindSettings()
 
@@ -87,11 +88,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
 
         let packSubmenu = NSMenu()
-        for pack in soundPackManager.availablePacks {
+        for pack in soundPackManager.availablePacks() {
             let item = NSMenuItem(title: pack.title, action: #selector(selectSoundPack(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = pack.id
             item.state = settings.selectedSoundPackID == pack.id ? .on : .off
+            item.isEnabled = !pack.isCustom || settings.customSoundDirectoryPath != nil
             packSubmenu.addItem(item)
         }
 
@@ -102,6 +104,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "Played Today: \(settings.todaysCount)", action: nil, keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Sensitivity: \(String(format: "%.2f", settings.sensitivity)) g", action: nil, keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Cooldown: \(String(format: "%.2f", settings.cooldown)) s", action: nil, keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Current Motion: \(String(format: "%.3f", motionDetector.currentStrength)) g", action: nil, keyEquivalent: ""))
 
         menu.addItem(.separator())
 
@@ -112,6 +115,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let settingsItem = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
+
+        let recalibrateItem = NSMenuItem(title: "Recalibrate Motion", action: #selector(recalibrateMotion), keyEquivalent: "")
+        recalibrateItem.target = self
+        recalibrateItem.isEnabled = settings.isEnabled
+        menu.addItem(recalibrateItem)
+
+        let customFolderItem = NSMenuItem(title: "Choose Custom Sound Folder...", action: #selector(chooseCustomSoundFolder), keyEquivalent: "")
+        customFolderItem.target = self
+        menu.addItem(customFolderItem)
+
+        let launchAtLoginItem = NSMenuItem(title: "Launch at Login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
+        launchAtLoginItem.target = self
+        launchAtLoginItem.state = launchAtLoginMenuState
+        launchAtLoginItem.isEnabled = settings.launchAtLoginStatus != .unavailable
+        menu.addItem(launchAtLoginItem)
 
         let resetItem = NSMenuItem(title: "Reset Today Counter", action: #selector(resetCounter), keyEquivalent: "")
         resetItem.target = self
@@ -133,6 +151,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         soundPlayer.playRandomSound(
             packID: settings.selectedSoundPackID,
+            customDirectoryPath: settings.customSoundDirectoryPath,
             impactStrength: impact.strength,
             sensitivity: settings.sensitivity
         )
@@ -149,6 +168,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        if packID == SoundPackManager.customPackID && settings.customSoundDirectoryPath == nil {
+            chooseCustomSoundFolder()
+            return
+        }
+
         settings.selectedSoundPackID = packID
     }
 
@@ -160,11 +184,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 soundPackManager: soundPackManager,
                 onTestSound: { [weak self] in
                     self?.playPreviewSound()
+                },
+                onChooseCustomSoundFolder: { [weak self] in
+                    self?.chooseCustomSoundFolder()
+                },
+                onClearCustomSoundFolder: { [weak self] in
+                    self?.clearCustomSoundFolder()
+                },
+                onRevealCustomSoundFolder: { [weak self] in
+                    self?.revealCustomSoundFolder()
+                },
+                onSetLaunchAtLogin: { [weak self] enabled in
+                    self?.setLaunchAtLogin(enabled)
+                },
+                onRecalibrateMotion: { [weak self] in
+                    self?.recalibrateMotion()
                 }
             )
 
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 420, height: 360),
+                contentRect: NSRect(x: 0, y: 0, width: 470, height: 620),
                 styleMask: [.titled, .closable, .miniaturizable],
                 backing: .buffered,
                 defer: false
@@ -185,7 +224,79 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func playPreviewSound() {
-        soundPlayer.playPreview(packID: settings.selectedSoundPackID, sensitivity: settings.sensitivity)
+        soundPlayer.playPreview(
+            packID: settings.selectedSoundPackID,
+            customDirectoryPath: settings.customSoundDirectoryPath,
+            sensitivity: settings.sensitivity
+        )
+    }
+
+    @objc private func chooseCustomSoundFolder() {
+        let panel = NSOpenPanel()
+        panel.title = "Choose Custom Sound Folder"
+        panel.prompt = "Choose"
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+
+        if let customPath = settings.customSoundDirectoryPath {
+            panel.directoryURL = URL(fileURLWithPath: customPath)
+        }
+
+        guard panel.runModal() == .OK, let url = panel.url else {
+            return
+        }
+
+        settings.customSoundDirectoryPath = url.path
+        settings.selectedSoundPackID = SoundPackManager.customPackID
+        rebuildMenu()
+    }
+
+    private func clearCustomSoundFolder() {
+        settings.customSoundDirectoryPath = nil
+        rebuildMenu()
+    }
+
+    private func revealCustomSoundFolder() {
+        guard let customPath = settings.customSoundDirectoryPath else {
+            return
+        }
+
+        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: customPath)])
+    }
+
+    @objc private func recalibrateMotion() {
+        motionDetector.resetCalibration()
+    }
+
+    @objc private func toggleLaunchAtLogin() {
+        setLaunchAtLogin(settings.launchAtLoginStatus != .enabled)
+    }
+
+    private func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            try LoginItemManager.setEnabled(enabled)
+            refreshLaunchAtLoginStatus()
+        } catch {
+            refreshLaunchAtLoginStatus(error: error.localizedDescription)
+        }
+
+        rebuildMenu()
+    }
+
+    private func refreshLaunchAtLoginStatus(error: String? = nil) {
+        settings.updateLaunchAtLoginStatus(LoginItemManager.status(), error: error)
+    }
+
+    private var launchAtLoginMenuState: NSControl.StateValue {
+        switch settings.launchAtLoginStatus {
+        case .enabled:
+            return .on
+        case .requiresApproval, .unknown:
+            return .mixed
+        case .disabled, .unavailable:
+            return .off
+        }
     }
 
     @objc private func resetCounter() {

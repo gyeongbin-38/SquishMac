@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build Release App
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build app bundle
+        run: bash Scripts/package-app.sh
+
+      - name: Zip app bundle
+        run: ditto -c -k --sequesterRsrc --keepParent .build/SquishMac.app .build/SquishMac.app.zip
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag_name="${GITHUB_REF_NAME}"
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            tag_name="manual-${GITHUB_RUN_NUMBER}"
+          fi
+
+          gh release create "$tag_name" \
+            .build/SquishMac.app.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "SquishMac ${tag_name}" \
+            --notes "Unsigned SquishMac macOS app bundle. For wider distribution, add Apple Developer code signing and notarization."
