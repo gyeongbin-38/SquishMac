@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  macos-build:
+    name: macOS Swift Build
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build debug executable
+        run: swift build -v
+
+      - name: Build app bundle
+        run: bash Scripts/package-app.sh
+
+      - name: Verify app bundle
+        run: |
+          test -x .build/SquishMac.app/Contents/MacOS/SquishMac
+          test -f .build/SquishMac.app/Contents/Info.plist
+          test -d .build/SquishMac.app/Contents/Resources/SquishMac_SquishMac.bundle
+
+      - name: Upload app bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: SquishMac
+          path: .build/SquishMac.app
