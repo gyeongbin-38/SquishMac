@@ -1,7 +1,7 @@
 import Combine
 import Foundation
 
-#if canImport(CoreMotion)
+#if canImport(CoreMotion) && !os(macOS)
 import CoreMotion
 #endif
 
@@ -147,7 +147,7 @@ final class MotionDetector: ObservableObject {
     }
 
     private static func makeBestSource() -> AccelerometerSource? {
-        #if canImport(CoreMotion)
+        #if canImport(CoreMotion) && !os(macOS)
         let coreMotionSource = CoreMotionAccelerometerSource()
         if coreMotionSource.isAvailable {
             return coreMotionSource
@@ -163,7 +163,7 @@ final class MotionDetector: ObservableObject {
     }
 }
 
-#if canImport(CoreMotion)
+#if canImport(CoreMotion) && !os(macOS)
 private final class CoreMotionAccelerometerSource: AccelerometerSource {
     let name = "CoreMotion"
 

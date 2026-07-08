@@ -32,6 +32,6 @@ Sources/SquishMac/Resources/Sounds/pop
 
 The included sounds are generated placeholders for the MVP, not copied from any existing app.
 
-## Motion sensor note
+## Motion Sensor Note
 
-The detector tries CoreMotion first, then an IOHIDEventSystem fallback. Actual impact detection must be tested on a supported Apple Silicon MacBook because macOS sensor exposure differs by hardware and OS version.
+The detector uses an IOHIDEventSystem-based accelerometer reader because `CMMotionManager` is not available on macOS. Actual impact detection must be tested on a supported Apple Silicon MacBook because macOS sensor exposure differs by hardware and OS version.
