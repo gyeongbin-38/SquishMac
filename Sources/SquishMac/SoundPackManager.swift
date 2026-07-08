@@ -42,7 +42,7 @@ final class SoundPackManager {
             return Self.customPack
         }
 
-        Self.packs.first { $0.id == id } ?? Self.packs[0]
+        return Self.packs.first { $0.id == id } ?? Self.packs[0]
     }
 
     func soundURLs(for packID: String, customDirectoryPath: String?) -> [URL] {
