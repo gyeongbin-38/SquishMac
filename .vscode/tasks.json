@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Swift: Build SquishMac",
+      "type": "shell",
+      "command": "swift build",
+      "group": "build",
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "Swift: Run SquishMac",
+      "type": "shell",
+      "command": "swift run SquishMac",
+      "group": "test",
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "Package .app",
+      "type": "shell",
+      "command": "bash Scripts/package-app.sh",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}
