@@ -9,7 +9,7 @@ final class TrackpadGestureEngineTests: XCTestCase {
             mode: .sixFingerSlime,
             fingerCount: 6,
             pressure: 0.45,
-            movement: 0.25,
+            movement: 0.08,
             spread: 0.8,
             timestamp: 1
         )

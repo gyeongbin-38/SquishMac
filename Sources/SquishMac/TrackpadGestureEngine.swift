@@ -175,7 +175,7 @@ final class TrackpadGestureEngine {
             return TrackpadGestureEvaluation(liveIntensity: liveIntensity, trigger: nil)
         }
 
-        let pressureJump = pressure - previousPressure
+        let pressureJump = previousFingerCount == 2 ? pressure - previousPressure : 0
         let kind: TrackpadSoundKind
         if pressure >= 0.78 || pressureJump >= 0.22 {
             kind = .waxCrush
