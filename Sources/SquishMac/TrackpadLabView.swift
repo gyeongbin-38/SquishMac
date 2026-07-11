@@ -121,7 +121,7 @@ private final class TrackpadTouchNSView: NSView {
     }
 
     private func configure() {
-        acceptsTouchEvents = true
+        allowedTouchTypes = [.indirect]
         wantsRestingTouches = true
         wantsLayer = true
         layer?.cornerRadius = 12
@@ -196,12 +196,13 @@ private final class TrackpadTouchNSView: NSView {
     }
 
     private func publish(event: NSEvent, forceFingerCount: Int? = nil) {
-        let touches = Array(event.touches(matching: .touching, in: self))
-        let positions = touches
-            .map(\.normalizedPosition)
-            .sorted { lhs, rhs in
-                lhs.x == rhs.x ? lhs.y < rhs.y : lhs.x < rhs.x
-            }
+        let touchSet: Set<NSTouch> = event.touches(matching: .touching, in: self)
+        var positions: [CGPoint] = touchSet.map { touch in
+            touch.normalizedPosition
+        }
+        positions.sort { lhs, rhs in
+            lhs.x == rhs.x ? lhs.y < rhs.y : lhs.x < rhs.x
+        }
 
         let fingerCount = forceFingerCount ?? positions.count
         let movement = movementAmount(current: positions, previous: previousPositions)
