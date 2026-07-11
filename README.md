@@ -4,6 +4,14 @@ SquishMac is a Swift-based macOS menu bar app MVP. It detects a quick hit or sha
 
 The newer prototype direction is the Trackpad Lab: a pressure-sensitive squish surface for testing 6-finger slime kneading and 2-thumb wax squish crushing on a Force Touch trackpad.
 
+## Trackpad Lab
+
+Open `Open Trackpad Lab...` from the menu bar item, choose a mode, and use the Force Touch trackpad as the input surface.
+
+- `6-Finger Slime` maps multi-finger pressure, movement, and release into knead, stretch, and release gestures.
+- `2-Thumb Wax Crush` maps two-finger pressure into press, crack, and crush stages.
+- The diagnostics panel shows live fingers, pressure, movement, intensity, peak pressure, max finger count, and gesture count.
+
 ## Run in VS Code
 
 ```sh

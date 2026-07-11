@@ -7,23 +7,25 @@ struct TrackpadLabView: View {
     let onGesture: (TrackpadGestureTrigger) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            header
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                header
 
-            Picker("Mode", selection: $state.mode) {
-                ForEach(TrackpadMode.allCases) { mode in
-                    Text(mode.title).tag(mode)
+                Picker("Mode", selection: $state.mode) {
+                    ForEach(TrackpadMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
                 }
+                .pickerStyle(.segmented)
+
+                TrackpadTouchSurface(state: state, onGesture: onGesture)
+                    .frame(height: 270)
+
+                metrics
             }
-            .pickerStyle(.segmented)
-
-            TrackpadTouchSurface(state: state, onGesture: onGesture)
-                .frame(height: 270)
-
-            metrics
+            .padding(22)
         }
-        .padding(22)
-        .frame(width: 560, height: 520)
+        .frame(width: 560, height: 610)
     }
 
     private var header: some View {
@@ -66,6 +68,35 @@ struct TrackpadLabView: View {
                         .foregroundStyle(.secondary)
                     Text(state.lastGestureLabel)
                 }
+
+                GridRow {
+                    Text("Gestures")
+                        .foregroundStyle(.secondary)
+                    Text("\(state.gestureCount)")
+                        .monospacedDigit()
+                }
+
+                GridRow {
+                    Text("Max fingers")
+                        .foregroundStyle(.secondary)
+                    Text("\(state.maxFingerCount)")
+                        .monospacedDigit()
+                }
+
+                GridRow {
+                    Text("Peak pressure")
+                        .foregroundStyle(.secondary)
+                    Text(String(format: "%.3f", state.peakPressure))
+                        .monospacedDigit()
+                }
+            }
+
+            HStack {
+                Button("Reset Diagnostics") {
+                    state.reset()
+                }
+
+                Spacer()
             }
         }
     }

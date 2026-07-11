@@ -12,6 +12,10 @@ final class TrackpadInteractionState: ObservableObject {
     @Published private(set) var liveIntensity: Double = 0
     @Published private(set) var lastGestureLabel: String = "None"
     @Published private(set) var lastGestureDate: Date?
+    @Published private(set) var maxFingerCount: Int = 0
+    @Published private(set) var peakPressure: Double = 0
+    @Published private(set) var peakIntensity: Double = 0
+    @Published private(set) var gestureCount: Int = 0
 
     private let engine = TrackpadGestureEngine()
 
@@ -36,10 +40,14 @@ final class TrackpadInteractionState: ObservableObject {
         self.movement = movement.clamped(to: 0.0...1.0)
         self.spread = spread.clamped(to: 0.0...1.0)
         self.liveIntensity = evaluation.liveIntensity
+        self.maxFingerCount = max(maxFingerCount, fingerCount)
+        self.peakPressure = max(peakPressure, self.pressure)
+        self.peakIntensity = max(peakIntensity, evaluation.liveIntensity)
 
         if let trigger = evaluation.trigger {
             lastGestureLabel = trigger.label
             lastGestureDate = date
+            gestureCount += 1
             return trigger
         }
 
@@ -55,6 +63,10 @@ final class TrackpadInteractionState: ObservableObject {
         liveIntensity = 0
         lastGestureLabel = "None"
         lastGestureDate = nil
+        maxFingerCount = 0
+        peakPressure = 0
+        peakIntensity = 0
+        gestureCount = 0
     }
 }
 

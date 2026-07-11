@@ -39,7 +39,7 @@ final class TrackpadGestureEngineTests: XCTestCase {
         let evaluation = engine.evaluate(
             mode: .twoThumbWaxCrush,
             fingerCount: 2,
-            pressure: 0.55,
+            pressure: 0.82,
             movement: 0.15,
             spread: 0.25,
             timestamp: 1
@@ -47,6 +47,54 @@ final class TrackpadGestureEngineTests: XCTestCase {
 
         XCTAssertGreaterThan(evaluation.liveIntensity, 0.5)
         XCTAssertEqual(evaluation.trigger?.kind, .waxCrush)
+    }
+
+    func testWaxPressAndCrackUseLowerIntensityStages() {
+        let engine = TrackpadGestureEngine()
+
+        let press = engine.evaluate(
+            mode: .twoThumbWaxCrush,
+            fingerCount: 2,
+            pressure: 0.52,
+            movement: 0.10,
+            spread: 0.35,
+            timestamp: 1
+        )
+        let crack = engine.evaluate(
+            mode: .twoThumbWaxCrush,
+            fingerCount: 2,
+            pressure: 0.62,
+            movement: 0.34,
+            spread: 0.25,
+            timestamp: 1.5
+        )
+
+        XCTAssertEqual(press.trigger?.kind, .waxPress)
+        XCTAssertEqual(crack.trigger?.kind, .waxCrack)
+    }
+
+    func testSlimeStretchAndReleaseAreDistinctGestures() {
+        let engine = TrackpadGestureEngine()
+
+        let stretch = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 5,
+            pressure: 0.42,
+            movement: 0.32,
+            spread: 0.70,
+            timestamp: 1
+        )
+        let release = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 0,
+            pressure: 0,
+            movement: 0,
+            spread: 0,
+            timestamp: 1.5
+        )
+
+        XCTAssertEqual(stretch.trigger?.kind, .slimeStretch)
+        XCTAssertEqual(release.trigger?.kind, .slimeRelease)
     }
 
     func testTrackpadCooldownSuppressesImmediateRepeats() {
