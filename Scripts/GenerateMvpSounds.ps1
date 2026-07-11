@@ -57,6 +57,7 @@ function New-Sound {
         "slime" { 0.42 + $Variant * 0.035 }
         "squishy" { 0.32 + $Variant * 0.030 }
         "pop" { 0.14 + $Variant * 0.018 }
+        "wax" { 0.22 + $Variant * 0.028 }
         default { 0.25 }
     }
 
@@ -96,6 +97,15 @@ function New-Sound {
                 $value = [Math]::Sin(2 * [Math]::PI * $freq * $t) * $env
                 $value += $noise * 0.35 * [Math]::Exp(-80.0 * $u)
             }
+            "wax" {
+                $snap = [Math]::Exp(-42.0 * $u)
+                $body = [Math]::Sin([Math]::PI * $u) * [Math]::Exp(-2.4 * $u)
+                $freq = 240 + 55 * $Variant - 80 * $u
+                $value = [Math]::Sin(2 * [Math]::PI * $freq * $t) * 0.45 * $body
+                $value += [Math]::Sin(2 * [Math]::PI * ($freq * 1.7) * $t) * 0.20 * $body
+                $value += $noise * 0.36 * $snap
+                $value += $noise * 0.10 * $body
+            }
         }
 
         $samples[$i] = $value * 0.75
@@ -104,8 +114,8 @@ function New-Sound {
     return $samples
 }
 
-foreach ($kind in @("bubble", "slime", "squishy", "pop")) {
-    for ($variant = 1; $variant -le 3; $variant++) {
+foreach ($kind in @("bubble", "slime", "squishy", "pop", "wax")) {
+    for ($variant = 1; $variant -le 6; $variant++) {
         $path = Join-Path $baseDir "$kind/$kind-$variant.wav"
         Write-Wav -Path $path -Samples (New-Sound -Kind $kind -Variant $variant)
     }

@@ -2,6 +2,8 @@
 
 SquishMac is a Swift-based macOS menu bar app MVP. It detects a quick hit or shake on supported MacBook motion sensors, chooses a random squishy sound from the selected pack, and scales playback volume from the detected impact strength.
 
+The newer prototype direction is the Trackpad Lab: a pressure-sensitive squish surface for testing 6-finger slime kneading and 2-thumb wax squish crushing on a Force Touch trackpad.
+
 ## Run in VS Code
 
 ```sh
@@ -47,6 +49,7 @@ Sources/SquishMac/Resources/Sounds/bubble
 Sources/SquishMac/Resources/Sounds/slime
 Sources/SquishMac/Resources/Sounds/squishy
 Sources/SquishMac/Resources/Sounds/pop
+Sources/SquishMac/Resources/Sounds/wax
 ```
 
 The included sounds are generated placeholders for the MVP, not copied from any existing app.

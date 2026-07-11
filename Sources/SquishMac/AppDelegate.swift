@@ -7,9 +7,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let soundPackManager = SoundPackManager()
     private lazy var soundPlayer = SoundPlayer(packManager: soundPackManager)
     private lazy var motionDetector = MotionDetector(settings: settings)
+    private let trackpadState = TrackpadInteractionState()
 
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
+    private var trackpadWindow: NSWindow?
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -116,6 +118,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsItem.target = self
         menu.addItem(settingsItem)
 
+        let trackpadItem = NSMenuItem(title: "Open Trackpad Lab...", action: #selector(openTrackpadLab), keyEquivalent: "t")
+        trackpadItem.target = self
+        menu.addItem(trackpadItem)
+
         let recalibrateItem = NSMenuItem(title: "Recalibrate Motion", action: #selector(recalibrateMotion), keyEquivalent: "")
         recalibrateItem.target = self
         recalibrateItem.isEnabled = settings.isEnabled
@@ -217,6 +223,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         settingsWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc private func openTrackpadLab() {
+        if trackpadWindow == nil {
+            let view = TrackpadLabView(
+                state: trackpadState,
+                onGesture: { [weak self] trigger in
+                    self?.handleTrackpadGesture(trigger)
+                }
+            )
+
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 560, height: 520),
+                styleMask: [.titled, .closable, .miniaturizable],
+                backing: .buffered,
+                defer: false
+            )
+            window.title = "SquishMac Trackpad Lab"
+            window.contentViewController = NSHostingController(rootView: view)
+            window.center()
+            window.isReleasedWhenClosed = false
+            trackpadWindow = window
+        }
+
+        trackpadWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func handleTrackpadGesture(_ trigger: TrackpadGestureTrigger) {
+        guard settings.isEnabled else {
+            return
+        }
+
+        soundPlayer.playInteractionSound(kind: trigger.kind, intensity: trigger.intensity)
+        settings.recordPlay()
+        rebuildMenu()
     }
 
     @objc private func playTestSound() {

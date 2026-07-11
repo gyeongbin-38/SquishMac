@@ -23,7 +23,8 @@ final class SoundPackManager {
         SoundPack(id: "bubble", title: "Bubble Pack", folderName: "bubble"),
         SoundPack(id: "slime", title: "Slime Pack", folderName: "slime"),
         SoundPack(id: "squishy", title: "Squishy Pack", folderName: "squishy"),
-        SoundPack(id: "pop", title: "Pop Pack", folderName: "pop")
+        SoundPack(id: "pop", title: "Pop Pack", folderName: "pop"),
+        SoundPack(id: "wax", title: "Wax Squish Pack", folderName: "wax")
     ]
 
     static let customPack = SoundPack(
