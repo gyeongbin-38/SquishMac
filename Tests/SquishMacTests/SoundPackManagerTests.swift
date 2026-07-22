@@ -2,6 +2,17 @@ import XCTest
 @testable import SquishMac
 
 final class SoundPackManagerTests: XCTestCase {
+    func testEveryBundledPackContainsPlayableSounds() {
+        let manager = SoundPackManager()
+
+        for pack in SoundPackManager.packs {
+            XCTAssertFalse(
+                manager.soundURLs(for: pack.id, customDirectoryPath: nil).isEmpty,
+                "Expected bundled sounds for \(pack.id)"
+            )
+        }
+    }
+
     func testCustomFolderWithoutPathReturnsNoSounds() {
         let manager = SoundPackManager()
 

@@ -1,6 +1,6 @@
 import Foundation
 
-enum TrackpadMode: String, CaseIterable, Identifiable, Hashable {
+enum TrackpadMode: String, CaseIterable, Identifiable, Hashable, Codable {
     case sixFingerSlime
     case twoThumbWaxCrush
 
@@ -25,7 +25,7 @@ enum TrackpadMode: String, CaseIterable, Identifiable, Hashable {
     }
 }
 
-enum TrackpadSoundKind: Equatable, Hashable {
+enum TrackpadSoundKind: String, CaseIterable, Equatable, Hashable, Codable {
     case slimeKnead
     case slimeStretch
     case slimeRelease
@@ -51,7 +51,19 @@ enum TrackpadSoundKind: Equatable, Hashable {
     }
 }
 
-struct TrackpadGestureTrigger {
+struct TrackpadTuning: Equatable, Codable {
+    static let standard = TrackpadTuning(response: 1.0, soundDensity: 1.0)
+
+    let response: Double
+    let soundDensity: Double
+
+    init(response: Double, soundDensity: Double) {
+        self.response = response.clamped(to: 0.5...1.75)
+        self.soundDensity = soundDensity.clamped(to: 0.5...2.0)
+    }
+}
+
+struct TrackpadGestureTrigger: Equatable {
     let kind: TrackpadSoundKind
     let intensity: Double
     let label: String
@@ -63,16 +75,25 @@ struct TrackpadGestureEvaluation {
 }
 
 final class TrackpadGestureEngine {
+    private enum WaxStage: Int {
+        case idle
+        case press
+        case crack
+        case crush
+    }
+
     private var lastTriggerTimes: [TrackpadSoundKind: TimeInterval] = [:]
     private var previousFingerCount = 0
     private var previousPressure = 0.0
     private var previousSpread = 0.0
+    private var waxStage: WaxStage = .idle
 
     func reset() {
         lastTriggerTimes.removeAll()
         previousFingerCount = 0
         previousPressure = 0
         previousSpread = 0
+        waxStage = .idle
     }
 
     func evaluate(
@@ -81,27 +102,33 @@ final class TrackpadGestureEngine {
         pressure: Double,
         movement: Double,
         spread: Double,
-        timestamp: TimeInterval
+        timestamp: TimeInterval,
+        tuning: TrackpadTuning = .standard
     ) -> TrackpadGestureEvaluation {
         let clampedPressure = pressure.clamped(to: 0.0...1.0)
         let clampedMovement = movement.clamped(to: 0.0...1.0)
         let clampedSpread = spread.clamped(to: 0.0...1.0)
+        let responsivePressure = (clampedPressure * tuning.response).clamped(to: 0.0...1.0)
+        let responsiveMovement = (clampedMovement * tuning.response).clamped(to: 0.0...1.0)
 
         switch mode {
         case .sixFingerSlime:
             return evaluateSlime(
                 fingerCount: fingerCount,
-                pressure: clampedPressure,
-                movement: clampedMovement,
-                timestamp: timestamp
+                pressure: responsivePressure,
+                movement: responsiveMovement,
+                spread: clampedSpread,
+                timestamp: timestamp,
+                soundDensity: tuning.soundDensity
             )
         case .twoThumbWaxCrush:
             return evaluateWaxCrush(
                 fingerCount: fingerCount,
-                pressure: clampedPressure,
-                movement: clampedMovement,
+                pressure: responsivePressure,
+                movement: responsiveMovement,
                 spread: clampedSpread,
-                timestamp: timestamp
+                timestamp: timestamp,
+                soundDensity: tuning.soundDensity
             )
         }
     }
@@ -110,15 +137,21 @@ final class TrackpadGestureEngine {
         fingerCount: Int,
         pressure: Double,
         movement: Double,
-        timestamp: TimeInterval
+        spread: Double,
+        timestamp: TimeInterval,
+        soundDensity: Double
     ) -> TrackpadGestureEvaluation {
         let fingerFactor = (Double(min(fingerCount, 6)) / 6.0).clamped(to: 0.0...1.0)
         let liveIntensity = (fingerFactor * 0.40 + pressure * 0.42 + movement * 0.18)
             .clamped(to: 0.0...1.0)
+        let pressureDelta = abs(pressure - previousPressure)
+        let spreadDelta = abs(spread - previousSpread)
+        let isInitialContact = previousFingerCount < 3 && fingerCount >= 3
 
         defer {
             previousFingerCount = fingerCount
             previousPressure = pressure
+            previousSpread = spread
         }
 
         if previousFingerCount >= 3 && fingerCount == 0 && previousPressure >= 0.18 {
@@ -129,7 +162,7 @@ final class TrackpadGestureEngine {
                 label: "Slime release",
                 liveIntensity: liveIntensity,
                 timestamp: timestamp,
-                interval: 0.10
+                interval: densityAdjusted(0.10, soundDensity: soundDensity)
             )
         }
 
@@ -137,9 +170,17 @@ final class TrackpadGestureEngine {
             return TrackpadGestureEvaluation(liveIntensity: liveIntensity, trigger: nil)
         }
 
+        let hasTextureChange = isInitialContact
+            || movement >= 0.025
+            || pressureDelta >= 0.018
+            || spreadDelta >= 0.025
+        guard hasTextureChange else {
+            return TrackpadGestureEvaluation(liveIntensity: liveIntensity, trigger: nil)
+        }
+
         let isStretching = movement >= 0.16 && pressure <= 0.72 && fingerCount >= 4
         let kind: TrackpadSoundKind = isStretching ? .slimeStretch : .slimeKnead
-        let interval = max(0.07, (isStretching ? 0.22 : 0.28) - liveIntensity * 0.16)
+        let baseInterval = max(0.07, (isStretching ? 0.22 : 0.28) - liveIntensity * 0.16)
         let label = isStretching
             ? "Slime stretch"
             : (fingerCount >= 6 ? "6-finger slime press" : "Slime knead")
@@ -150,7 +191,7 @@ final class TrackpadGestureEngine {
             label: label,
             liveIntensity: liveIntensity,
             timestamp: timestamp,
-            interval: interval
+            interval: densityAdjusted(baseInterval, soundDensity: soundDensity)
         )
     }
 
@@ -159,10 +200,12 @@ final class TrackpadGestureEngine {
         pressure: Double,
         movement: Double,
         spread: Double,
-        timestamp: TimeInterval
+        timestamp: TimeInterval,
+        soundDensity: Double
     ) -> TrackpadGestureEvaluation {
         let fingerMatch = fingerCount == 2 ? 1.0 : 0.0
-        let crushShape = max(pressure, movement * 0.70 + (1.0 - spread) * 0.30)
+        let closingSpeed = previousFingerCount == 2 ? max(0, previousSpread - spread) : 0
+        let crushShape = max(pressure, movement * 0.64 + closingSpeed * 0.22 + (1.0 - spread) * 0.14)
         let liveIntensity = (fingerMatch * 0.22 + crushShape * 0.78).clamped(to: 0.0...1.0)
 
         defer {
@@ -172,41 +215,50 @@ final class TrackpadGestureEngine {
         }
 
         guard fingerCount == 2, liveIntensity >= 0.48 else {
+            if fingerCount == 0 {
+                waxStage = .idle
+            }
             return TrackpadGestureEvaluation(liveIntensity: liveIntensity, trigger: nil)
         }
 
         let pressureJump = previousFingerCount == 2 ? pressure - previousPressure : 0
-        let kind: TrackpadSoundKind
-        if pressure >= 0.78 || pressureJump >= 0.22 {
-            kind = .waxCrush
-        } else if pressure >= 0.58 || movement >= 0.28 {
-            kind = .waxCrack
+        let nextStage: WaxStage
+        if pressure >= 0.78 || pressureJump >= 0.22 || (closingSpeed >= 0.20 && pressure >= 0.55) {
+            nextStage = .crush
+        } else if pressure >= 0.58 || movement >= 0.28 || closingSpeed >= 0.10 {
+            nextStage = .crack
         } else {
+            nextStage = .press
+        }
+
+        guard nextStage.rawValue > waxStage.rawValue else {
+            return TrackpadGestureEvaluation(liveIntensity: liveIntensity, trigger: nil)
+        }
+        waxStage = nextStage
+
+        let kind: TrackpadSoundKind
+        let baseInterval: TimeInterval
+        switch nextStage {
+        case .idle:
+            return TrackpadGestureEvaluation(liveIntensity: liveIntensity, trigger: nil)
+        case .press:
             kind = .waxPress
+            baseInterval = 0.24
+        case .crack:
+            kind = .waxCrack
+            baseInterval = max(0.13, 0.34 - liveIntensity * 0.18)
+        case .crush:
+            kind = .waxCrush
+            baseInterval = max(0.11, 0.48 - liveIntensity * 0.25)
         }
 
-        let interval: TimeInterval
-        switch kind {
-        case .waxPress:
-            interval = 0.24
-        case .waxCrack:
-            interval = max(0.13, 0.34 - liveIntensity * 0.18)
-        case .waxCrush:
-            interval = max(0.11, 0.48 - liveIntensity * 0.25)
-        case .slimeKnead, .slimeStretch, .slimeRelease:
-            interval = 0.20
-        }
-
-        return TrackpadGestureEvaluation(
+        return triggerIfReady(
+            kind: kind,
+            intensity: liveIntensity,
+            label: kind.title,
             liveIntensity: liveIntensity,
-            trigger: triggerIfReady(
-                kind: kind,
-                intensity: liveIntensity,
-                label: kind.title,
-                liveIntensity: liveIntensity,
-                timestamp: timestamp,
-                interval: interval
-            ).trigger
+            timestamp: timestamp,
+            interval: densityAdjusted(baseInterval, soundDensity: soundDensity)
         )
     }
 
@@ -228,6 +280,10 @@ final class TrackpadGestureEngine {
             liveIntensity: liveIntensity,
             trigger: TrackpadGestureTrigger(kind: kind, intensity: intensity, label: label)
         )
+    }
+
+    private func densityAdjusted(_ interval: TimeInterval, soundDensity: Double) -> TimeInterval {
+        interval / soundDensity.clamped(to: 0.5...2.0)
     }
 }
 

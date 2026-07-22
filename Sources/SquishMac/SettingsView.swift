@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var settings: SettingsStore
     @ObservedObject var motionDetector: MotionDetector
+    @ObservedObject var soundPlayer: SoundPlayer
 
     let soundPackManager: SoundPackManager
     let onTestSound: () -> Void
@@ -24,6 +25,10 @@ struct SettingsView: View {
 
                 Divider()
 
+                trackpadSettings
+
+                Divider()
+
                 soundSettings
 
                 Divider()
@@ -40,7 +45,7 @@ struct SettingsView: View {
             }
             .padding(22)
         }
-        .frame(width: 470, height: 620)
+        .frame(width: 500, height: 700)
     }
 
     private var header: some View {
@@ -93,7 +98,15 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Sound")
 
-            Picker("Sound Pack", selection: $settings.selectedSoundPackID) {
+            settingSlider(
+                title: "Master Volume",
+                value: $settings.masterVolume,
+                range: SettingsStore.masterVolumeRange,
+                format: "%.0f%%",
+                displayMultiplier: 100
+            )
+
+            Picker("Impact Sound Pack", selection: $settings.selectedSoundPackID) {
                 ForEach(soundPackManager.availablePacks()) { pack in
                     Text(pack.title)
                         .tag(pack.id)
@@ -123,6 +136,60 @@ struct SettingsView: View {
 
                 Spacer()
             }
+
+            if let lastPlayedFileName = soundPlayer.lastPlayedFileName {
+                HStack {
+                    Text("Last played")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(lastPlayedFileName)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .font(.system(.caption, design: .monospaced))
+                }
+            }
+
+            if let error = soundPlayer.lastPlaybackError {
+                HStack(alignment: .top) {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                    Button("Dismiss") {
+                        soundPlayer.clearPlaybackError()
+                    }
+                }
+            }
+        }
+    }
+
+    private var trackpadSettings: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("Trackpad")
+
+            Picker("Default Mode", selection: $settings.trackpadMode) {
+                ForEach(TrackpadMode.allCases) { mode in
+                    Text(mode.title).tag(mode)
+                }
+            }
+            .pickerStyle(.menu)
+
+            Toggle("Wax crack and crush haptics", isOn: $settings.isHapticFeedbackEnabled)
+
+            settingSlider(
+                title: "Touch Response",
+                value: $settings.trackpadResponse,
+                range: SettingsStore.trackpadResponseRange,
+                format: "%.2fx"
+            )
+
+            settingSlider(
+                title: "Sound Density",
+                value: $settings.trackpadSoundDensity,
+                range: SettingsStore.soundDensityRange,
+                format: "%.2fx"
+            )
         }
     }
 
@@ -130,12 +197,15 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle("Detection")
 
+            Toggle("Motion impact sounds", isOn: $settings.isImpactDetectionEnabled)
+
             settingSlider(
                 title: "Sensitivity",
                 value: $settings.sensitivity,
                 range: SettingsStore.sensitivityRange,
                 format: "%.2f g"
             )
+            .disabled(!settings.isImpactDetectionEnabled)
 
             settingSlider(
                 title: "Cooldown",
@@ -143,6 +213,7 @@ struct SettingsView: View {
                 range: SettingsStore.cooldownRange,
                 format: "%.2f s"
             )
+            .disabled(!settings.isImpactDetectionEnabled)
         }
     }
 
@@ -204,7 +275,7 @@ struct SettingsView: View {
             }
 
             Button("Recalibrate Motion", action: onRecalibrateMotion)
-                .disabled(!settings.isEnabled)
+                .disabled(!settings.isEnabled || !settings.isImpactDetectionEnabled)
         }
     }
 
@@ -232,13 +303,14 @@ struct SettingsView: View {
         title: String,
         value: Binding<Double>,
         range: ClosedRange<Double>,
-        format: String
+        format: String,
+        displayMultiplier: Double = 1
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(title)
                 Spacer()
-                Text(String(format: format, value.wrappedValue))
+                Text(String(format: format, value.wrappedValue * displayMultiplier))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }

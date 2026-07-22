@@ -18,6 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Run tests
+        run: swift test -v
+
       - name: Build app bundle
         run: bash Scripts/package-app.sh
 

@@ -120,4 +120,95 @@ final class TrackpadGestureEngineTests: XCTestCase {
         XCTAssertNotNil(first.trigger)
         XCTAssertNil(suppressed.trigger)
     }
+
+    func testStationarySlimeDoesNotRepeatWithoutTextureChange() {
+        let engine = TrackpadGestureEngine()
+
+        let first = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.5,
+            movement: 0.1,
+            spread: 0.7,
+            timestamp: 1
+        )
+        let stationary = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.5,
+            movement: 0,
+            spread: 0.7,
+            timestamp: 2
+        )
+
+        XCTAssertNotNil(first.trigger)
+        XCTAssertNil(stationary.trigger)
+    }
+
+    func testWaxCrushStageDoesNotRepeatUntilTouchCycleEnds() {
+        let engine = TrackpadGestureEngine()
+
+        let firstCrush = engine.evaluate(
+            mode: .twoThumbWaxCrush,
+            fingerCount: 2,
+            pressure: 0.9,
+            movement: 0.3,
+            spread: 0.2,
+            timestamp: 1
+        )
+        let heldCrush = engine.evaluate(
+            mode: .twoThumbWaxCrush,
+            fingerCount: 2,
+            pressure: 0.95,
+            movement: 0.4,
+            spread: 0.1,
+            timestamp: 2
+        )
+        _ = engine.evaluate(
+            mode: .twoThumbWaxCrush,
+            fingerCount: 0,
+            pressure: 0,
+            movement: 0,
+            spread: 0,
+            timestamp: 2.2
+        )
+        let nextCrush = engine.evaluate(
+            mode: .twoThumbWaxCrush,
+            fingerCount: 2,
+            pressure: 0.9,
+            movement: 0.3,
+            spread: 0.2,
+            timestamp: 3
+        )
+
+        XCTAssertEqual(firstCrush.trigger?.kind, .waxCrush)
+        XCTAssertNil(heldCrush.trigger)
+        XCTAssertEqual(nextCrush.trigger?.kind, .waxCrush)
+    }
+
+    func testResponseTuningCanRecognizeAQuieterWaxPress() {
+        let standardEngine = TrackpadGestureEngine()
+        let responsiveEngine = TrackpadGestureEngine()
+
+        let standard = standardEngine.evaluate(
+            mode: .twoThumbWaxCrush,
+            fingerCount: 2,
+            pressure: 0.25,
+            movement: 0,
+            spread: 0.9,
+            timestamp: 1
+        )
+        let responsive = responsiveEngine.evaluate(
+            mode: .twoThumbWaxCrush,
+            fingerCount: 2,
+            pressure: 0.25,
+            movement: 0,
+            spread: 0.9,
+            timestamp: 1,
+            tuning: TrackpadTuning(response: 1.75, soundDensity: 1)
+        )
+
+        XCTAssertNil(standard.trigger)
+        XCTAssertEqual(responsive.trigger?.kind, .waxPress)
+    }
 }

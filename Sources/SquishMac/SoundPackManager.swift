@@ -56,13 +56,7 @@ final class SoundPackManager {
         }
 
         let selectedPack = pack(for: packID)
-        let selectedURLs = urls(in: selectedPack.folderName)
-
-        if selectedURLs.isEmpty {
-            return Self.packs.flatMap { urls(in: $0.folderName) }
-        }
-
-        return selectedURLs
+        return urls(in: selectedPack.folderName)
     }
 
     func soundCount(for packID: String, customDirectoryPath: String?) -> Int {
@@ -78,7 +72,14 @@ final class SoundPackManager {
             .appendingPathComponent("Sounds", isDirectory: true)
             .appendingPathComponent(folderName, isDirectory: true)
 
-        return urls(inDirectory: directory, recursive: false)
+        let nestedURLs = urls(inDirectory: directory, recursive: false)
+        if !nestedURLs.isEmpty {
+            return nestedURLs
+        }
+
+        // SwiftPM may flatten processed resource directories in the generated bundle.
+        return urls(inDirectory: resourceURL, recursive: false)
+            .filter { $0.deletingPathExtension().lastPathComponent.hasPrefix("\(folderName)-") }
     }
 
     private func urls(inDirectory directory: URL, recursive: Bool) -> [URL] {

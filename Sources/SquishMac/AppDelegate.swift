@@ -7,7 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let soundPackManager = SoundPackManager()
     private lazy var soundPlayer = SoundPlayer(packManager: soundPackManager)
     private lazy var motionDetector = MotionDetector(settings: settings)
-    private let trackpadState = TrackpadInteractionState()
+    private lazy var trackpadState = TrackpadInteractionState(mode: settings.trackpadMode)
 
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
@@ -24,26 +24,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.handleImpact(impact)
         }
 
-        if settings.isEnabled {
-            motionDetector.start()
-        }
     }
 
     private func bindSettings() {
         settings.$isEnabled
+            .combineLatest(settings.$isImpactDetectionEnabled)
             .receive(on: RunLoop.main)
-            .sink { [weak self] isEnabled in
+            .sink { [weak self] isEnabled, isImpactDetectionEnabled in
                 guard let self else {
                     return
                 }
 
-                if isEnabled {
+                if isEnabled && isImpactDetectionEnabled {
                     self.motionDetector.start()
                 } else {
                     self.motionDetector.stop()
                 }
 
+                if !isEnabled {
+                    self.soundPlayer.stopAll()
+                }
+
                 self.rebuildMenu()
+            }
+            .store(in: &cancellables)
+
+        settings.$trackpadMode
+            .removeDuplicates()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] mode in
+                self?.trackpadState.mode = mode
             }
             .store(in: &cancellables)
 
@@ -99,14 +109,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             packSubmenu.addItem(item)
         }
 
-        let packItem = NSMenuItem(title: "Sound Pack", action: nil, keyEquivalent: "")
+        let packItem = NSMenuItem(title: "Impact Sound Pack", action: nil, keyEquivalent: "")
         packItem.submenu = packSubmenu
         menu.addItem(packItem)
 
         menu.addItem(NSMenuItem(title: "Played Today: \(settings.todaysCount)", action: nil, keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Sensitivity: \(String(format: "%.2f", settings.sensitivity)) g", action: nil, keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Cooldown: \(String(format: "%.2f", settings.cooldown)) s", action: nil, keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Current Motion: \(String(format: "%.3f", motionDetector.currentStrength)) g", action: nil, keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Trackpad Mode: \(settings.trackpadMode.title)", action: nil, keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Volume: \(Int(settings.masterVolume * 100))%", action: nil, keyEquivalent: ""))
+
+        if settings.isImpactDetectionEnabled {
+            menu.addItem(NSMenuItem(title: "Current Motion: \(String(format: "%.3f", motionDetector.currentStrength)) g", action: nil, keyEquivalent: ""))
+        }
 
         menu.addItem(.separator())
 
@@ -118,13 +131,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsItem.target = self
         menu.addItem(settingsItem)
 
-        let trackpadItem = NSMenuItem(title: "Open Trackpad Lab...", action: #selector(openTrackpadLab), keyEquivalent: "t")
+        let trackpadItem = NSMenuItem(title: "Open Squish Surface...", action: #selector(openTrackpadLab), keyEquivalent: "t")
         trackpadItem.target = self
         menu.addItem(trackpadItem)
 
         let recalibrateItem = NSMenuItem(title: "Recalibrate Motion", action: #selector(recalibrateMotion), keyEquivalent: "")
         recalibrateItem.target = self
-        recalibrateItem.isEnabled = settings.isEnabled
+        recalibrateItem.isEnabled = settings.isEnabled && settings.isImpactDetectionEnabled
         menu.addItem(recalibrateItem)
 
         let customFolderItem = NSMenuItem(title: "Choose Custom Sound Folder...", action: #selector(chooseCustomSoundFolder), keyEquivalent: "")
@@ -151,17 +164,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func handleImpact(_ impact: MotionImpact) {
-        guard settings.isEnabled else {
+        guard settings.isEnabled, settings.isImpactDetectionEnabled else {
             return
         }
 
-        soundPlayer.playRandomSound(
+        let didPlay = soundPlayer.playRandomSound(
             packID: settings.selectedSoundPackID,
             customDirectoryPath: settings.customSoundDirectoryPath,
             impactStrength: impact.strength,
-            sensitivity: settings.sensitivity
+            sensitivity: settings.sensitivity,
+            masterVolume: settings.masterVolume
         )
-        settings.recordPlay()
+        if didPlay {
+            settings.recordPlay()
+        }
         rebuildMenu()
     }
 
@@ -187,6 +203,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let view = SettingsView(
                 settings: settings,
                 motionDetector: motionDetector,
+                soundPlayer: soundPlayer,
                 soundPackManager: soundPackManager,
                 onTestSound: { [weak self] in
                     self?.playPreviewSound()
@@ -209,7 +226,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             )
 
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 470, height: 620),
+                contentRect: NSRect(x: 0, y: 0, width: 500, height: 700),
                 styleMask: [.titled, .closable, .miniaturizable],
                 backing: .buffered,
                 defer: false
@@ -229,18 +246,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if trackpadWindow == nil {
             let view = TrackpadLabView(
                 state: trackpadState,
+                settings: settings,
                 onGesture: { [weak self] trigger in
                     self?.handleTrackpadGesture(trigger)
+                },
+                onExportRecording: { [weak self] in
+                    self?.exportTrackpadRecording()
                 }
             )
 
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 560, height: 610),
+                contentRect: NSRect(x: 0, y: 0, width: 620, height: 740),
                 styleMask: [.titled, .closable, .miniaturizable],
                 backing: .buffered,
                 defer: false
             )
-            window.title = "SquishMac Trackpad Lab"
+            window.title = "SquishMac Squish Surface"
             window.contentViewController = NSHostingController(rootView: view)
             window.center()
             window.isReleasedWhenClosed = false
@@ -256,9 +277,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        soundPlayer.playInteractionSound(kind: trigger.kind, intensity: trigger.intensity)
-        settings.recordPlay()
+        let didPlay = soundPlayer.playInteractionSound(
+            kind: trigger.kind,
+            intensity: trigger.intensity,
+            masterVolume: settings.masterVolume
+        )
+        if didPlay {
+            settings.recordPlay()
+        }
+        performHapticFeedback(for: trigger.kind)
         rebuildMenu()
+    }
+
+    private func performHapticFeedback(for kind: TrackpadSoundKind) {
+        guard settings.isHapticFeedbackEnabled else {
+            return
+        }
+
+        let pattern: NSHapticFeedbackManager.FeedbackPattern
+        switch kind {
+        case .waxCrack:
+            pattern = .levelChange
+        case .waxCrush:
+            pattern = .generic
+        case .slimeKnead, .slimeStretch, .slimeRelease, .waxPress:
+            return
+        }
+
+        NSHapticFeedbackManager.defaultPerformer.perform(pattern, performanceTime: .now)
     }
 
     @objc private func playTestSound() {
@@ -269,8 +315,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         soundPlayer.playPreview(
             packID: settings.selectedSoundPackID,
             customDirectoryPath: settings.customSoundDirectoryPath,
-            sensitivity: settings.sensitivity
+            sensitivity: settings.sensitivity,
+            masterVolume: settings.masterVolume
         )
+    }
+
+    private func exportTrackpadRecording() {
+        if trackpadState.isRecording {
+            trackpadState.stopRecording()
+        }
+
+        do {
+            let data = try trackpadState.encodedRecording()
+            let panel = NSSavePanel()
+            panel.title = "Export Trackpad Session"
+            panel.prompt = "Export"
+            panel.nameFieldStringValue = recordingFileName()
+            panel.allowedFileTypes = ["json"]
+            panel.canCreateDirectories = true
+
+            guard panel.runModal() == .OK, let url = panel.url else {
+                return
+            }
+
+            try data.write(to: url, options: .atomic)
+        } catch {
+            let alert = NSAlert(error: error)
+            alert.messageText = "Could Not Export Trackpad Session"
+            alert.runModal()
+        }
+    }
+
+    private func recordingFileName() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        return "SquishMac-Trackpad-\(formatter.string(from: Date())).json"
     }
 
     @objc private func chooseCustomSoundFolder() {
@@ -348,5 +428,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func quit() {
         NSApp.terminate(nil)
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        motionDetector.stop()
+        soundPlayer.stopAll()
     }
 }

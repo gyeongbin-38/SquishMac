@@ -33,9 +33,15 @@ jobs:
           test -x .build/SquishMac.app/Contents/MacOS/SquishMac
           test -f .build/SquishMac.app/Contents/Info.plist
           test -d .build/SquishMac.app/Contents/Resources/SquishMac_SquishMac.bundle
+          plutil -lint .build/SquishMac.app/Contents/Info.plist
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' .build/SquishMac.app/Contents/Info.plist)" = "com.gyeongbin.squishmac"
+
+      - name: Zip app bundle
+        run: ditto -c -k --sequesterRsrc --keepParent .build/SquishMac.app .build/SquishMac.app.zip
 
       - name: Upload app bundle
         uses: actions/upload-artifact@v4
         with:
           name: SquishMac
-          path: .build/SquishMac.app
+          path: .build/SquishMac.app.zip
+          if-no-files-found: error
