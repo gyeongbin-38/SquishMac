@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import UniformTypeIdentifiers
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = SettingsStore()
@@ -331,7 +332,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             panel.title = "Export Trackpad Session"
             panel.prompt = "Export"
             panel.nameFieldStringValue = recordingFileName()
-            panel.allowedFileTypes = ["json"]
+            panel.allowedContentTypes = [.json]
             panel.canCreateDirectories = true
 
             guard panel.runModal() == .OK, let url = panel.url else {
