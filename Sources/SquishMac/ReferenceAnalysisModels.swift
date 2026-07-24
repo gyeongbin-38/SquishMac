@@ -152,6 +152,16 @@ struct SoundLayerRecipe: Codable, Equatable {
     let playbackRate: SoundParameterRange
     let delayMilliseconds: SoundParameterRange
     let canBeSynthesizedWhenMissing: Bool
+
+    private enum CodingKeys: String, CodingKey {
+        case role
+        case sourcePackID = "sourcePackId"
+        case probability
+        case volume
+        case playbackRate
+        case delayMilliseconds
+        case canBeSynthesizedWhenMissing
+    }
 }
 
 struct GestureSoundRecipe: Codable, Equatable {
