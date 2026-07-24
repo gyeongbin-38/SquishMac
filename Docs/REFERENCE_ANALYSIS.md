@@ -24,6 +24,8 @@ The audio track is decoded to mono PCM. Adaptive onset detection records RMS, pe
 
 The JSON contains `motion_frames`, `audio_events`, `gesture_events`, `learned_profile`, and `sound_recipes`. `audio_event_index` links a gesture to the audio event that most likely belongs to it.
 
+For command-line or collaborative analysis, place local footage under `ReferenceVideos/` and exported data under `AnalysisOutput/`. Both directories are ignored by Git so personal footage is not pushed to the public repository.
+
 ## Recording Recommendations
 
 - Use a fixed camera, stable lighting, and a background that contrasts with the hands.

@@ -4,3 +4,7 @@ DerivedData/
 *.xcuserstate
 *.app/
 .DS_Store
+
+# Keep personal reference footage and extracted analysis files local.
+ReferenceVideos/
+AnalysisOutput/
