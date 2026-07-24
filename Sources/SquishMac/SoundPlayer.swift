@@ -201,7 +201,7 @@ final class SoundPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
                     for: layer.sourcePackID,
                     customDirectoryPath: nil
                 )
-                self.playRandomURL(
+                _ = self.playRandomURL(
                     layerURLs,
                     key: "\(layer.sourcePackID):\(layer.role)",
                     volume: volume,

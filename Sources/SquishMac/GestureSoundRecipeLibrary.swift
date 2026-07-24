@@ -48,17 +48,17 @@ enum GestureSoundRecipeLibrary {
     static func recipe(for soundKind: TrackpadSoundKind) -> GestureSoundRecipe {
         switch soundKind {
         case .slimeKnead:
-            return recipe(for: .slimeKnead)
+            return recipe(for: ReferenceGestureKind.slimeKnead)
         case .slimeStretch:
-            return recipe(for: .slimeStretch)
+            return recipe(for: ReferenceGestureKind.slimeStretch)
         case .slimeRelease:
-            return recipe(for: .slimeRelease)
+            return recipe(for: ReferenceGestureKind.slimeRelease)
         case .waxPress:
-            return recipe(for: .waxPress)
+            return recipe(for: ReferenceGestureKind.waxPress)
         case .waxCrack:
-            return recipe(for: .waxCrack)
+            return recipe(for: ReferenceGestureKind.waxCrack)
         case .waxCrush:
-            return recipe(for: .waxCrush)
+            return recipe(for: ReferenceGestureKind.waxCrush)
         }
     }
 

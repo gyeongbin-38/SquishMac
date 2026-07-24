@@ -21,7 +21,7 @@ struct ReferenceVideoAnalysisView: View {
             }
 
             Text(controller.statusText)
-                .foregroundStyle(controller.errorMessage == nil ? .secondary : .red)
+                .foregroundStyle(controller.errorMessage == nil ? Color.secondary : Color.red)
 
             if let errorMessage = controller.errorMessage {
                 Text(errorMessage)
