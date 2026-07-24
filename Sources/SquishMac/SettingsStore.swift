@@ -20,6 +20,10 @@ final class SettingsStore: ObservableObject {
         didSet { defaults.set(isHapticFeedbackEnabled, forKey: Keys.isHapticFeedbackEnabled) }
     }
 
+    @Published var isSystemGestureGuardEnabled: Bool {
+        didSet { defaults.set(isSystemGestureGuardEnabled, forKey: Keys.isSystemGestureGuardEnabled) }
+    }
+
     @Published var sensitivity: Double {
         didSet {
             let safeValue = sensitivity.clamped(to: Self.sensitivityRange)
@@ -117,6 +121,7 @@ final class SettingsStore: ObservableObject {
         self.isEnabled = defaults.object(forKey: Keys.isEnabled) as? Bool ?? true
         self.isImpactDetectionEnabled = defaults.object(forKey: Keys.isImpactDetectionEnabled) as? Bool ?? true
         self.isHapticFeedbackEnabled = defaults.object(forKey: Keys.isHapticFeedbackEnabled) as? Bool ?? true
+        self.isSystemGestureGuardEnabled = defaults.object(forKey: Keys.isSystemGestureGuardEnabled) as? Bool ?? true
         self.sensitivity = (defaults.object(forKey: Keys.sensitivity) as? Double ?? 0.32)
             .clamped(to: Self.sensitivityRange)
         self.cooldown = (defaults.object(forKey: Keys.cooldown) as? Double ?? 0.80)
@@ -204,6 +209,7 @@ private enum Keys {
     static let isEnabled = "settings.isEnabled"
     static let isImpactDetectionEnabled = "settings.isImpactDetectionEnabled"
     static let isHapticFeedbackEnabled = "settings.isHapticFeedbackEnabled"
+    static let isSystemGestureGuardEnabled = "settings.isSystemGestureGuardEnabled"
     static let sensitivity = "settings.sensitivity"
     static let cooldown = "settings.cooldown"
     static let masterVolume = "settings.masterVolume"

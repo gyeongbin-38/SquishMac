@@ -3,16 +3,22 @@ import Combine
 import SwiftUI
 import UniformTypeIdentifiers
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = SettingsStore()
     private let soundPackManager = SoundPackManager()
     private lazy var soundPlayer = SoundPlayer(packManager: soundPackManager)
     private lazy var motionDetector = MotionDetector(settings: settings)
     private lazy var trackpadState = TrackpadInteractionState(mode: settings.trackpadMode)
+    private lazy var cameraSlimeController = CameraSlimeController()
+    private lazy var referenceVideoController = ReferenceVideoAnalysisController()
+    private let trackpadGestureGuard = TrackpadSystemGestureGuard()
 
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
     private var trackpadWindow: NSWindow?
+    private var cameraSlimeWindow: NSWindow?
+    private var referenceVideoWindow: NSWindow?
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -136,6 +142,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         trackpadItem.target = self
         menu.addItem(trackpadItem)
 
+        let cameraItem = NSMenuItem(title: "Open Camera Slime...", action: #selector(openCameraSlime), keyEquivalent: "c")
+        cameraItem.target = self
+        menu.addItem(cameraItem)
+
+        let analyzeVideoItem = NSMenuItem(title: "Analyze Reference Video...", action: #selector(openReferenceVideoAnalyzer), keyEquivalent: "")
+        analyzeVideoItem.target = self
+        menu.addItem(analyzeVideoItem)
+
         let recalibrateItem = NSMenuItem(title: "Recalibrate Motion", action: #selector(recalibrateMotion), keyEquivalent: "")
         recalibrateItem.target = self
         recalibrateItem.isEnabled = settings.isEnabled && settings.isImpactDetectionEnabled
@@ -253,6 +267,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 },
                 onExportRecording: { [weak self] in
                     self?.exportTrackpadRecording()
+                },
+                onOpenSystemSettings: { [weak self] in
+                    self?.openSystemSettings()
                 }
             )
 
@@ -267,6 +284,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.center()
             window.isReleasedWhenClosed = false
             trackpadWindow = window
+            trackpadGestureGuard.start(protecting: window) { [weak self] in
+                guard let self else {
+                    return false
+                }
+                return self.settings.isSystemGestureGuardEnabled
+                    && self.trackpadState.fingerCount >= 2
+            }
         }
 
         trackpadWindow?.makeKeyAndOrderFront(nil)
@@ -288,6 +312,101 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         performHapticFeedback(for: trigger.kind)
         rebuildMenu()
+    }
+
+    @objc private func openCameraSlime() {
+        if cameraSlimeWindow == nil {
+            cameraSlimeController.onGesture = { [weak self] trigger in
+                self?.handleTrackpadGesture(trigger)
+            }
+            let view = CameraSlimeView(
+                controller: cameraSlimeController,
+                settings: settings
+            )
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 760, height: 680),
+                styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                backing: .buffered,
+                defer: false
+            )
+            window.title = "SquishMac Camera Slime"
+            window.contentMinSize = NSSize(width: 620, height: 560)
+            window.contentViewController = NSHostingController(rootView: view)
+            window.center()
+            window.isReleasedWhenClosed = false
+            window.delegate = self
+            cameraSlimeWindow = window
+        }
+
+        cameraSlimeWindow?.makeKeyAndOrderFront(nil)
+        cameraSlimeController.start()
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc private func openReferenceVideoAnalyzer() {
+        if referenceVideoWindow == nil {
+            let view = ReferenceVideoAnalysisView(
+                controller: referenceVideoController,
+                onChooseVideo: { [weak self] in
+                    self?.chooseReferenceVideo()
+                },
+                onExport: { [weak self] in
+                    self?.exportReferenceVideoAnalysis()
+                }
+            )
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 560, height: 470),
+                styleMask: [.titled, .closable, .miniaturizable],
+                backing: .buffered,
+                defer: false
+            )
+            window.title = "SquishMac Reference Video Analyzer"
+            window.contentViewController = NSHostingController(rootView: view)
+            window.center()
+            window.isReleasedWhenClosed = false
+            referenceVideoWindow = window
+        }
+
+        referenceVideoWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func chooseReferenceVideo() {
+        let panel = NSOpenPanel()
+        panel.title = "Choose a Slime or Wax Reference Video"
+        panel.prompt = "Analyze"
+        panel.allowedContentTypes = [.movie]
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.allowsMultipleSelection = false
+
+        guard panel.runModal() == .OK, let url = panel.url else {
+            return
+        }
+        referenceVideoController.analyze(videoURL: url)
+    }
+
+    private func exportReferenceVideoAnalysis() {
+        do {
+            let data = try referenceVideoController.encodedResult()
+            let panel = NSSavePanel()
+            panel.title = "Export Reference Video Analysis"
+            panel.prompt = "Export"
+            panel.allowedContentTypes = [.json]
+            panel.canCreateDirectories = true
+            let sourceName = referenceVideoController.result?.sourceFileName
+                .replacingOccurrences(of: ".", with: "-") ?? "Reference-Video"
+            panel.nameFieldStringValue = "\(sourceName)-SquishMac-Analysis.json"
+
+            guard panel.runModal() == .OK, let url = panel.url else {
+                return
+            }
+            try data.write(to: url, options: .atomic)
+        } catch {
+            let alert = NSAlert(error: error)
+            alert.messageText = "Could Not Export Reference Video Analysis"
+            alert.runModal()
+        }
     }
 
     private func performHapticFeedback(for kind: TrackpadSoundKind) {
@@ -352,6 +471,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyyMMdd-HHmmss"
         return "SquishMac-Trackpad-\(formatter.string(from: Date())).json"
+    }
+
+    private func openSystemSettings() {
+        NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/System Settings.app"))
     }
 
     @objc private func chooseCustomSoundFolder() {
@@ -432,7 +555,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        referenceVideoController.cancel()
+        cameraSlimeController.stop()
+        trackpadGestureGuard.stop()
         motionDetector.stop()
         soundPlayer.stopAll()
+    }
+}
+
+extension AppDelegate: NSWindowDelegate {
+    func windowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else {
+            return
+        }
+        if window === cameraSlimeWindow {
+            cameraSlimeController.stop()
+        }
     }
 }

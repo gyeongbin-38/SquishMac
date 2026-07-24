@@ -44,9 +44,9 @@ waxCrack
 waxCrush
 ```
 
-## Future Video Alignment
+## Reference Video Alignment
 
-A later analysis tool can align this JSON with an owned or licensed reference video by using a visible or audible sync action at the beginning of both recordings. The intended pipeline is:
+The built-in reference analyzer can produce a separate timeline from an owned or licensed video. Use a visible or audible sync action at the beginning of both recordings when comparing the two:
 
 ```text
 reference video + audio
@@ -61,7 +61,9 @@ timestamped reference gesture events
 compare with SquishMac samples/events
           |
           v
-updated thresholds, response curves, and sound mappings
+updated thresholds, response curves, and layered sound mappings
 ```
+
+See [Reference video analysis](REFERENCE_ANALYSIS.md) for its export fields and recording guidance.
 
 Reference media and extracted audio must be original, public-domain, or licensed for the intended use.

@@ -119,6 +119,7 @@ final class SoundPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private var variationSelector = SoundVariationSelector()
     private var audioDataCache: [URL: Data] = [:]
     private var cacheOrder: [URL] = []
+    private var playbackGeneration = 0
     private let maxActivePlayers = 10
     private let maximumCachedFiles = 48
 
@@ -150,19 +151,65 @@ final class SoundPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
         intensity: Double,
         masterVolume: Double = 1.0
     ) -> Bool {
+        let safeIntensity = intensity.clamped(to: 0.0...1.0)
+        let safeMasterVolume = masterVolume.clamped(to: 0.0...1.0)
         let response = AudioResponseCurve.interaction(
             kind: kind,
-            intensity: intensity,
-            masterVolume: masterVolume
+            intensity: safeIntensity,
+            masterVolume: safeMasterVolume
         )
         let urls = packManager.soundURLs(for: response.packID, customDirectoryPath: nil)
         let rateVariation = Float.random(in: -0.025...0.025)
-        return playRandomURL(
+        let didPlayPrimary = playRandomURL(
             urls,
             key: response.packID,
             volume: response.volume,
             rate: (response.rate + rateVariation).clamped(to: 0.5...1.5)
         )
+        guard didPlayPrimary else {
+            return false
+        }
+
+        let generation = playbackGeneration
+        let recipe = GestureSoundRecipeLibrary.recipe(for: kind)
+        for layer in recipe.layers.dropFirst() {
+            let probability = (
+                layer.probability * (0.62 + safeIntensity * 0.38)
+            ).clamped(to: 0.0...1.0)
+            guard Double.random(in: 0...1) <= probability else {
+                continue
+            }
+
+            let volume = Float(
+                interpolated(layer.volume, progress: safeIntensity)
+                    * safeMasterVolume
+            )
+            let rate = Float(
+                interpolated(layer.playbackRate, progress: safeIntensity)
+                    + Double.random(in: -0.025...0.025)
+            ).clamped(to: 0.5...1.5)
+            let delay = interpolated(
+                layer.delayMilliseconds,
+                progress: Double.random(in: 0...1)
+            ) / 1_000
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self, self.playbackGeneration == generation else {
+                    return
+                }
+                let layerURLs = self.packManager.soundURLs(
+                    for: layer.sourcePackID,
+                    customDirectoryPath: nil
+                )
+                self.playRandomURL(
+                    layerURLs,
+                    key: "\(layer.sourcePackID):\(layer.role)",
+                    volume: volume,
+                    rate: rate
+                )
+            }
+        }
+        return true
     }
 
     @discardableResult
@@ -182,6 +229,7 @@ final class SoundPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
 
     func stopAll() {
+        playbackGeneration &+= 1
         activePlayers.forEach { $0.stop() }
         activePlayers.removeAll()
     }
@@ -254,6 +302,13 @@ final class SoundPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private func reportError(_ message: String) {
         lastPlaybackError = message
         NSLog("SquishMac audio: \(message)")
+    }
+
+    private func interpolated(
+        _ range: SoundParameterRange,
+        progress: Double
+    ) -> Double {
+        range.minimum + (range.maximum - range.minimum) * progress.clamped(to: 0.0...1.0)
     }
 
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {

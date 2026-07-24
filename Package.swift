@@ -19,6 +19,10 @@ let package = Package(
             linkerSettings: [
                 .linkedFramework("AppKit"),
                 .linkedFramework("AVFoundation"),
+                .linkedFramework("CoreMedia"),
+                .linkedFramework("CoreVideo"),
+                .linkedFramework("ImageIO"),
+                .linkedFramework("Vision"),
                 .linkedFramework("ServiceManagement")
             ]
         ),

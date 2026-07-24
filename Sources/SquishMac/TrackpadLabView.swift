@@ -7,6 +7,7 @@ struct TrackpadLabView: View {
 
     let onGesture: (TrackpadGestureTrigger) -> Void
     let onExportRecording: () -> Void
+    let onOpenSystemSettings: () -> Void
 
     var body: some View {
         ScrollView {
@@ -28,6 +29,10 @@ struct TrackpadLabView: View {
                 .frame(height: 300)
 
                 liveMetrics
+
+                Divider()
+
+                gestureGuardControls
 
                 Divider()
 
@@ -143,6 +148,24 @@ struct TrackpadLabView: View {
         }
     }
 
+    private var gestureGuardControls: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Toggle(
+                    "Protect against system trackpad gestures",
+                    isOn: $settings.isSystemGestureGuardEnabled
+                )
+                Spacer()
+                Button("Open System Settings", action: onOpenSystemSettings)
+            }
+
+            Text("If macOS still changes desktops, turn off Trackpad > More Gestures > Swipe between full-screen applications and Mission Control while testing.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     private var recordingControls: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -248,9 +271,7 @@ private final class TrackpadTouchNSView: NSView {
     var tuning: TrackpadTuning = .standard
     var onGesture: ((TrackpadGestureTrigger) -> Void)?
 
-    private var lastPressure: Double = 0
-    private var lastForceStage: Int = 0
-    private var previousTouchPoints: [TrackpadTouchPoint] = []
+    private var inputAccumulator = TrackpadInputAccumulator()
     private var configuredPressureMode: TrackpadMode?
 
     override var acceptsFirstResponder: Bool { true }
@@ -359,15 +380,15 @@ private final class TrackpadTouchNSView: NSView {
     }
 
     override func touchesBegan(with event: NSEvent) {
-        publish(event: event)
+        publishTouches(from: event)
     }
 
     override func touchesMoved(with event: NSEvent) {
-        publish(event: event)
+        publishTouches(from: event)
     }
 
     override func touchesEnded(with event: NSEvent) {
-        publish(event: event)
+        publishTouches(from: event)
     }
 
     override func touchesCancelled(with event: NSEvent) {
@@ -375,37 +396,54 @@ private final class TrackpadTouchNSView: NSView {
     }
 
     override func pressureChange(with event: NSEvent) {
-        lastPressure = Double(event.pressure).clamped(to: 0.0...1.0)
-        lastForceStage = max(0, event.stage)
-        publish(event: event, isPressureEvent: true)
+        let frame = inputAccumulator.updatePressure(
+            Double(event.pressure),
+            forceStage: event.stage
+        )
+        publish(frame: frame, isPressureEvent: true)
     }
 
     override func mouseDown(with event: NSEvent) {
-        updatePressure(from: event)
-        publish(event: event, isPressureEvent: event.pressure > 0)
+        let pressure = Double(event.pressure).clamped(to: 0.0...1.0)
+        let frame = inputAccumulator.updatePressure(
+            pressure,
+            forceStage: pressure > 0 ? 1 : 0
+        )
+        publish(frame: frame, isPressureEvent: pressure > 0)
     }
 
     override func mouseDragged(with event: NSEvent) {
-        updatePressure(from: event)
-        publish(event: event, isPressureEvent: event.pressure > 0)
+        let pressure = Double(event.pressure).clamped(to: 0.0...1.0)
+        let frame = inputAccumulator.updatePressure(
+            pressure,
+            forceStage: pressure > 0 ? 1 : 0
+        )
+        publish(frame: frame, isPressureEvent: pressure > 0)
     }
 
     override func mouseUp(with event: NSEvent) {
-        lastPressure = 0
-        lastForceStage = 0
-        publish(event: event)
+        publish(frame: inputAccumulator.updatePressure(0, forceStage: 0))
+    }
+
+    override func scrollWheel(with event: NSEvent) {}
+
+    override func swipe(with event: NSEvent) {}
+
+    override func magnify(with event: NSEvent) {}
+
+    override func rotate(with event: NSEvent) {}
+
+    override func smartMagnify(with event: NSEvent) {}
+
+    override func wantsScrollEventsForSwipeTracking(on axis: NSEvent.GestureAxis) -> Bool {
+        true
     }
 
     @objc private func windowDidResignKey() {
         clearInput()
     }
 
-    private func updatePressure(from event: NSEvent) {
-        lastPressure = Double(event.pressure).clamped(to: 0.0...1.0)
-        lastForceStage = lastPressure > 0 ? 1 : 0
-    }
-
-    private func publish(event: NSEvent, isPressureEvent: Bool = false) {
+    private func publishTouches(from event: NSEvent) {
         let touchSet: Set<NSTouch> = event.touches(matching: .touching, in: self)
         let points = touchSet.map { touch -> TrackpadTouchPoint in
             let position = touch.normalizedPosition
@@ -417,26 +455,21 @@ private final class TrackpadTouchNSView: NSView {
         }
         .sorted { $0.id < $1.id }
 
-        let movement = TrackpadTouchMetrics.movement(current: points, previous: previousTouchPoints)
-        let spread = TrackpadTouchMetrics.spread(points)
-        previousTouchPoints = points
+        publish(frame: inputAccumulator.updateTouches(points))
+    }
 
-        if points.isEmpty {
-            lastPressure = 0
-            lastForceStage = 0
-        }
-
+    private func publish(frame: TrackpadInputFrame, isPressureEvent: Bool = false) {
         guard let state else {
             return
         }
 
         let trigger = state.update(
-            fingerCount: points.count,
-            pressure: lastPressure,
-            forceStage: lastForceStage,
-            movement: movement,
-            spread: spread,
-            touchPoints: points,
+            fingerCount: frame.touchPoints.count,
+            pressure: frame.pressure,
+            forceStage: frame.forceStage,
+            movement: frame.movement,
+            spread: frame.spread,
+            touchPoints: frame.touchPoints,
             tuning: tuning,
             isPressureEvent: isPressureEvent
         )
@@ -448,9 +481,7 @@ private final class TrackpadTouchNSView: NSView {
     }
 
     private func clearInput() {
-        lastPressure = 0
-        lastForceStage = 0
-        previousTouchPoints.removeAll()
+        inputAccumulator.clear()
         state?.cancelCurrentGesture()
         needsDisplay = true
     }

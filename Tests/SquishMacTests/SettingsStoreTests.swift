@@ -54,6 +54,7 @@ final class SettingsStoreTests: XCTestCase {
         store.trackpadResponse = 1.4
         store.trackpadSoundDensity = 1.6
         store.isHapticFeedbackEnabled = false
+        store.isSystemGestureGuardEnabled = false
 
         let restored = SettingsStore(defaults: defaults)
 
@@ -61,6 +62,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(restored.trackpadResponse, 1.4, accuracy: 0.0001)
         XCTAssertEqual(restored.trackpadSoundDensity, 1.6, accuracy: 0.0001)
         XCTAssertFalse(restored.isHapticFeedbackEnabled)
+        XCTAssertFalse(restored.isSystemGestureGuardEnabled)
     }
 
     private func makeDefaults() -> UserDefaults {

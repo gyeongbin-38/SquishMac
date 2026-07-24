@@ -25,9 +25,13 @@ Confirm that all tests pass, `SquishMac.app` launches, the icon appears in the m
 - Open `Open Squish Surface...` and click or touch inside the surface.
 - Confirm that touch points follow the physical fingers without swapping during crossing movements.
 - Confirm that `Fingers` reaches the expected count, especially 6 in Slime mode.
+- Hold exactly two fingers on the surface, vary Force Touch pressure without moving, and confirm `Fingers` remains at 2.
+- Lift one of two fingers while pressure remains and confirm the surviving finger stays visible.
 - Press firmly and confirm the status changes to `Force pressure detected`.
 - Confirm that pressure rises and falls smoothly and Force Touch stage changes are visible.
 - Move one finger while holding the others still and confirm movement remains stable.
+- With gesture protection enabled, perform three- and four-finger horizontal/vertical swipes inside the surface.
+- If macOS still opens Mission Control or changes Spaces, disable those gestures in `System Settings > Trackpad > More Gestures` and record the macOS version.
 
 ## 4. Six-Finger Slime
 
@@ -73,6 +77,24 @@ Confirm that all tests pass, `SquishMac.app` launches, the icon appears in the m
 
 Do not repeatedly hit the display, hinge, or enclosure. The impact feature should be tested with light taps only.
 
+## 9. Camera Slime
+
+- Open `Open Camera Slime...` and grant camera permission.
+- Confirm the preview starts and up to ten fingertip points follow two visible hands.
+- Confirm no frames, landmarks, or recordings are written to disk without an explicit export.
+- Test Slime with three to ten visible fingertips and confirm press, knead, stretch, and release sounds.
+- Test Wax with two visible fingertips and confirm press, crack, and crush stages reset after release.
+- Cover the camera and confirm tracking clears without repeated sounds or a crash.
+- Deny camera permission once and confirm the window gives a recoverable Privacy & Security message.
+
+## 10. Reference Video
+
+- Analyze one owned Slime video and one owned Wax video, each with an audio track.
+- Confirm progress reaches 100% and exported JSON decodes successfully.
+- Spot-check fingertip positions, gesture timestamps, and linked audio event indices.
+- Analyze a valid silent video and confirm it succeeds with an empty `audio_events` array.
+- Cancel or close a long analysis and confirm the app remains responsive.
+
 ## Result Template
 
 ```text
@@ -86,5 +108,9 @@ Best slime response/density:
 Best wax response/density:
 Audio issues:
 JSON export issues:
+Two-finger retention:
+System gesture result:
+Camera tracking result:
+Reference video result:
 Other notes:
 ```

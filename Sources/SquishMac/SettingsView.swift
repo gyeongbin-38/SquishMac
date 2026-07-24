@@ -176,6 +176,7 @@ struct SettingsView: View {
             .pickerStyle(.menu)
 
             Toggle("Wax crack and crush haptics", isOn: $settings.isHapticFeedbackEnabled)
+            Toggle("Protect against system trackpad gestures", isOn: $settings.isSystemGestureGuardEnabled)
 
             settingSlider(
                 title: "Touch Response",
