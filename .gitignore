@@ -8,3 +8,6 @@ DerivedData/
 # Keep personal reference footage and extracted analysis files local.
 ReferenceVideos/
 AnalysisOutput/
+.venv-analysis/
+__pycache__/
+*.pyc

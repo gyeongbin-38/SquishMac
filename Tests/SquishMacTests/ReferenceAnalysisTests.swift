@@ -17,8 +17,10 @@ final class ReferenceAnalysisTests: XCTestCase {
 
     func testReferenceAnalysisJSONRoundTrip() throws {
         let analysis = ReferenceVideoAnalysis(
-            schemaVersion: 1,
+            schemaVersion: 2,
+            datasetID: "clear__test-dataset",
             sourceFileName: "owned-reference.mov",
+            materialProfile: SlimeMaterialProfile.builtIn[0],
             mode: .slime,
             duration: 1.5,
             analyzedFramesPerSecond: 15,

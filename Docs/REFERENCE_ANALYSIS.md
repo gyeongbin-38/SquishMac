@@ -17,14 +17,42 @@ The audio track is decoded to mono PCM. Adaptive onset detection records RMS, pe
 ## App Workflow
 
 1. Open `Analyze Reference Video...` from the menu bar.
-2. Select `Slime` or `Wax Squish`.
+2. Select an existing material profile or create a separate profile for the physical slime.
 3. Choose a local `.mov`, `.mp4`, or other macOS-readable movie.
 4. Wait for motion and audio analysis to complete.
 5. Export the JSON result.
 
 The JSON contains `motion_frames`, `audio_events`, `gesture_events`, `learned_profile`, and `sound_recipes`. `audio_event_index` links a gesture to the audio event that most likely belongs to it.
 
+Each profile is stored separately under:
+
+```text
+~/Library/Application Support/SquishMac/ReferenceDatasets/
+  <material-profile-id>/
+    <dataset-id>/
+      analysis.json
+```
+
+Built-in categories include clear, thick and glossy, butter/clay, cloud, jelly, icee, floam/bead, crunchy, and wax-shell slime. Custom profiles allow two slimes in the same category to retain different tuning and sound behavior.
+
 For command-line or collaborative analysis, place local footage under `ReferenceVideos/` and exported data under `AnalysisOutput/`. Both directories are ignored by Git so personal footage is not pushed to the public repository.
+
+## Detailed Offline Extraction
+
+The companion Python tool produces all 21 landmarks per hand, a tracked preview video, calibrated motion features, onset-aligned sound events, and individual WAV clips:
+
+```powershell
+py -3.12 -m venv .venv-analysis
+.\.venv-analysis\Scripts\python.exe -m pip install -r Tools\requirements-analysis.txt
+.\.venv-analysis\Scripts\python.exe Tools\reference_video_analysis.py `
+  --video "ReferenceVideos\sample.mp4" `
+  --output "AnalysisOutput\sample" `
+  --material-id "wax-shell-sample" `
+  --material-name "Wax Shell Sample" `
+  --material-category "wax_shell_slime"
+```
+
+Output is separated into `motion/landmarks.json`, `events/gesture_timeline.json`, `audio/events.json`, `audio/clips/<gesture>/`, and `overlays/tracking.mp4`.
 
 ## Recording Recommendations
 

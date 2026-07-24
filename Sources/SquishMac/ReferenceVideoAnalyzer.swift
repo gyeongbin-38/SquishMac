@@ -9,9 +9,10 @@ final class ReferenceVideoAnalyzer {
 
     func analyze(
         videoURL: URL,
-        mode: ReferenceMaterialMode,
+        materialProfile: SlimeMaterialProfile,
         progress: @escaping (Double) -> Void
     ) async throws -> ReferenceVideoAnalysis {
+        let mode = materialProfile.referenceMode
         let asset = AVURLAsset(url: videoURL)
         let durationValue = try await asset.load(.duration)
         let duration = max(0, durationValue.seconds)
@@ -38,8 +39,10 @@ final class ReferenceVideoAnalyzer {
         progress(1)
 
         return ReferenceVideoAnalysis(
-            schemaVersion: 1,
+            schemaVersion: 2,
+            datasetID: "\(materialProfile.id)__\(UUID().uuidString.lowercased())",
             sourceFileName: videoURL.lastPathComponent,
+            materialProfile: materialProfile,
             mode: mode,
             duration: duration,
             analyzedFramesPerSecond: Self.analysisFramesPerSecond,

@@ -19,6 +19,9 @@ jobs:
       - name: Show Swift version
         run: swift --version
 
+      - name: Validate reference analysis tool
+        run: python3 -m py_compile Tools/reference_video_analysis.py
+
       - name: Build debug executable
         run: swift build -v
 

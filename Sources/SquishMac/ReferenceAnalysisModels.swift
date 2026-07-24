@@ -181,7 +181,9 @@ struct LearnedGestureProfile: Codable, Equatable {
 
 struct ReferenceVideoAnalysis: Codable, Equatable {
     let schemaVersion: Int
+    let datasetID: String
     let sourceFileName: String
+    let materialProfile: SlimeMaterialProfile
     let mode: ReferenceMaterialMode
     let duration: TimeInterval
     let analyzedFramesPerSecond: Double
@@ -190,6 +192,21 @@ struct ReferenceVideoAnalysis: Codable, Equatable {
     let gestureEvents: [ReferenceGestureEvent]
     let learnedProfile: LearnedGestureProfile
     let soundRecipes: [GestureSoundRecipe]
+
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion
+        case datasetID = "datasetId"
+        case sourceFileName
+        case materialProfile
+        case mode
+        case duration
+        case analyzedFramesPerSecond
+        case motionFrames
+        case audioEvents
+        case gestureEvents
+        case learnedProfile
+        case soundRecipes
+    }
 
     func encodedJSON() throws -> Data {
         let encoder = JSONEncoder()

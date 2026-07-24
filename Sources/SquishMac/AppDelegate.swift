@@ -352,10 +352,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 },
                 onExport: { [weak self] in
                     self?.exportReferenceVideoAnalysis()
+                },
+                onRevealSavedDataset: { [weak self] in
+                    self?.revealSavedReferenceDataset()
                 }
             )
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 560, height: 470),
+                contentRect: NSRect(x: 0, y: 0, width: 600, height: 520),
                 styleMask: [.titled, .closable, .miniaturizable],
                 backing: .buffered,
                 defer: false
@@ -396,7 +399,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             panel.canCreateDirectories = true
             let sourceName = referenceVideoController.result?.sourceFileName
                 .replacingOccurrences(of: ".", with: "-") ?? "Reference-Video"
-            panel.nameFieldStringValue = "\(sourceName)-SquishMac-Analysis.json"
+            let profileID = referenceVideoController.result?.materialProfile.id
+                ?? "material"
+            panel.nameFieldStringValue = "\(profileID)-\(sourceName)-SquishMac-Analysis.json"
 
             guard panel.runModal() == .OK, let url = panel.url else {
                 return
@@ -407,6 +412,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             alert.messageText = "Could Not Export Reference Video Analysis"
             alert.runModal()
         }
+    }
+
+    private func revealSavedReferenceDataset() {
+        guard let url = referenceVideoController.savedDatasetURL else {
+            return
+        }
+        NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
     private func performHapticFeedback(for kind: TrackpadSoundKind) {

@@ -18,6 +18,7 @@ SquishMac is a Swift macOS menu bar sound toy built around a Force Touch trackpa
 - Layered sound recipes that probabilistically combine wet contact, bubbles, suction, creaks, cracks, and crush debris.
 - Versioned JSON recording of trackpad samples and recognized gesture events.
 - Local reference-video analysis with Vision fingertip tracking, audio-onset detection, gesture/audio alignment, and learned tuning suggestions.
+- Separate material profiles and dataset directories for clear, glossy, butter, cloud, jelly, icee, floam, crunchy, and wax-shell slime.
 - Live camera slime and wax interaction with on-device two-hand tracking and a virtual material overlay.
 - Optional MacBook impact detection, sensitivity, cooldown, custom sound folders, launch at login, and a daily play counter.
 - Generated placeholder WAV files for Bubble, Slime, Squishy, Pop, and Wax packs.
@@ -64,6 +65,8 @@ These files are intended for hardware calibration and later comparison with owne
 
 `Analyze Reference Video...` reads a local movie at 15 analyzed frames per second. It records wrist and fingertip landmarks for up to two hands, derives movement/spread/pinch/pressure estimates, detects audio onsets, aligns inferred gestures with nearby audio events, and exports the complete timeline as JSON. The current profile builder is data-derived threshold tuning, not a trained neural network. See [Reference analysis workflow](Docs/REFERENCE_ANALYSIS.md).
 
+Choose or create a material profile before analysis. Completed analyses are automatically stored under `Application Support/SquishMac/ReferenceDatasets/<material-profile>/<dataset-id>/analysis.json`, keeping tuning and sound mappings separate for each slime.
+
 `Open Camera Slime...` uses the built-in camera and Apple's on-device Vision hand-pose request. Camera frames are not uploaded or saved by SquishMac. The camera pressure value is a visual estimate derived from hand compression and pinch, not physical Force Touch pressure.
 
 ## Sound Packs
@@ -100,6 +103,10 @@ Sources/SquishMac/
   ReferenceVideoAnalyzer.swift      offline motion/audio timeline analysis
   HandMotionAnalyzer.swift          hand features and gesture inference
   GestureSoundRecipeLibrary.swift   probabilistic multi-layer sound mappings
+  SlimeMaterialProfile.swift        material taxonomy and profile metadata
+  ReferenceDatasetLibrary.swift     profile-separated local dataset storage
+Tools/
+  reference_video_analysis.py       offline MediaPipe motion/audio extraction
 ```
 
 ## Validation and Distribution
