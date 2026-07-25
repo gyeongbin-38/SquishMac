@@ -603,6 +603,18 @@ def mux_tracking_video(
     )
 
 
+def extract_tracking_poster(ffmpeg: Path, video: Path, output: Path) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        [
+            str(ffmpeg), "-y", "-hide_banner", "-loglevel", "error",
+            "-ss", "0", "-i", str(video),
+            "-frames:v", "1", "-q:v", "2", str(output),
+        ],
+        check=True,
+    )
+
+
 def analyze_audio(audio_path: Path) -> tuple[np.ndarray, int, list[dict[str, Any]]]:
     samples, sample_rate = sf.read(audio_path, always_2d=False)
     if samples.ndim > 1:
@@ -1009,6 +1021,7 @@ def main() -> None:
     audio_path = output / "audio" / "source.wav"
     silent_tracking = output / "overlays" / "tracking-silent.mp4"
     tracking_video = output / "overlays" / "tracking.mp4"
+    tracking_poster = output / "overlays" / "poster.jpg"
 
     print("Extracting source audio")
     extract_audio(ffmpeg, video, audio_path)
@@ -1040,6 +1053,7 @@ def main() -> None:
         output_root=output / "audio" / "clips",
     )
     mux_tracking_video(ffmpeg, silent_tracking, video, tracking_video)
+    extract_tracking_poster(ffmpeg, tracking_video, tracking_poster)
     silent_tracking.unlink(missing_ok=True)
 
     motion_path = output / "motion" / "landmarks.json"
@@ -1098,6 +1112,7 @@ def main() -> None:
             "audio_events": audio_events_path.relative_to(output).as_posix(),
             "gesture_timeline": gesture_path.relative_to(output).as_posix(),
             "tracking_video": tracking_video.relative_to(output).as_posix(),
+            "tracking_poster": tracking_poster.relative_to(output).as_posix(),
             "source_audio": audio_path.relative_to(output).as_posix(),
             "audio_clip_root": "audio/clips",
         },

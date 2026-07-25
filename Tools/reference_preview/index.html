@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SquishMac Reference Lab</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">SQUISHMAC REFERENCE LAB</p>
+        <h1>영상 모션·사운드 검수</h1>
+      </div>
+      <div id="loadStatus" class="status-badge" role="status">데이터 불러오는 중</div>
+    </header>
+
+    <main class="workspace">
+      <section class="summary-band" aria-label="분석 요약">
+        <div class="summary-primary">
+          <p class="section-label">현재 데이터셋</p>
+          <h2 id="materialName">-</h2>
+          <p id="materialDescription" class="muted">분석 정보를 확인하고 있습니다.</p>
+        </div>
+        <dl class="summary-stats">
+          <div><dt>영상 길이</dt><dd id="durationStat">-</dd></div>
+          <div><dt>손 추적률</dt><dd id="coverageStat">-</dd></div>
+          <div><dt>동작 이벤트</dt><dd id="gestureStat">-</dd></div>
+          <div><dt>사운드 이벤트</dt><dd id="audioStat">-</dd></div>
+        </dl>
+      </section>
+
+      <div id="errorPanel" class="error-panel" role="alert" hidden>
+        <strong>분석 데이터를 열 수 없습니다.</strong>
+        <span id="errorMessage"></span>
+      </div>
+
+      <div id="labContent" class="lab-layout" hidden>
+        <section class="video-column">
+          <div class="panel video-panel">
+            <div class="panel-header">
+              <div>
+                <p class="section-label">TRACKED VIDEO</p>
+                <h2>손가락 모션 확인</h2>
+              </div>
+              <div id="timeDisplay" class="time-display">00:00.000 / 00:00.000</div>
+            </div>
+
+            <div class="video-frame">
+              <video id="trackingVideo" controls playsinline preload="metadata"></video>
+              <div class="video-corner-readout" aria-live="polite">
+                <span id="cornerGesture">대기</span>
+                <strong id="cornerPressure">압력 추정 0%</strong>
+              </div>
+            </div>
+
+            <div class="transport-settings">
+              <label class="toggle-control">
+                <input id="sourceAudioToggle" type="checkbox">
+                <span>영상 원본 소리</span>
+              </label>
+              <label class="toggle-control">
+                <input id="mappedAudioToggle" type="checkbox" checked>
+                <span>매핑 사운드 자동 재생</span>
+              </label>
+              <label class="compact-control">
+                <span>재생 속도</span>
+                <select id="playbackRate">
+                  <option value="0.5">0.5x</option>
+                  <option value="1" selected>1.0x</option>
+                  <option value="1.5">1.5x</option>
+                </select>
+              </label>
+              <label class="volume-control">
+                <span>매핑 볼륨</span>
+                <input id="mappedVolume" type="range" min="0" max="100" value="75">
+                <output id="mappedVolumeValue">75%</output>
+              </label>
+            </div>
+          </div>
+
+          <div class="panel timeline-panel">
+            <div class="panel-header compact">
+              <div>
+                <p class="section-label">TIMELINE</p>
+                <h2>움직임과 소리의 대응</h2>
+              </div>
+              <div class="chart-legend" aria-label="차트 범례">
+                <span><i class="legend-movement"></i>움직임</span>
+                <span><i class="legend-pressure"></i>압력 추정</span>
+              </div>
+            </div>
+            <canvas id="motionChart" height="150" aria-label="움직임과 압력 추정 그래프"></canvas>
+            <div id="eventTimeline" class="event-timeline" aria-label="이벤트 타임라인">
+              <div class="timeline-lane">
+                <span class="lane-label">동작</span>
+                <div id="gestureMarkers" class="marker-track"></div>
+              </div>
+              <div class="timeline-lane">
+                <span class="lane-label">소리</span>
+                <div id="audioMarkers" class="marker-track"></div>
+              </div>
+              <div id="timelinePlayhead" class="timeline-playhead" aria-hidden="true"></div>
+            </div>
+            <p class="timeline-help">그래프나 이벤트 점을 누르면 해당 시점으로 이동합니다.</p>
+          </div>
+        </section>
+
+        <aside class="inspection-column">
+          <section class="panel live-panel">
+            <div class="panel-header compact">
+              <div>
+                <p class="section-label">CURRENT FRAME</p>
+                <h2>현재 분석값</h2>
+              </div>
+              <span id="currentTimestamp" class="timestamp-chip">0.000s</span>
+            </div>
+
+            <div class="current-gesture">
+              <span>감지 동작</span>
+              <strong id="currentGesture">대기</strong>
+              <small id="gestureIntensity">이벤트 없음</small>
+            </div>
+
+            <dl class="metric-grid">
+              <div><dt>손</dt><dd id="handCount">0</dd></div>
+              <div><dt>손끝</dt><dd id="fingertipCount">0</dd></div>
+            </dl>
+
+            <div class="meter-list">
+              <div class="meter-row">
+                <div><span>움직임</span><output id="movementValue">0%</output></div>
+                <progress id="movementMeter" max="1" value="0"></progress>
+              </div>
+              <div class="meter-row pressure">
+                <div><span>압력 추정</span><output id="pressureValue">0%</output></div>
+                <progress id="pressureMeter" max="1" value="0"></progress>
+              </div>
+              <div class="meter-row spread">
+                <div><span>손가락 펼침</span><output id="spreadValue">0%</output></div>
+                <progress id="spreadMeter" max="1" value="0"></progress>
+              </div>
+            </div>
+
+            <p class="notice">
+              압력은 손 사이 거리와 형태 변화를 이용한 2D 상대 추정치입니다. 실제 트랙패드 압력값이 아닙니다.
+            </p>
+          </section>
+
+          <section class="panel clip-panel">
+            <div class="panel-header compact">
+              <div>
+                <p class="section-label">EXTRACTED AUDIO</p>
+                <h2>추출 사운드</h2>
+              </div>
+              <select id="audioFilter" aria-label="사운드 종류 필터">
+                <option value="all">전체</option>
+              </select>
+            </div>
+            <div id="audioClipList" class="clip-list"></div>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <template id="clipTemplate">
+      <article class="clip-row">
+        <button class="clip-play" type="button" aria-label="사운드 재생">
+          <span aria-hidden="true">▶</span>
+        </button>
+        <div class="clip-details">
+          <strong class="clip-texture"></strong>
+          <span class="clip-meta"></span>
+        </div>
+        <button class="clip-seek" type="button">영상에서 보기</button>
+      </article>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

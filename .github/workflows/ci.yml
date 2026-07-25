@@ -20,7 +20,9 @@ jobs:
         run: swift --version
 
       - name: Validate reference analysis tool
-        run: python3 -m py_compile Tools/reference_video_analysis.py
+        run: |
+          python3 -m py_compile Tools/reference_video_analysis.py Tools/reference_preview_server.py
+          node --check Tools/reference_preview/app.js
 
       - name: Build debug executable
         run: swift build -v

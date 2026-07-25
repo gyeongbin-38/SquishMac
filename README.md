@@ -69,6 +69,17 @@ Choose or create a material profile before analysis. Completed analyses are auto
 
 `Open Camera Slime...` uses the built-in camera and Apple's on-device Vision hand-pose request. Camera frames are not uploaded or saved by SquishMac. The camera pressure value is a visual estimate derived from hand compression and pinch, not physical Force Touch pressure.
 
+To inspect a completed analysis on Windows, start the local browser preview:
+
+```powershell
+python Tools/reference_preview_server.py --dataset AnalysisOutput/1
+```
+
+The preview synchronizes the tracked video with per-frame hand, fingertip,
+movement, relative-pressure, gesture, and extracted-audio data. It can also
+auto-play mapped clips while the tracked video is playing. `AnalysisOutput/`
+remains ignored by Git so private footage and extracted audio are not pushed.
+
 ## Sound Packs
 
 Add `.wav`, `.mp3`, `.m4a`, `.aiff`, or `.aif` files to:
