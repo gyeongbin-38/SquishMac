@@ -10,9 +10,7 @@ struct CameraSlimeView: View {
         VStack(alignment: .leading, spacing: 14) {
             header
             modePicker
-            if controller.mode == .slime {
-                materialProfilePicker
-            }
+            materialProfilePicker
             cameraSurface
             liveMetrics
             controls
@@ -20,11 +18,20 @@ struct CameraSlimeView: View {
         .padding(18)
         .frame(width: 760, height: 740)
         .onAppear {
-            controller.setMaterialProfile(settings.selectedSlimeMaterialProfile)
+            controller.setMaterialProfile(activeMaterialProfile)
             controller.start()
         }
         .onChange(of: settings.selectedSlimeMaterialProfileID) { _ in
+            guard controller.mode == .slime else {
+                return
+            }
             controller.setMaterialProfile(settings.selectedSlimeMaterialProfile)
+        }
+        .onChange(of: settings.selectedWaxMaterialProfileID) { _ in
+            guard controller.mode == .wax else {
+                return
+            }
+            controller.setMaterialProfile(settings.selectedWaxMaterialProfile)
         }
         .onDisappear {
             controller.stop()
@@ -50,7 +57,12 @@ struct CameraSlimeView: View {
             "Material",
             selection: Binding(
                 get: { controller.mode },
-                set: { controller.setMode($0) }
+                set: { newMode in
+                    controller.setMode(newMode)
+                    controller.setMaterialProfile(
+                        settings.selectedMaterialProfile(for: newMode)
+                    )
+                }
             )
         ) {
             ForEach(ReferenceMaterialMode.allCases) { mode in
@@ -60,29 +72,61 @@ struct CameraSlimeView: View {
         .pickerStyle(.segmented)
     }
 
+    private var activeMaterialProfile: SlimeMaterialProfile {
+        settings.selectedMaterialProfile(for: controller.mode)
+    }
+
     private var materialProfilePicker: some View {
         HStack(spacing: 12) {
-            Picker(
-                "Slime",
-                selection: $settings.selectedSlimeMaterialProfileID
-            ) {
-                ForEach(SlimeMaterialProfile.runtimeSlimeProfiles) { profile in
-                    Text(profile.displayName).tag(profile.id)
+            if controller.mode == .slime {
+                Picker(
+                    "Slime",
+                    selection: $settings.selectedSlimeMaterialProfileID
+                ) {
+                    ForEach(SlimeMaterialProfile.runtimeSlimeProfiles) { profile in
+                        Text(profile.displayName).tag(profile.id)
+                    }
                 }
+                .pickerStyle(.menu)
+            } else {
+                Picker(
+                    "Wax",
+                    selection: $settings.selectedWaxMaterialProfileID
+                ) {
+                    ForEach(SlimeMaterialProfile.runtimeWaxProfiles) { profile in
+                        Text(profile.displayName).tag(profile.id)
+                    }
+                }
+                .pickerStyle(.menu)
             }
-            .pickerStyle(.menu)
 
-            let tuning = settings.selectedSlimeMaterialProfile.effectiveCameraTuning
-            Text(
-                String(
-                    format: "Camera %.2fx / stretch %.0f%%",
-                    tuning.response,
-                    tuning.stretchMovementThreshold * 100
+            let tuning = activeMaterialProfile.effectiveCameraTuning
+            if controller.mode == .wax {
+                let waxRules = activeMaterialProfile.effectiveInteractionRules
+                    .effectiveWaxInteraction
+                Text(
+                    String(
+                        format: "Camera %.2fx / crack %.0f%% / crush %.0f%%",
+                        tuning.response,
+                        waxRules.crackPressureThreshold * 100,
+                        waxRules.crushPressureThreshold * 100
+                    )
                 )
-            )
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .monospacedDigit()
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+            } else {
+                Text(
+                    String(
+                        format: "Camera %.2fx / stretch %.0f%%",
+                        tuning.response,
+                        tuning.stretchMovementThreshold * 100
+                    )
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+            }
         }
     }
 

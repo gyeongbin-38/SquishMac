@@ -187,6 +187,18 @@ struct SettingsView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
+            Picker("Default Wax", selection: $settings.selectedWaxMaterialProfileID) {
+                ForEach(SlimeMaterialProfile.runtimeWaxProfiles) { profile in
+                    Text(profile.displayName).tag(profile.id)
+                }
+            }
+            .pickerStyle(.menu)
+
+            Text(settings.selectedWaxMaterialProfile.effectiveInteractionRules.interactionSummary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
             Toggle("Wax crack and crush haptics", isOn: $settings.isHapticFeedbackEnabled)
             Toggle("Protect against system trackpad gestures", isOn: $settings.isSystemGestureGuardEnabled)
 

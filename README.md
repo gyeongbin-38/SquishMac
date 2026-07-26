@@ -11,7 +11,7 @@ SquishMac is a Swift macOS menu bar sound toy built around a Force Touch trackpa
 - Pressure events retain the last active touch set, preventing two-finger input from disappearing between touch updates.
 - Best-effort in-app suppression of scroll, swipe, magnify, rotate, and smart-magnify gestures while the Squish Surface is active.
 - Optional one-shot haptic feedback for wax crack and crush stages.
-- Stateful wax progression so press, crack, and crush do not repeat while a press is held.
+- Stateful wax progression with impulse-gated micro-cracks, so a held press stays quiet while fresh squeeze pulses can fracture the shell again.
 - Pressure-sensitive volume and playback rate, master volume, touch response, and sound density controls.
 - Shuffle-bag sound selection that plays every variation before repeating and avoids consecutive duplicates.
 - Lazy in-memory audio caching for lower response latency.
@@ -22,7 +22,7 @@ SquishMac is a Swift macOS menu bar sound toy built around a Force Touch trackpa
 - Profile-driven interaction rules so each slime can define its own touch style, thresholds, and material-specific sounds.
 - Doctor Putty profile with a fast-stretch failure state and two original snap variations extracted from video 2.
 - Video 3 clear-slime profile with 40 cleaned gesture-aligned sounds, split into knead/press and stretch packs and played at a profile-specific 86% gain.
-- Video 4 pastel clay profile with 18 non-overlapping cleaned sounds, separate knead/press and short-stretch packs, and bar-pung disabled.
+- Video 4 pastel wax-shell profile with 24 cleaned sounds: 18 exposed-core press sounds, five restored shell-crack sounds, and one final crush sound.
 - Profile-specific bar-pung recognition: two-hand wide-sheet to downward-seal motion on camera, and a five-to-six-finger wide-spread to closing-pressure proxy on trackpad.
 - Per-material camera thresholds and trackpad response recommendations instead of sharing one input scale.
 - Live camera slime and wax interaction with on-device two-hand tracking and a virtual material overlay.
@@ -38,6 +38,10 @@ AppKit exposes touch identity and normalized touch position separately from the 
 - touch count, identity, position, movement, and spread from `NSTouch`;
 - normalized pressure and Force Touch stage from `NSEvent`;
 - a stateful gesture model that applies response and sound-density tuning.
+
+The Squish Surface explicitly accepts indirect AppKit touch events and retains
+the most recent touch set during pressure callbacks. This prevents a Force Touch
+update from erasing the two-contact count before the wax engine evaluates it.
 
 This is aggregate interaction pressure, not an independent pressure value for every finger. Real Force Touch hardware testing is required to tune how pressure events line up with six simultaneous touches and two-thumb input.
 
@@ -75,7 +79,7 @@ These files are intended for hardware calibration and later comparison with owne
 
 Choose or create a material profile before analysis. Completed analyses are automatically stored under `Application Support/SquishMac/ReferenceDatasets/<material-profile>/<dataset-id>/analysis.json`, keeping tuning and sound mappings separate for each slime.
 
-`Open Camera Slime...` uses the built-in camera and Apple's on-device Vision hand-pose request. Select a slime profile to apply its camera-specific gesture thresholds and sound mappings. With `Clear Slime (Video 3)`, holding two open hands far enough apart arms bar-pung; moving both hands quickly downward while keeping the sheet broad seals it. Camera frames are not uploaded or saved by SquishMac. The camera pressure value is a visual estimate derived from hand compression and pinch, not physical Force Touch pressure.
+`Open Camera Slime...` uses the built-in camera and Apple's on-device Vision hand-pose request. Select a slime or wax profile to apply its camera-specific gesture thresholds and sound mappings. With `Clear Slime (Video 3)`, holding two open hands far enough apart arms bar-pung; moving both hands quickly downward while keeping the sheet broad seals it. `Pastel Wax Shell Slime (Video 4)` uses two opposing fingertips, convergence speed, pinch, and visible hand compression to infer press, repeated fine-crack, and crush stages. Camera frames are not uploaded or saved by SquishMac. The camera pressure value is a visual estimate, not physical Force Touch pressure.
 
 To inspect a completed analysis on Windows, start the local browser preview:
 
@@ -101,11 +105,12 @@ Sources/SquishMac/Resources/Sounds/wax
 Sources/SquishMac/Resources/Sounds/doctor-putty-failure
 Sources/SquishMac/Resources/Sounds/clear-video-3-knead
 Sources/SquishMac/Resources/Sounds/clear-video-3-stretch
-Sources/SquishMac/Resources/Sounds/pastel-clay-video-4-knead
-Sources/SquishMac/Resources/Sounds/pastel-clay-video-4-stretch
+Sources/SquishMac/Resources/Sounds/pastel-wax-video-4-press
+Sources/SquishMac/Resources/Sounds/pastel-wax-video-4-crack
+Sources/SquishMac/Resources/Sounds/pastel-wax-video-4-crush
 ```
 
-The general sound packs are generated development placeholders. The Doctor Putty failure pack contains two short clips derived from user-provided video 2. The clear-video-3 packs contain 34 knead/press clips and 6 stretch clips. The pastel-clay-video-4 packs contain 12 knead/press clips and 6 short-stretch clips after excluding the opening external-contact risk range and one inaudibly quiet candidate. Reference-derived clips are gesture aligned, screened for voice and external-contact contamination, and conservatively cleaned. These packs are profile-only. Replace placeholders with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
+The general sound packs are generated development placeholders. The Doctor Putty failure pack contains two short clips derived from user-provided video 2. The clear-video-3 packs contain 34 knead/press clips and 6 stretch clips. Video 4 contains 18 exposed-core handling clips plus all six verified opening wax-shell transients: five progressive cracks and one final crush. The restored wax clips use isolated, non-overlapping boundaries and preserve brittle high-frequency detail. Reference-derived clips are gesture aligned, screened for voice and unrelated contact contamination, and conservatively cleaned. These packs are profile-only. Replace placeholders with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
 
 ## Project Layout
 

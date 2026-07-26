@@ -149,17 +149,21 @@ final class ReferenceGestureInferenceEngine {
 
     private let mode: ReferenceMaterialMode
     private let cameraTuning: CameraGestureTuning
+    private let interactionRules: SlimeInteractionRules
     private var previousFrame: HandMotionFrame?
     private var lastTriggerTimes: [ReferenceGestureKind: TimeInterval] = [:]
     private var waxStage: WaxStage = .idle
+    private var previousWaxSignal = 0.0
     private var bubblePreparation: BubblePreparation?
 
     init(
         mode: ReferenceMaterialMode,
-        cameraTuning: CameraGestureTuning = .standard
+        cameraTuning: CameraGestureTuning = .standard,
+        interactionRules: SlimeInteractionRules = .standard
     ) {
         self.mode = mode
         self.cameraTuning = cameraTuning
+        self.interactionRules = interactionRules
     }
 
     var isBarPungPrepared: Bool {
@@ -301,26 +305,79 @@ final class ReferenceGestureInferenceEngine {
     private func processWax(
         _ frame: HandMotionFrame
     ) -> (kind: ReferenceGestureKind, intensity: Double)? {
-        guard frame.handCount >= 1, frame.fingertipCount >= 2 else {
+        let waxRules = interactionRules.effectiveWaxInteraction
+        guard frame.handCount >= 1,
+              frame.fingertipCount >= waxRules.minimumContactCount else {
             if frame.fingertipCount == 0 {
                 waxStage = .idle
+                previousWaxSignal = 0
             }
             return nil
         }
 
-        let pressure = max(
-            frame.pressureEstimate,
-            min(1, frame.movement * 0.45 + frame.pinch * 0.65)
-        )
+        let responsivePressure = (
+            frame.pressureEstimate * cameraTuning.response
+        ).clamped(to: 0.0...1.0)
+        let responsiveMovement = (
+            frame.movement * cameraTuning.response
+        ).clamped(to: 0.0...1.0)
+        let closingSpeed = previousFrame.map {
+            max(0, $0.spread - frame.spread)
+        } ?? 0
+        let deformationSignal = (
+            responsiveMovement * 0.38
+                + frame.pinch * 0.46
+                + min(1, closingSpeed * 2.4) * 0.16
+        ).clamped(to: 0.0...1.0)
+        let waxSignal = max(responsivePressure, deformationSignal)
+        let hasPreviousWaxContacts = (
+            previousFrame?.fingertipCount ?? 0
+        ) >= waxRules.minimumContactCount
+        let previousResponsivePressure = (
+            (previousFrame?.pressureEstimate ?? 0) * cameraTuning.response
+        ).clamped(to: 0.0...1.0)
+        let pressureJump = hasPreviousWaxContacts
+            ? max(
+                waxSignal - previousWaxSignal,
+                responsivePressure - previousResponsivePressure
+            )
+            : 0
+        defer {
+            previousWaxSignal = waxSignal
+        }
+
         let nextStage: WaxStage
-        if pressure >= 0.78 {
+        if waxSignal >= waxRules.crushPressureThreshold
+            || pressureJump >= waxRules.crushPressureJumpThreshold
+            || (
+                closingSpeed >= waxRules.crushClosingThreshold
+                    && responsivePressure >= waxRules.crackPressureThreshold
+            ) {
             nextStage = .crush
-        } else if pressure >= 0.55 {
+        } else if waxSignal >= waxRules.crackPressureThreshold
+            || responsiveMovement >= waxRules.crackMovementThreshold
+            || closingSpeed >= waxRules.crackClosingThreshold {
             nextStage = .crack
-        } else if pressure >= 0.25 {
+        } else if waxSignal >= waxRules.pressPressureThreshold {
             nextStage = .press
         } else {
             return nil
+        }
+
+        if nextStage == .crack, waxStage == .crack {
+            let repeatedCrackImpulse = max(
+                max(pressureJump, closingSpeed),
+                abs(waxSignal - previousWaxSignal)
+            )
+            guard repeatedCrackImpulse >= waxRules.repeatedCrackImpulseThreshold else {
+                return nil
+            }
+            return trigger(
+                .waxCrack,
+                intensity: waxSignal,
+                timestamp: frame.timestamp,
+                cooldown: waxRules.repeatedCrackCooldown / cameraTuning.soundDensity
+            )
         }
 
         guard nextStage.rawValue > waxStage.rawValue else {
@@ -340,7 +397,12 @@ final class ReferenceGestureInferenceEngine {
             kind = .waxCrush
         }
 
-        return trigger(kind, intensity: pressure, timestamp: frame.timestamp, cooldown: 0.12)
+        return trigger(
+            kind,
+            intensity: waxSignal,
+            timestamp: frame.timestamp,
+            cooldown: 0.12 / cameraTuning.soundDensity
+        )
     }
 
     private func trigger(

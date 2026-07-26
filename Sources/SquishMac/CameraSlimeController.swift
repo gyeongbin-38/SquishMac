@@ -103,10 +103,11 @@ final class CameraSlimeController: NSObject, ObservableObject {
         visionQueue.async { [weak self] in
             self?.featureExtractor.reset()
             self?.activeCameraTuning = tuning
-            self?.activeInteractionRules = mode == .slime ? rules : .standard
+            self?.activeInteractionRules = rules
             self?.gestureEngine = ReferenceGestureInferenceEngine(
                 mode: mode,
-                cameraTuning: tuning
+                cameraTuning: tuning,
+                interactionRules: rules
             )
             self?.lastAnalyzedTime = -Double.infinity
         }
@@ -123,10 +124,11 @@ final class CameraSlimeController: NSObject, ObservableObject {
         visionQueue.async { [weak self] in
             self?.featureExtractor.reset()
             self?.activeCameraTuning = tuning
-            self?.activeInteractionRules = mode == .slime ? rules : .standard
+            self?.activeInteractionRules = rules
             self?.gestureEngine = ReferenceGestureInferenceEngine(
                 mode: mode,
-                cameraTuning: tuning
+                cameraTuning: tuning,
+                interactionRules: rules
             )
             self?.lastAnalyzedTime = -Double.infinity
         }

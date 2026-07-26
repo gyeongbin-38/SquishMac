@@ -12,7 +12,7 @@ SquishMac exports UTF-8 JSON with `schema_version: 2`. Property names use snake 
 | `architecture` | Usually `arm64` on supported MacBooks |
 | `started_at`, `ended_at` | Session wall-clock bounds |
 | `tuning` | Response and sound density active at recording start |
-| `material_profile_id` | Selected slime profile, or `null` for non-slime sessions |
+| `material_profile_id` | Selected slime or wax material profile |
 | `samples` | Ordered raw and derived trackpad observations |
 | `events` | Ordered recognized slime and wax gestures |
 

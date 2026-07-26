@@ -68,6 +68,52 @@ final class HandMotionAnalyzerTests: XCTestCase {
         XCTAssertEqual(crush?.kind, .waxCrush)
     }
 
+    func testVideo4WaxCameraAllowsFreshMicroCracksBeforeFinalCrush() {
+        let engine = ReferenceGestureInferenceEngine(
+            mode: .wax,
+            cameraTuning: .pastelWaxVideo4,
+            interactionRules: .pastelWaxVideo4
+        )
+
+        let press = engine.process(motionFrame(
+            timestamp: 0,
+            handCount: 1,
+            fingertipCount: 2,
+            movement: 0.02,
+            spread: 0.50,
+            pressure: 0.20
+        ))
+        let crack = engine.process(motionFrame(
+            timestamp: 0.25,
+            handCount: 1,
+            fingertipCount: 2,
+            movement: 0.08,
+            spread: 0.44,
+            pressure: 0.42
+        ))
+        let repeatedCrack = engine.process(motionFrame(
+            timestamp: 0.50,
+            handCount: 1,
+            fingertipCount: 2,
+            movement: 0.08,
+            spread: 0.40,
+            pressure: 0.54
+        ))
+        let crush = engine.process(motionFrame(
+            timestamp: 0.75,
+            handCount: 1,
+            fingertipCount: 2,
+            movement: 0.10,
+            spread: 0.28,
+            pressure: 0.72
+        ))
+
+        XCTAssertEqual(press?.kind, .waxPress)
+        XCTAssertEqual(crack?.kind, .waxCrack)
+        XCTAssertEqual(repeatedCrack?.kind, .waxCrack)
+        XCTAssertEqual(crush?.kind, .waxCrush)
+    }
+
     func testCameraTuningCanRecognizeVideo3StretchWithoutChangingStandardProfile() {
         let standardEngine = ReferenceGestureInferenceEngine(mode: .slime)
         let video3Engine = ReferenceGestureInferenceEngine(

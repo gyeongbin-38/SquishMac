@@ -73,6 +73,24 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    @Published var selectedWaxMaterialProfileID: String {
+        didSet {
+            let validIDs = Set(SlimeMaterialProfile.runtimeWaxProfiles.map(\.id))
+            guard validIDs.contains(selectedWaxMaterialProfileID) else {
+                selectedWaxMaterialProfileID = SlimeMaterialProfile.defaultWaxProfileID
+                defaults.set(
+                    SlimeMaterialProfile.defaultWaxProfileID,
+                    forKey: Keys.selectedWaxMaterialProfileID
+                )
+                return
+            }
+            defaults.set(
+                selectedWaxMaterialProfileID,
+                forKey: Keys.selectedWaxMaterialProfileID
+            )
+        }
+    }
+
     @Published var trackpadResponse: Double {
         didSet {
             let safeValue = trackpadResponse.clamped(to: Self.trackpadResponseRange)
@@ -151,6 +169,11 @@ final class SettingsStore: ObservableObject {
         self.selectedSlimeMaterialProfileID = SlimeMaterialProfile.runtimeSlimeProfiles.contains {
             $0.id == storedSlimeProfileID
         } ? storedSlimeProfileID : SlimeMaterialProfile.defaultSlimeProfileID
+        let storedWaxProfileID = defaults.string(forKey: Keys.selectedWaxMaterialProfileID)
+            ?? SlimeMaterialProfile.defaultWaxProfileID
+        self.selectedWaxMaterialProfileID = SlimeMaterialProfile.runtimeWaxProfiles.contains {
+            $0.id == storedWaxProfileID
+        } ? storedWaxProfileID : SlimeMaterialProfile.defaultWaxProfileID
         self.trackpadResponse = (defaults.object(forKey: Keys.trackpadResponse) as? Double ?? 1.0)
             .clamped(to: Self.trackpadResponseRange)
         self.trackpadSoundDensity = (defaults.object(forKey: Keys.trackpadSoundDensity) as? Double ?? 1.0)
@@ -180,6 +203,24 @@ final class SettingsStore: ObservableObject {
         SlimeMaterialProfile.runtimeSlimeProfiles.first {
             $0.id == selectedSlimeMaterialProfileID
         } ?? SlimeMaterialProfile.runtimeSlimeProfiles[0]
+    }
+
+    var selectedWaxMaterialProfile: SlimeMaterialProfile {
+        SlimeMaterialProfile.runtimeWaxProfiles.first {
+            $0.id == selectedWaxMaterialProfileID
+        } ?? SlimeMaterialProfile.runtimeWaxProfiles[0]
+    }
+
+    func selectedMaterialProfile(for mode: TrackpadMode) -> SlimeMaterialProfile {
+        mode == .sixFingerSlime
+            ? selectedSlimeMaterialProfile
+            : selectedWaxMaterialProfile
+    }
+
+    func selectedMaterialProfile(for mode: ReferenceMaterialMode) -> SlimeMaterialProfile {
+        mode == .slime
+            ? selectedSlimeMaterialProfile
+            : selectedWaxMaterialProfile
     }
 
     var customSoundDirectoryDisplayName: String {
@@ -250,6 +291,7 @@ private enum Keys {
     static let masterVolume = "settings.masterVolume"
     static let trackpadMode = "settings.trackpadMode"
     static let selectedSlimeMaterialProfileID = "settings.selectedSlimeMaterialProfileID"
+    static let selectedWaxMaterialProfileID = "settings.selectedWaxMaterialProfileID"
     static let trackpadResponse = "settings.trackpadResponse"
     static let trackpadSoundDensity = "settings.trackpadSoundDensity"
     static let selectedSoundPackID = "settings.selectedSoundPackID"

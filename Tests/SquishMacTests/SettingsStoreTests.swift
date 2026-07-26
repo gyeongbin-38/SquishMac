@@ -54,6 +54,7 @@ final class SettingsStoreTests: XCTestCase {
         store.trackpadResponse = 1.4
         store.trackpadSoundDensity = 1.6
         store.selectedSlimeMaterialProfileID = "clear"
+        store.selectedWaxMaterialProfileID = "wax-shell"
         store.isHapticFeedbackEnabled = false
         store.isSystemGestureGuardEnabled = false
 
@@ -63,6 +64,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(restored.trackpadResponse, 1.4, accuracy: 0.0001)
         XCTAssertEqual(restored.trackpadSoundDensity, 1.6, accuracy: 0.0001)
         XCTAssertEqual(restored.selectedSlimeMaterialProfileID, "clear")
+        XCTAssertEqual(restored.selectedWaxMaterialProfileID, "wax-shell")
         XCTAssertFalse(restored.isHapticFeedbackEnabled)
         XCTAssertFalse(restored.isSystemGestureGuardEnabled)
     }
@@ -81,6 +83,19 @@ final class SettingsStoreTests: XCTestCase {
             store.selectedSlimeMaterialProfile.interactionRules,
             SlimeInteractionRules.doctorPutty
         )
+    }
+
+    func testUnknownWaxProfileFallsBackToVideo4PastelWax() {
+        let defaults = makeDefaults()
+        defaults.set("missing-wax", forKey: "settings.selectedWaxMaterialProfileID")
+
+        let store = SettingsStore(defaults: defaults)
+
+        XCTAssertEqual(
+            store.selectedWaxMaterialProfileID,
+            SlimeMaterialProfile.defaultWaxProfileID
+        )
+        XCTAssertEqual(store.selectedWaxMaterialProfile.category, .waxShell)
     }
 
     func testProfileTrackpadTuningIsAppliedAsAUserAdjustableMultiplier() throws {

@@ -52,15 +52,21 @@ final class SoundPackManager {
             isUserSelectable: false
         ),
         SoundPack(
-            id: "pastel-clay-video-4-knead",
-            title: "Pastel Clay 4 Knead",
-            folderName: "pastel-clay-video-4-knead",
+            id: "pastel-wax-video-4-press",
+            title: "Pastel Wax 4 Press",
+            folderName: "pastel-wax-video-4-press",
             isUserSelectable: false
         ),
         SoundPack(
-            id: "pastel-clay-video-4-stretch",
-            title: "Pastel Clay 4 Stretch",
-            folderName: "pastel-clay-video-4-stretch",
+            id: "pastel-wax-video-4-crack",
+            title: "Pastel Wax 4 Crack",
+            folderName: "pastel-wax-video-4-crack",
+            isUserSelectable: false
+        ),
+        SoundPack(
+            id: "pastel-wax-video-4-crush",
+            title: "Pastel Wax 4 Crush",
+            folderName: "pastel-wax-video-4-crush",
             isUserSelectable: false
         )
     ]

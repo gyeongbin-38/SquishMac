@@ -122,28 +122,39 @@ final class ReferenceAnalysisTests: XCTestCase {
         XCTAssertNotNil(profile.effectiveCameraTuning.bubbleGesture)
     }
 
-    func testVideo4PastelClayKeepsSeparateTuningAndDisablesBarPung() throws {
+    func testVideo4PastelWaxRoutesPressureStagesAndDisablesBarPung() throws {
         let profile = try XCTUnwrap(
-            SlimeMaterialProfile.builtIn.first { $0.id == "pastel-clay-video-4" }
+            SlimeMaterialProfile.builtIn.first {
+                $0.id == "pastel-wax-shell-video-4"
+            }
         )
 
-        XCTAssertEqual(profile.category, .butterClay)
-        XCTAssertEqual(profile.effectiveTrackpadTuning.response, 0.90)
-        XCTAssertEqual(profile.effectiveTrackpadTuning.soundDensity, 0.92)
+        XCTAssertEqual(profile.category, .waxShell)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.response, 1.08)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.soundDensity, 1.18)
         XCTAssertEqual(
-            profile.effectiveCameraTuning.stretchMovementThreshold,
-            0.243057,
-            accuracy: 0.000001
+            profile.effectiveInteractionRules.effectiveWaxInteraction
+                .crackPressureThreshold,
+            0.43
         )
         XCTAssertEqual(
-            profile.effectiveInteractionRules.soundPackID(for: .slimeKnead),
-            "pastel-clay-video-4-knead"
+            profile.effectiveInteractionRules.soundPackID(for: .waxPress),
+            "pastel-wax-video-4-press"
         )
         XCTAssertEqual(
-            profile.effectiveInteractionRules.soundPackID(for: .slimeStretch),
-            "pastel-clay-video-4-stretch"
+            profile.effectiveInteractionRules.soundPackID(for: .waxCrack),
+            "pastel-wax-video-4-crack"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .waxCrush),
+            "pastel-wax-video-4-crush"
         )
         XCTAssertNil(profile.effectiveInteractionRules.bubbleGesture)
         XCTAssertNil(profile.effectiveCameraTuning.bubbleGesture)
+        XCTAssertTrue(
+            SlimeMaterialProfile.runtimeWaxProfiles.contains {
+                $0.id == profile.id
+            }
+        )
     }
 }

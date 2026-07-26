@@ -21,16 +21,14 @@ struct TrackpadLabView: View {
                 }
                 .pickerStyle(.segmented)
 
-                if state.mode == .sixFingerSlime {
-                    materialProfilePicker
-                }
+                materialProfilePicker
 
                 TrackpadTouchSurface(
                     state: state,
                     tuning: settings.trackpadTuning(
-                        for: settings.selectedSlimeMaterialProfile
+                        for: activeMaterialProfile
                     ),
-                    interactionRules: settings.selectedSlimeMaterialProfile.effectiveInteractionRules,
+                    interactionRules: activeMaterialProfile.effectiveInteractionRules,
                     onGesture: onGesture
                 )
                 .frame(height: 300)
@@ -62,6 +60,9 @@ struct TrackpadLabView: View {
         .onChange(of: settings.selectedSlimeMaterialProfileID) { _ in
             state.cancelCurrentGesture()
         }
+        .onChange(of: settings.selectedWaxMaterialProfileID) { _ in
+            state.cancelCurrentGesture()
+        }
     }
 
     private var modeBinding: Binding<TrackpadMode> {
@@ -72,6 +73,10 @@ struct TrackpadLabView: View {
                 settings.trackpadMode = newMode
             }
         )
+    }
+
+    private var activeMaterialProfile: SlimeMaterialProfile {
+        settings.selectedMaterialProfile(for: state.mode)
     }
 
     private var header: some View {
@@ -98,20 +103,35 @@ struct TrackpadLabView: View {
 
     private var materialProfilePicker: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Picker("Slime material", selection: $settings.selectedSlimeMaterialProfileID) {
-                ForEach(SlimeMaterialProfile.runtimeSlimeProfiles) { profile in
-                    Text(profile.displayName).tag(profile.id)
+            if state.mode == .sixFingerSlime {
+                Picker(
+                    "Slime material",
+                    selection: $settings.selectedSlimeMaterialProfileID
+                ) {
+                    ForEach(SlimeMaterialProfile.runtimeSlimeProfiles) { profile in
+                        Text(profile.displayName).tag(profile.id)
+                    }
                 }
+                .pickerStyle(.menu)
+            } else {
+                Picker(
+                    "Wax material",
+                    selection: $settings.selectedWaxMaterialProfileID
+                ) {
+                    ForEach(SlimeMaterialProfile.runtimeWaxProfiles) { profile in
+                        Text(profile.displayName).tag(profile.id)
+                    }
+                }
+                .pickerStyle(.menu)
             }
-            .pickerStyle(.menu)
 
-            Text(settings.selectedSlimeMaterialProfile.effectiveInteractionRules.interactionSummary)
+            Text(activeMaterialProfile.effectiveInteractionRules.interactionSummary)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             let tuning = settings.trackpadTuning(
-                for: settings.selectedSlimeMaterialProfile
+                for: activeMaterialProfile
             )
             Text(
                 String(
@@ -233,11 +253,9 @@ struct TrackpadLabView: View {
                     Button("Record") {
                         state.startRecording(
                             tuning: settings.trackpadTuning(
-                                for: settings.selectedSlimeMaterialProfile
+                                for: activeMaterialProfile
                             ),
-                            materialProfileID: state.mode == .sixFingerSlime
-                                ? settings.selectedSlimeMaterialProfileID
-                                : nil
+                            materialProfileID: activeMaterialProfile.id
                         )
                     }
                 }
@@ -346,6 +364,7 @@ private final class TrackpadTouchNSView: NSView {
     }
 
     private func configure() {
+        acceptsTouchEvents = true
         allowedTouchTypes = [.indirect]
         wantsRestingTouches = true
         wantsLayer = true

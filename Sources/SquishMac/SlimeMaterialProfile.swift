@@ -67,7 +67,7 @@ enum SlimeMaterialCategory: String, CaseIterable, Identifiable, Codable {
                 interactionSummary: "Press and fold to emphasize the textured inclusions."
             )
         case .waxShell:
-            return .standard
+            return .waxStandard
         case .clear, .thickGlossy, .jelly, .icee, .other:
             return .standard
         }
@@ -135,14 +135,14 @@ struct CameraGestureTuning: Codable, Equatable, Hashable {
         bubbleGesture: CameraBubbleGestureTuning()
     )
 
-    static let pastelClayVideo4 = CameraGestureTuning(
-        response: 0.910788,
-        soundDensity: 1.123549,
-        minimumFingertipCount: 3,
+    static let pastelWaxVideo4 = CameraGestureTuning(
+        response: 1.08,
+        soundDensity: 1.18,
+        minimumFingertipCount: 2,
         kneadMovementThreshold: 0.097359,
         stretchMovementThreshold: 0.243057,
         stretchSpreadThreshold: 0.399264,
-        pressPressureThreshold: 0.285815,
+        pressPressureThreshold: 0.18,
         bubbleGesture: nil
     )
 
@@ -214,6 +214,102 @@ struct TrackpadBubbleGestureRules: Codable, Equatable, Hashable {
     }
 }
 
+struct WaxInteractionRules: Codable, Equatable, Hashable {
+    static let standard = WaxInteractionRules()
+
+    static let pastelWaxVideo4 = WaxInteractionRules(
+        minimumContactCount: 2,
+        pressPressureThreshold: 0.18,
+        crackPressureThreshold: 0.43,
+        crushPressureThreshold: 0.74,
+        crackMovementThreshold: 0.16,
+        crackClosingThreshold: 0.06,
+        crushClosingThreshold: 0.14,
+        crackPressureJumpThreshold: 0.09,
+        crushPressureJumpThreshold: 0.26,
+        repeatedCrackImpulseThreshold: 0.08,
+        repeatedCrackCooldown: 0.14,
+        pressSoundPackID: "pastel-wax-video-4-press",
+        crackSoundPackID: "pastel-wax-video-4-crack",
+        crushSoundPackID: "pastel-wax-video-4-crush"
+    )
+
+    let minimumContactCount: Int
+    let pressPressureThreshold: Double
+    let crackPressureThreshold: Double
+    let crushPressureThreshold: Double
+    let crackMovementThreshold: Double
+    let crackClosingThreshold: Double
+    let crushClosingThreshold: Double
+    let crackPressureJumpThreshold: Double
+    let crushPressureJumpThreshold: Double
+    let repeatedCrackImpulseThreshold: Double
+    let repeatedCrackCooldown: TimeInterval
+    let pressSoundPackID: String?
+    let crackSoundPackID: String?
+    let crushSoundPackID: String?
+
+    init(
+        minimumContactCount: Int = 2,
+        pressPressureThreshold: Double = 0.30,
+        crackPressureThreshold: Double = 0.55,
+        crushPressureThreshold: Double = 0.78,
+        crackMovementThreshold: Double = 0.28,
+        crackClosingThreshold: Double = 0.10,
+        crushClosingThreshold: Double = 0.20,
+        crackPressureJumpThreshold: Double = 0.12,
+        crushPressureJumpThreshold: Double = 0.22,
+        repeatedCrackImpulseThreshold: Double = 0.10,
+        repeatedCrackCooldown: TimeInterval = 0.16,
+        pressSoundPackID: String? = nil,
+        crackSoundPackID: String? = nil,
+        crushSoundPackID: String? = nil
+    ) {
+        let safePress = pressPressureThreshold.clamped(to: 0.01...0.90)
+        let safeCrack = crackPressureThreshold.clamped(to: safePress...0.95)
+        self.minimumContactCount = max(2, minimumContactCount)
+        self.pressPressureThreshold = safePress
+        self.crackPressureThreshold = safeCrack
+        self.crushPressureThreshold = crushPressureThreshold.clamped(
+            to: safeCrack...1.0
+        )
+        self.crackMovementThreshold = crackMovementThreshold.clamped(to: 0.01...1.0)
+        self.crackClosingThreshold = crackClosingThreshold.clamped(to: 0.01...1.0)
+        self.crushClosingThreshold = max(
+            self.crackClosingThreshold,
+            crushClosingThreshold.clamped(to: 0.01...1.0)
+        )
+        self.crackPressureJumpThreshold = crackPressureJumpThreshold.clamped(
+            to: 0.01...1.0
+        )
+        self.crushPressureJumpThreshold = max(
+            self.crackPressureJumpThreshold,
+            crushPressureJumpThreshold.clamped(to: 0.01...1.0)
+        )
+        self.repeatedCrackImpulseThreshold = repeatedCrackImpulseThreshold.clamped(
+            to: 0.01...1.0
+        )
+        self.repeatedCrackCooldown = max(0.08, repeatedCrackCooldown)
+        self.pressSoundPackID = pressSoundPackID
+        self.crackSoundPackID = crackSoundPackID
+        self.crushSoundPackID = crushSoundPackID
+    }
+
+    func soundPackID(for kind: TrackpadSoundKind) -> String? {
+        switch kind {
+        case .waxPress:
+            return pressSoundPackID
+        case .waxCrack:
+            return crackSoundPackID
+        case .waxCrush:
+            return crushSoundPackID
+        case .slimeKnead, .slimeStretch, .slimeBubble,
+             .slimeStretchFailure, .slimeRelease:
+            return nil
+        }
+    }
+}
+
 struct SlimeInteractionRules: Codable, Equatable, Hashable {
     static let standard = SlimeInteractionRules(
         style: .elastic,
@@ -247,13 +343,21 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         interactionSummary: "Press with three to six fingers, stretch broadly, then close and press to seal a bar-pung."
     )
 
-    static let pastelClayVideo4 = SlimeInteractionRules(
+    static let waxStandard = SlimeInteractionRules(
         style: .densePutty,
-        minimumFingerCount: 3,
+        minimumFingerCount: 2,
         stretchMovementThreshold: 0.18,
-        kneadSoundPackID: "pastel-clay-video-4-knead",
-        stretchSoundPackID: "pastel-clay-video-4-stretch",
-        interactionSummary: "Use small controlled pulls, pinches, folds, and presses. Bar-pung is disabled for this material."
+        waxInteraction: .standard,
+        interactionSummary: "Press inward with two opposing contacts, then increase pressure to crack and crush the wax shell."
+    )
+
+    static let pastelWaxVideo4 = SlimeInteractionRules(
+        style: .densePutty,
+        minimumFingerCount: 2,
+        stretchMovementThreshold: 0.18,
+        waxInteraction: .pastelWaxVideo4,
+        volumeScale: 0.92,
+        interactionSummary: "Use two opposing contacts. A light hold presses the shell, rising pressure makes repeated fine cracks, and a firm inward squeeze crushes it."
     )
 
     let style: SlimeInteractionStyle
@@ -268,6 +372,7 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
     let stretchSoundPackID: String?
     let releaseSoundPackID: String?
     let bubbleGesture: TrackpadBubbleGestureRules?
+    let waxInteraction: WaxInteractionRules?
     let volumeScale: Double?
     let interactionSummary: String
 
@@ -284,6 +389,7 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         stretchSoundPackID: String? = nil,
         releaseSoundPackID: String? = nil,
         bubbleGesture: TrackpadBubbleGestureRules? = nil,
+        waxInteraction: WaxInteractionRules? = nil,
         volumeScale: Double = 1.0,
         interactionSummary: String
     ) {
@@ -306,12 +412,17 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         self.stretchSoundPackID = stretchSoundPackID
         self.releaseSoundPackID = releaseSoundPackID
         self.bubbleGesture = bubbleGesture
+        self.waxInteraction = waxInteraction
         self.volumeScale = volumeScale.clamped(to: 0.1...1.0)
         self.interactionSummary = interactionSummary
     }
 
     var effectiveVolumeScale: Double {
         (volumeScale ?? 1.0).clamped(to: 0.1...1.0)
+    }
+
+    var effectiveWaxInteraction: WaxInteractionRules {
+        waxInteraction ?? .standard
     }
 
     func soundPackID(for kind: TrackpadSoundKind) -> String? {
@@ -327,7 +438,7 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         case .slimeStretchFailure:
             return failureSoundPackID
         case .waxPress, .waxCrack, .waxCrush:
-            return nil
+            return effectiveWaxInteraction.soundPackID(for: kind)
         }
     }
 }
@@ -385,9 +496,14 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
     }
 
     static let defaultSlimeProfileID = "doctor-putty-pink"
+    static let defaultWaxProfileID = "pastel-wax-shell-video-4"
 
     static var runtimeSlimeProfiles: [SlimeMaterialProfile] {
         builtIn.filter { $0.category != .waxShell }
+    }
+
+    static var runtimeWaxProfiles: [SlimeMaterialProfile] {
+        builtIn.filter { $0.category == .waxShell }
     }
 
     static let builtIn: [SlimeMaterialProfile] = [
@@ -413,15 +529,15 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
             interactionRules: .doctorPutty
         ),
         profile(
-            "pastel-clay-video-4",
-            "Pastel Clay Slime (Video 4)",
-            .butterClay,
-            outer: "pastel green, white, and lavender matte folds",
-            core: "dense clay-rich slime with short elastic pulls and soft folds",
-            notes: "Video 4 reference. Product name is not yet confirmed, and bar-pung is disabled.",
-            interactionRules: .pastelClayVideo4,
-            trackpadTuning: TrackpadTuning(response: 0.90, soundDensity: 0.92),
-            cameraTuning: .pastelClayVideo4
+            "pastel-wax-shell-video-4",
+            "Pastel Wax Shell Slime (Video 4)",
+            .waxShell,
+            outer: "pastel green and white brittle wax shell",
+            core: "lavender elastic slime with soft folds and short pulls",
+            notes: "Video 4 reference. The opening sequence is a two-contact wax-shell crush, followed by exposed slime-core handling.",
+            interactionRules: .pastelWaxVideo4,
+            trackpadTuning: TrackpadTuning(response: 1.08, soundDensity: 1.18),
+            cameraTuning: .pastelWaxVideo4
         ),
         profile("butter-clay", "Butter / Clay Slime", .butterClay, core: "soft matte clay slime"),
         profile("cloud", "Cloud Slime", .cloud, core: "fluffy drizzling cloud slime"),

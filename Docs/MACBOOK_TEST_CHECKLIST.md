@@ -45,8 +45,6 @@ Confirm that all tests pass, `SquishMac.app` launches, the icon appears in the m
 - With Video 3 selected, spread five or six fingers beyond `0.60`; confirm `Bar-pung ready` appears.
 - Within 1.25 seconds, reduce spread by at least `0.16` while movement exceeds `0.10` and pressure exceeds `0.30`; confirm one bar-pung event plays.
 - Repeat the closing movement without a new wide preparation; confirm bar-pung does not repeat.
-- Select `Pastel Clay Slime (Video 4)` and confirm knead/press and short-stretch gestures use different source pools.
-- Confirm the Video 4 profile never shows `Bar-pung ready`, even after a wide five- or six-finger spread.
 - Confirm the profile-adjusted values show approximately `0.96x` response and `1.08x` sound density before user multipliers.
 - Hold all fingers still; confirm sound does not repeat continuously without movement or pressure change.
 - Lift only one or two fingers; confirm the release sound does not fire.
@@ -55,11 +53,14 @@ Confirm that all tests pass, `SquishMac.app` launches, the icon appears in the m
 
 ## 5. Two-Thumb Wax Crush
 
+- Select `Pastel Wax Shell Slime (Video 4)` and confirm the profile-adjusted values show approximately `1.08x` response and `1.18x` sound density before user multipliers.
+- Confirm two contacts remain visible in the live finger counter while Force Touch pressure changes.
 - Place two thumbs lightly; confirm a press sound occurs.
-- Increase pressure; confirm a crack occurs once.
-- Continue to a firm press; confirm a crush occurs once.
+- Increase pressure past roughly `0.43`; confirm a restored Video 4 crack plays.
+- Add distinct squeeze pulses without releasing; confirm fresh micro-cracks can play but a motionless hold stays quiet.
+- Continue past roughly `0.74`; confirm the final Video 4 crush plays once.
 - Confirm the optional haptic produces one level change at crack and one stronger response at crush.
-- Hold the firm press; confirm crack and crush do not loop.
+- Hold the firm press without changing pressure or contact distance; confirm crack and crush do not loop.
 - Fully release and press again; confirm a new press/crack/crush cycle is allowed.
 - Test slow pressure ramps and quick pressure jumps separately.
 
@@ -98,8 +99,8 @@ Do not repeatedly hit the display, hinge, or enclosure. The impact feature shoul
 - With Video 3 selected, show two open hands with at least eight tracked fingertips and broad spread; confirm `Bar-pung ready` appears.
 - Within 1.4 seconds, move both hands downward quickly while keeping them broadly separated; confirm one camera bar-pung event plays.
 - Repeat with one hand or with mostly inward movement and confirm camera bar-pung does not trigger.
-- Select `Pastel Clay Slime (Video 4)` and confirm small folds and short pulls trigger its own packs without arming bar-pung.
-- Test Wax with two visible fingertips and confirm press, crack, and crush stages reset after release.
+- Switch to Wax, select `Pastel Wax Shell Slime (Video 4)`, and confirm the readout shows crack near `43%` and crush near `74%`.
+- Bring two visible fingertips together while increasing hand compression; confirm press, repeated fine-crack, and crush stages use the Video 4 packs and reset after release.
 - Cover the camera and confirm tracking clears without repeated sounds or a crash.
 - Deny camera permission once and confirm the window gives a recoverable Privacy & Security message.
 

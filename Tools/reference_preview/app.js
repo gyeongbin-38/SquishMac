@@ -12,6 +12,8 @@ const labels = {
   slime_release: "슬라임 놓기",
   brittle_crack: "단단한 깨짐",
   clay_snap: "클레이 스냅",
+  wax_fine_crack: "왁스 미세 균열",
+  wax_shell_crush: "왁스 셸 파손",
   suction_pop: "흡착 팝",
   wet_friction: "젖은 마찰",
   micro_crackle: "미세 크랙",
@@ -166,10 +168,24 @@ function populateSummary() {
   const cameraTuning = dataset.input_tuning?.camera;
   const trackpadTuning = dataset.input_tuning?.trackpad;
   if (cameraTuning && trackpadTuning) {
-    elements.materialDescription.textContent += ` / ${[
-      `Camera stretch ${Math.round(cameraTuning.stretch_movement_threshold * 100)}%`,
-      `Trackpad stretch ${Math.round(trackpadTuning.stretch_movement_threshold * 100)}%`,
-    ].join(" / ")}`;
+    const isWax = material.category === "wax_shell";
+    const tuningDetails = isWax
+      ? [
+        ["Camera crack", cameraTuning.crack_pressure_threshold],
+        ["Camera crush", cameraTuning.crush_pressure_threshold],
+        ["Trackpad crack", trackpadTuning.crack_pressure_threshold],
+        ["Trackpad crush", trackpadTuning.crush_pressure_threshold],
+      ]
+      : [
+        ["Camera stretch", cameraTuning.stretch_movement_threshold],
+        ["Trackpad stretch", trackpadTuning.stretch_movement_threshold],
+      ];
+    const availableDetails = tuningDetails
+      .filter(([, value]) => Number.isFinite(value))
+      .map(([label, value]) => `${label} ${Math.round(value * 100)}%`);
+    if (availableDetails.length > 0) {
+      elements.materialDescription.textContent += ` / ${availableDetails.join(" / ")}`;
+    }
   }
   elements.durationStat.textContent = formatClock(state.duration);
   elements.coverageStat.textContent = formatPercent(summary.hand_detection_coverage || 0);

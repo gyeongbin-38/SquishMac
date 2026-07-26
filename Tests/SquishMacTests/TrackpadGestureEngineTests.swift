@@ -276,40 +276,63 @@ final class TrackpadGestureEngineTests: XCTestCase {
         XCTAssertEqual(stretch.trigger?.soundPackIDOverride, "clear-video-3-stretch")
     }
 
-    func testVideo4PastelClayRoutesSoundsWithoutBarPung() {
-        let kneadEngine = TrackpadGestureEngine()
-        let stretchEngine = TrackpadGestureEngine()
+    func testVideo4PastelWaxRoutesPressCrackRepeatAndCrushSounds() {
+        let engine = TrackpadGestureEngine()
 
-        let knead = kneadEngine.evaluate(
-            mode: .sixFingerSlime,
-            fingerCount: 5,
-            pressure: 0.58,
+        let press = engine.evaluate(
+            mode: .twoThumbWaxCrush,
+            fingerCount: 2,
+            pressure: 0.24,
+            movement: 0.02,
+            spread: 0.50,
+            timestamp: 1,
+            interactionRules: .pastelWaxVideo4
+        )
+        let crack = engine.evaluate(
+            mode: .twoThumbWaxCrush,
+            fingerCount: 2,
+            pressure: 0.48,
+            movement: 0.10,
+            spread: 0.43,
+            timestamp: 1.3,
+            interactionRules: .pastelWaxVideo4
+        )
+        let repeatedCrack = engine.evaluate(
+            mode: .twoThumbWaxCrush,
+            fingerCount: 2,
+            pressure: 0.60,
             movement: 0.08,
-            spread: 0.45,
-            timestamp: 1,
-            interactionRules: .pastelClayVideo4
+            spread: 0.39,
+            timestamp: 1.6,
+            interactionRules: .pastelWaxVideo4
         )
-        let stretch = stretchEngine.evaluate(
-            mode: .sixFingerSlime,
-            fingerCount: 5,
-            pressure: 0.42,
-            movement: 0.24,
-            spread: 0.70,
-            timestamp: 1,
-            interactionRules: .pastelClayVideo4
+        let crush = engine.evaluate(
+            mode: .twoThumbWaxCrush,
+            fingerCount: 2,
+            pressure: 0.82,
+            movement: 0.12,
+            spread: 0.25,
+            timestamp: 1.9,
+            interactionRules: .pastelWaxVideo4
         )
 
-        XCTAssertEqual(knead.trigger?.kind, .slimeKnead)
+        XCTAssertEqual(press.trigger?.kind, .waxPress)
         XCTAssertEqual(
-            knead.trigger?.soundPackIDOverride,
-            "pastel-clay-video-4-knead"
+            press.trigger?.soundPackIDOverride,
+            "pastel-wax-video-4-press"
         )
-        XCTAssertEqual(stretch.trigger?.kind, .slimeStretch)
+        XCTAssertEqual(crack.trigger?.kind, .waxCrack)
         XCTAssertEqual(
-            stretch.trigger?.soundPackIDOverride,
-            "pastel-clay-video-4-stretch"
+            crack.trigger?.soundPackIDOverride,
+            "pastel-wax-video-4-crack"
         )
-        XCTAssertNil(SlimeInteractionRules.pastelClayVideo4.bubbleGesture)
+        XCTAssertEqual(repeatedCrack.trigger?.kind, .waxCrack)
+        XCTAssertEqual(crush.trigger?.kind, .waxCrush)
+        XCTAssertEqual(
+            crush.trigger?.soundPackIDOverride,
+            "pastel-wax-video-4-crush"
+        )
+        XCTAssertNil(SlimeInteractionRules.pastelWaxVideo4.bubbleGesture)
     }
 
     func testVideo3BarPungRequiresWidePreparationThenClosingPress() {

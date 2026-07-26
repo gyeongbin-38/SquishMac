@@ -115,6 +115,7 @@ final class TrackpadGestureEngine {
     private var previousFingerCount = 0
     private var previousPressure = 0.0
     private var previousSpread = 0.0
+    private var previousWaxSignal = 0.0
     private var waxStage: WaxStage = .idle
     private var slimeStretchFailureLatched = false
     private var slimeBubbleArmTime: TimeInterval?
@@ -129,6 +130,7 @@ final class TrackpadGestureEngine {
         previousFingerCount = 0
         previousPressure = 0
         previousSpread = 0
+        previousWaxSignal = 0
         waxStage = .idle
         slimeStretchFailureLatched = false
         resetSlimeBubble()
@@ -168,7 +170,8 @@ final class TrackpadGestureEngine {
                 movement: responsiveMovement,
                 spread: clampedSpread,
                 timestamp: timestamp,
-                soundDensity: tuning.soundDensity
+                soundDensity: tuning.soundDensity,
+                interactionRules: interactionRules
             )
         }
     }
@@ -327,34 +330,81 @@ final class TrackpadGestureEngine {
         movement: Double,
         spread: Double,
         timestamp: TimeInterval,
-        soundDensity: Double
+        soundDensity: Double,
+        interactionRules: SlimeInteractionRules
     ) -> TrackpadGestureEvaluation {
-        let fingerMatch = fingerCount == 2 ? 1.0 : 0.0
-        let closingSpeed = previousFingerCount == 2 ? max(0, previousSpread - spread) : 0
-        let crushShape = max(pressure, movement * 0.64 + closingSpeed * 0.22 + (1.0 - spread) * 0.14)
-        let liveIntensity = (fingerMatch * 0.22 + crushShape * 0.78).clamped(to: 0.0...1.0)
+        let waxRules = interactionRules.effectiveWaxInteraction
+        let hasRequiredContacts = fingerCount == waxRules.minimumContactCount
+        let closingSpeed = previousFingerCount == waxRules.minimumContactCount
+            ? max(0, previousSpread - spread)
+            : 0
+        let deformationSignal = (
+            movement * 0.52
+                + min(1, closingSpeed * 2.4) * 0.34
+                + (1.0 - spread) * 0.14
+        ).clamped(to: 0.0...1.0)
+        let waxSignal = max(pressure, deformationSignal)
+        let contactFactor = hasRequiredContacts ? 1.0 : 0.0
+        let liveIntensity = (
+            contactFactor * 0.18 + waxSignal * 0.82
+        ).clamped(to: 0.0...1.0)
+        let pressureJump = previousFingerCount == waxRules.minimumContactCount
+            ? max(pressure - previousPressure, waxSignal - previousWaxSignal)
+            : 0
 
         defer {
             previousFingerCount = fingerCount
             previousPressure = pressure
             previousSpread = spread
+            previousWaxSignal = waxSignal
         }
 
-        guard fingerCount == 2, liveIntensity >= 0.48 else {
-            if fingerCount == 0 {
+        guard hasRequiredContacts else {
+            if fingerCount == 0, pressure <= 0.05 {
                 waxStage = .idle
             }
             return TrackpadGestureEvaluation(liveIntensity: liveIntensity, trigger: nil)
         }
 
-        let pressureJump = previousFingerCount == 2 ? pressure - previousPressure : 0
         let nextStage: WaxStage
-        if pressure >= 0.78 || pressureJump >= 0.22 || (closingSpeed >= 0.20 && pressure >= 0.55) {
+        if waxSignal >= waxRules.crushPressureThreshold
+            || pressureJump >= waxRules.crushPressureJumpThreshold
+            || (
+                closingSpeed >= waxRules.crushClosingThreshold
+                    && pressure >= waxRules.crackPressureThreshold
+            ) {
             nextStage = .crush
-        } else if pressure >= 0.58 || movement >= 0.28 || closingSpeed >= 0.10 {
+        } else if waxSignal >= waxRules.crackPressureThreshold
+            || movement >= waxRules.crackMovementThreshold
+            || closingSpeed >= waxRules.crackClosingThreshold {
             nextStage = .crack
-        } else {
+        } else if waxSignal >= waxRules.pressPressureThreshold {
             nextStage = .press
+        } else {
+            return TrackpadGestureEvaluation(liveIntensity: liveIntensity, trigger: nil)
+        }
+
+        if nextStage == .crack, waxStage == .crack {
+            let repeatedCrackImpulse = max(
+                max(pressureJump, closingSpeed),
+                abs(waxSignal - previousWaxSignal)
+            )
+            guard repeatedCrackImpulse >= waxRules.repeatedCrackImpulseThreshold else {
+                return TrackpadGestureEvaluation(liveIntensity: liveIntensity, trigger: nil)
+            }
+            return triggerIfReady(
+                kind: .waxCrack,
+                intensity: liveIntensity,
+                label: "Wax micro-crack",
+                liveIntensity: liveIntensity,
+                timestamp: timestamp,
+                interval: densityAdjusted(
+                    waxRules.repeatedCrackCooldown,
+                    soundDensity: soundDensity
+                ),
+                soundPackIDOverride: waxRules.crackSoundPackID,
+                volumeScale: interactionRules.effectiveVolumeScale
+            )
         }
 
         guard nextStage.rawValue > waxStage.rawValue else {
@@ -384,7 +434,9 @@ final class TrackpadGestureEngine {
             label: kind.title,
             liveIntensity: liveIntensity,
             timestamp: timestamp,
-            interval: densityAdjusted(baseInterval, soundDensity: soundDensity)
+            interval: densityAdjusted(baseInterval, soundDensity: soundDensity),
+            soundPackIDOverride: waxRules.soundPackID(for: kind),
+            volumeScale: interactionRules.effectiveVolumeScale
         )
     }
 

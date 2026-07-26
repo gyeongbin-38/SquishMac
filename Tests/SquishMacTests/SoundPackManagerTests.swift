@@ -64,27 +64,33 @@ final class SoundPackManagerTests: XCTestCase {
         )
     }
 
-    func testVideo4PastelClayPacksAreCleanedAndProfileOnly() {
+    func testVideo4PastelWaxPacksIncludeRestoredBreaksAndAreProfileOnly() {
         let manager = SoundPackManager()
 
         XCTAssertEqual(
             manager.soundCount(
-                for: "pastel-clay-video-4-knead",
+                for: "pastel-wax-video-4-press",
                 customDirectoryPath: nil
             ),
-            12
+            18
         )
         XCTAssertEqual(
             manager.soundCount(
-                for: "pastel-clay-video-4-stretch",
+                for: "pastel-wax-video-4-crack",
                 customDirectoryPath: nil
             ),
-            6
+            5
+        )
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "pastel-wax-video-4-crush",
+                customDirectoryPath: nil
+            ),
+            1
         )
         XCTAssertFalse(
             manager.availablePacks().contains {
-                $0.id == "pastel-clay-video-4-knead"
-                    || $0.id == "pastel-clay-video-4-stretch"
+                $0.id.hasPrefix("pastel-wax-video-4-")
             }
         )
     }
