@@ -32,7 +32,7 @@ final class SoundPackManagerTests: XCTestCase {
                 for: "doctor-putty-failure",
                 customDirectoryPath: nil
             ),
-            3
+            2
         )
         XCTAssertFalse(
             manager.availablePacks().contains { $0.id == "doctor-putty-failure" }

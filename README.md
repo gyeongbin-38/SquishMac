@@ -20,7 +20,7 @@ SquishMac is a Swift macOS menu bar sound toy built around a Force Touch trackpa
 - Local reference-video analysis with Vision fingertip tracking, audio-onset detection, gesture/audio alignment, and learned tuning suggestions.
 - Separate material profiles and dataset directories for clear, glossy, butter, cloud, jelly, icee, floam, crunchy, and wax-shell slime.
 - Profile-driven interaction rules so each slime can define its own touch style, thresholds, and material-specific sounds.
-- Doctor Putty profile with a fast-stretch failure state and three original snap variations extracted from video 2.
+- Doctor Putty profile with a fast-stretch failure state and two original snap variations extracted from video 2.
 - Live camera slime and wax interaction with on-device two-hand tracking and a virtual material overlay.
 - Optional MacBook impact detection, sensitivity, cooldown, custom sound folders, launch at login, and a daily play counter.
 - Generated placeholder WAV files for Bubble, Slime, Squishy, Pop, and Wax packs.
@@ -95,7 +95,7 @@ Sources/SquishMac/Resources/Sounds/wax
 Sources/SquishMac/Resources/Sounds/doctor-putty-failure
 ```
 
-The general sound packs are generated development placeholders. The Doctor Putty failure pack contains three short clips derived from the user-provided video 2 and is only selected by that material profile. Replace placeholders with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
+The general sound packs are generated development placeholders. The Doctor Putty failure pack contains two short clips derived from the user-provided video 2 and is only selected by that material profile. Replace placeholders with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
 
 ## Project Layout
 
