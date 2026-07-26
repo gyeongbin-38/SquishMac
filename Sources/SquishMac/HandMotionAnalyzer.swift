@@ -186,16 +186,18 @@ final class ReferenceGestureInferenceEngine {
             return nil
         }
 
-        let movement = (
-            frame.movement * cameraTuning.response
+        let movement = frame.movement.clamped(to: 0.0...1.0)
+        let pressure = frame.pressureEstimate.clamped(to: 0.0...1.0)
+        let responsiveMovement = (
+            movement * cameraTuning.response
         ).clamped(to: 0.0...1.0)
-        let pressure = (
-            frame.pressureEstimate * cameraTuning.response
+        let responsivePressure = (
+            pressure * cameraTuning.response
         ).clamped(to: 0.0...1.0)
         let intensity = (
             Double(min(frame.fingertipCount, 10)) / 10.0 * 0.25
-            + movement * 0.35
-            + pressure * 0.30
+            + responsiveMovement * 0.35
+            + responsivePressure * 0.30
             + frame.spread * 0.10
         ).clamped(to: 0.0...1.0)
 
