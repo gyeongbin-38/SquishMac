@@ -135,6 +135,17 @@ struct CameraGestureTuning: Codable, Equatable, Hashable {
         bubbleGesture: CameraBubbleGestureTuning()
     )
 
+    static let pastelClayVideo4 = CameraGestureTuning(
+        response: 0.910788,
+        soundDensity: 1.123549,
+        minimumFingertipCount: 3,
+        kneadMovementThreshold: 0.097359,
+        stretchMovementThreshold: 0.243057,
+        stretchSpreadThreshold: 0.399264,
+        pressPressureThreshold: 0.285815,
+        bubbleGesture: nil
+    )
+
     let response: Double
     let soundDensity: Double
     let minimumFingertipCount: Int
@@ -234,6 +245,15 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         ),
         volumeScale: 0.86,
         interactionSummary: "Press with three to six fingers, stretch broadly, then close and press to seal a bar-pung."
+    )
+
+    static let pastelClayVideo4 = SlimeInteractionRules(
+        style: .densePutty,
+        minimumFingerCount: 3,
+        stretchMovementThreshold: 0.18,
+        kneadSoundPackID: "pastel-clay-video-4-knead",
+        stretchSoundPackID: "pastel-clay-video-4-stretch",
+        interactionSummary: "Use small controlled pulls, pinches, folds, and presses. Bar-pung is disabled for this material."
     )
 
     let style: SlimeInteractionStyle
@@ -391,6 +411,17 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
             core: "dense stretchy low-gloss putty",
             notes: "Video 2 reference. Fast stretching causes a material-specific failure snap.",
             interactionRules: .doctorPutty
+        ),
+        profile(
+            "pastel-clay-video-4",
+            "Pastel Clay Slime (Video 4)",
+            .butterClay,
+            outer: "pastel green, white, and lavender matte folds",
+            core: "dense clay-rich slime with short elastic pulls and soft folds",
+            notes: "Video 4 reference. Product name is not yet confirmed, and bar-pung is disabled.",
+            interactionRules: .pastelClayVideo4,
+            trackpadTuning: TrackpadTuning(response: 0.90, soundDensity: 0.92),
+            cameraTuning: .pastelClayVideo4
         ),
         profile("butter-clay", "Butter / Clay Slime", .butterClay, core: "soft matte clay slime"),
         profile("cloud", "Cloud Slime", .cloud, core: "fluffy drizzling cloud slime"),

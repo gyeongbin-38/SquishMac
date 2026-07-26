@@ -64,6 +64,31 @@ final class SoundPackManagerTests: XCTestCase {
         )
     }
 
+    func testVideo4PastelClayPacksAreCleanedAndProfileOnly() {
+        let manager = SoundPackManager()
+
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "pastel-clay-video-4-knead",
+                customDirectoryPath: nil
+            ),
+            12
+        )
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "pastel-clay-video-4-stretch",
+                customDirectoryPath: nil
+            ),
+            6
+        )
+        XCTAssertFalse(
+            manager.availablePacks().contains {
+                $0.id == "pastel-clay-video-4-knead"
+                    || $0.id == "pastel-clay-video-4-stretch"
+            }
+        )
+    }
+
     func testCustomFolderSearchesRecursivelyForSupportedAudioFiles() throws {
         let manager = SoundPackManager()
         let root = FileManager.default.temporaryDirectory

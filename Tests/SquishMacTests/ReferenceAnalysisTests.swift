@@ -121,4 +121,29 @@ final class ReferenceAnalysisTests: XCTestCase {
         XCTAssertNotNil(profile.effectiveInteractionRules.bubbleGesture)
         XCTAssertNotNil(profile.effectiveCameraTuning.bubbleGesture)
     }
+
+    func testVideo4PastelClayKeepsSeparateTuningAndDisablesBarPung() throws {
+        let profile = try XCTUnwrap(
+            SlimeMaterialProfile.builtIn.first { $0.id == "pastel-clay-video-4" }
+        )
+
+        XCTAssertEqual(profile.category, .butterClay)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.response, 0.90)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.soundDensity, 0.92)
+        XCTAssertEqual(
+            profile.effectiveCameraTuning.stretchMovementThreshold,
+            0.243057,
+            accuracy: 0.000001
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeKnead),
+            "pastel-clay-video-4-knead"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeStretch),
+            "pastel-clay-video-4-stretch"
+        )
+        XCTAssertNil(profile.effectiveInteractionRules.bubbleGesture)
+        XCTAssertNil(profile.effectiveCameraTuning.bubbleGesture)
+    }
 }

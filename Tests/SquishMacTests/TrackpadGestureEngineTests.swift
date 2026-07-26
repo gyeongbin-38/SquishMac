@@ -276,6 +276,42 @@ final class TrackpadGestureEngineTests: XCTestCase {
         XCTAssertEqual(stretch.trigger?.soundPackIDOverride, "clear-video-3-stretch")
     }
 
+    func testVideo4PastelClayRoutesSoundsWithoutBarPung() {
+        let kneadEngine = TrackpadGestureEngine()
+        let stretchEngine = TrackpadGestureEngine()
+
+        let knead = kneadEngine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 5,
+            pressure: 0.58,
+            movement: 0.08,
+            spread: 0.45,
+            timestamp: 1,
+            interactionRules: .pastelClayVideo4
+        )
+        let stretch = stretchEngine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 5,
+            pressure: 0.42,
+            movement: 0.24,
+            spread: 0.70,
+            timestamp: 1,
+            interactionRules: .pastelClayVideo4
+        )
+
+        XCTAssertEqual(knead.trigger?.kind, .slimeKnead)
+        XCTAssertEqual(
+            knead.trigger?.soundPackIDOverride,
+            "pastel-clay-video-4-knead"
+        )
+        XCTAssertEqual(stretch.trigger?.kind, .slimeStretch)
+        XCTAssertEqual(
+            stretch.trigger?.soundPackIDOverride,
+            "pastel-clay-video-4-stretch"
+        )
+        XCTAssertNil(SlimeInteractionRules.pastelClayVideo4.bubbleGesture)
+    }
+
     func testVideo3BarPungRequiresWidePreparationThenClosingPress() {
         let engine = TrackpadGestureEngine()
 

@@ -72,6 +72,12 @@ slime gesture, records a voice-likelihood score, writes rejected candidates to
 clips. This reduces background and speech leakage without pretending that a
 heuristic filter can replace listening review.
 
+For recordings with known contamination, pass `--audio-exclusions` with a JSON
+array of `{ "start", "end", "reason" }` ranges. `--audio-highpass-hz` and
+`--audio-lowpass-hz` adjust material-specific cleanup, while
+`--isolate-audio-clips` prevents neighboring onset clips from sharing source
+audio. These options are recorded in `dataset.json`.
+
 ## Recording Recommendations
 
 - Use a fixed camera, stable lighting, and a background that contrasts with the hands.

@@ -22,6 +22,7 @@ SquishMac is a Swift macOS menu bar sound toy built around a Force Touch trackpa
 - Profile-driven interaction rules so each slime can define its own touch style, thresholds, and material-specific sounds.
 - Doctor Putty profile with a fast-stretch failure state and two original snap variations extracted from video 2.
 - Video 3 clear-slime profile with 40 cleaned gesture-aligned sounds, split into knead/press and stretch packs and played at a profile-specific 86% gain.
+- Video 4 pastel clay profile with 18 non-overlapping cleaned sounds, separate knead/press and short-stretch packs, and bar-pung disabled.
 - Profile-specific bar-pung recognition: two-hand wide-sheet to downward-seal motion on camera, and a five-to-six-finger wide-spread to closing-pressure proxy on trackpad.
 - Per-material camera thresholds and trackpad response recommendations instead of sharing one input scale.
 - Live camera slime and wax interaction with on-device two-hand tracking and a virtual material overlay.
@@ -100,9 +101,11 @@ Sources/SquishMac/Resources/Sounds/wax
 Sources/SquishMac/Resources/Sounds/doctor-putty-failure
 Sources/SquishMac/Resources/Sounds/clear-video-3-knead
 Sources/SquishMac/Resources/Sounds/clear-video-3-stretch
+Sources/SquishMac/Resources/Sounds/pastel-clay-video-4-knead
+Sources/SquishMac/Resources/Sounds/pastel-clay-video-4-stretch
 ```
 
-The general sound packs are generated development placeholders. The Doctor Putty failure pack contains two short clips derived from user-provided video 2. The clear-video-3 packs contain 34 knead/press clips and 6 stretch clips selected by hand-motion alignment, screened for voice-like audio, and conservatively cleaned. These packs are profile-only. Replace placeholders with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
+The general sound packs are generated development placeholders. The Doctor Putty failure pack contains two short clips derived from user-provided video 2. The clear-video-3 packs contain 34 knead/press clips and 6 stretch clips. The pastel-clay-video-4 packs contain 12 knead/press clips and 6 short-stretch clips after excluding the opening external-contact risk range and one inaudibly quiet candidate. Reference-derived clips are gesture aligned, screened for voice and external-contact contamination, and conservatively cleaned. These packs are profile-only. Replace placeholders with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
 
 ## Project Layout
 

@@ -828,9 +828,11 @@ def estimate_voice_likelihood(
 
 def select_slime_only_audio(
     events: list[dict[str, Any]],
+    manual_exclusions: list[dict[str, Any]] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     accepted: list[dict[str, Any]] = []
     rejected: list[dict[str, Any]] = []
+    exclusions = manual_exclusions or []
 
     for event in events:
         is_slime_gesture = str(event.get("gesture_kind") or "").startswith("slime_")
@@ -847,8 +849,19 @@ def select_slime_only_audio(
         )
         event["slime_likelihood"] = round(slime_likelihood, 6)
 
+        exclusion = next(
+            (
+                item
+                for item in exclusions
+                if item["start"] <= event["timestamp"] <= item["end"]
+            ),
+            None,
+        )
         rejection_reason: str | None = None
-        if not is_slime_gesture:
+        if exclusion is not None:
+            rejection_reason = "manual_audio_exclusion"
+            event["exclusion_reason"] = exclusion["reason"]
+        elif not is_slime_gesture:
             rejection_reason = "not_aligned_with_slime_gesture"
         elif voice_likelihood >= 0.72:
             rejection_reason = "possible_voice"
@@ -869,6 +882,56 @@ def select_slime_only_audio(
     for index, event in enumerate(rejected):
         event["id"] = index
     return accepted, rejected
+
+
+def load_audio_exclusions(path: Path | None) -> list[dict[str, Any]]:
+    if path is None:
+        return []
+    if not path.is_file():
+        raise FileNotFoundError(path)
+
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, list):
+        raise ValueError("--audio-exclusions must contain a JSON array")
+
+    exclusions: list[dict[str, Any]] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, dict):
+            raise ValueError(f"Audio exclusion {index} must be an object")
+        start = float(item.get("start", -1))
+        end = float(item.get("end", -1))
+        reason = str(item.get("reason") or "").strip()
+        if start < 0 or end <= start or not reason:
+            raise ValueError(
+                f"Audio exclusion {index} needs start >= 0, end > start, and reason"
+            )
+        exclusions.append(
+            {
+                "start": round(start, 6),
+                "end": round(end, 6),
+                "reason": reason,
+            }
+        )
+    return exclusions
+
+
+def isolate_audio_clip_boundaries(events: list[dict[str, Any]]) -> None:
+    for index, event in enumerate(events):
+        timestamp = float(event["timestamp"])
+        start = max(float(event["clip_start"]), timestamp - 0.055)
+        end = min(float(event["clip_end"]), timestamp + 0.30)
+        if index > 0:
+            previous_timestamp = float(events[index - 1]["timestamp"])
+            start = max(start, (previous_timestamp + timestamp) / 2 + 0.008)
+        if index + 1 < len(events):
+            next_timestamp = float(events[index + 1]["timestamp"])
+            end = min(end, (timestamp + next_timestamp) / 2 - 0.008)
+
+        if end - start < 0.09:
+            start = max(0.0, timestamp - 0.035)
+            end = timestamp + 0.065
+        event["clip_start"] = round(start, 6)
+        event["clip_end"] = round(end, 6)
 
 
 def classify_audio_texture(
@@ -1103,6 +1166,8 @@ def export_audio_clips(
     events: list[dict[str, Any]],
     output_root: Path,
     clean_slime_audio: bool = False,
+    highpass_hz: float = 70.0,
+    lowpass_hz: float = 16000.0,
 ) -> None:
     if output_root.exists():
         shutil.rmtree(output_root)
@@ -1119,7 +1184,12 @@ def export_audio_clips(
         end = int(event["clip_end"] * sample_rate)
         clip = np.array(samples[start:end], dtype=np.float64, copy=True)
         if clean_slime_audio:
-            clip = clean_slime_clip(clip, sample_rate)
+            clip = clean_slime_clip(
+                clip,
+                sample_rate,
+                highpass_hz=highpass_hz,
+                lowpass_hz=lowpass_hz,
+            )
         fade_size = min(int(sample_rate * 0.006), len(clip) // 2)
         if fade_size > 0:
             fade = np.linspace(0.0, 1.0, fade_size)
@@ -1132,14 +1202,26 @@ def export_audio_clips(
 def clean_slime_clip(
     clip: np.ndarray,
     sample_rate: int,
+    highpass_hz: float = 70.0,
+    lowpass_hz: float = 16000.0,
 ) -> np.ndarray:
     if len(clip) < 32:
         return clip
 
     clip = np.asarray(clip, dtype=np.float64)
     clip = clip - float(np.mean(clip))
-    highpass = butter(2, 70, btype="highpass", fs=sample_rate, output="sos")
-    lowpass_frequency = min(16000, sample_rate * 0.45)
+    highpass_frequency = min(max(highpass_hz, 20.0), sample_rate * 0.40)
+    highpass = butter(
+        2,
+        highpass_frequency,
+        btype="highpass",
+        fs=sample_rate,
+        output="sos",
+    )
+    lowpass_frequency = min(
+        max(lowpass_hz, highpass_frequency + 100.0),
+        sample_rate * 0.45,
+    )
     lowpass = butter(
         2,
         lowpass_frequency,
@@ -1304,6 +1386,31 @@ def parse_arguments() -> argparse.Namespace:
             "with high voice likelihood."
         ),
     )
+    parser.add_argument(
+        "--audio-exclusions",
+        type=Path,
+        help=(
+            "JSON array of timestamp ranges to reject before slime-only audio "
+            "selection. Each item needs start, end, and reason."
+        ),
+    )
+    parser.add_argument(
+        "--audio-highpass-hz",
+        type=float,
+        default=70.0,
+        help="High-pass frequency used when cleaning slime clips (default: 70).",
+    )
+    parser.add_argument(
+        "--audio-lowpass-hz",
+        type=float,
+        default=16000.0,
+        help="Low-pass frequency used when cleaning slime clips (default: 16000).",
+    )
+    parser.add_argument(
+        "--isolate-audio-clips",
+        action="store_true",
+        help="Shorten neighboring event clips so their source ranges do not overlap.",
+    )
     parser.add_argument("--model", type=Path)
     parser.add_argument("--ffmpeg")
     return parser.parse_args()
@@ -1320,8 +1427,19 @@ def main() -> None:
         or "shell" in args.material_category.lower()
     ):
         raise ValueError("--slime-only-audio cannot be used for wax material")
+    if args.audio_exclusions and not args.slime_only_audio:
+        raise ValueError("--audio-exclusions requires --slime-only-audio")
+    if args.audio_highpass_hz < 20:
+        raise ValueError("--audio-highpass-hz must be at least 20")
+    if args.audio_lowpass_hz <= args.audio_highpass_hz + 100:
+        raise ValueError(
+            "--audio-lowpass-hz must be at least 100 Hz above the high-pass"
+        )
 
     ffmpeg = find_ffmpeg(args.ffmpeg)
+    audio_exclusions = load_audio_exclusions(
+        args.audio_exclusions.resolve() if args.audio_exclusions else None
+    )
     requested_model = (
         args.model.resolve()
         if args.model
@@ -1366,7 +1484,8 @@ def main() -> None:
     rejected_audio_events: list[dict[str, Any]] = []
     if args.slime_only_audio:
         audio_events, rejected_audio_events = select_slime_only_audio(
-            audio_events
+            audio_events,
+            manual_exclusions=audio_exclusions,
         )
         gestures = infer_gestures(
             frames=frames,
@@ -1374,12 +1493,16 @@ def main() -> None:
             material_category=args.material_category,
             analysis_fps=args.analysis_fps,
         )
+    if args.isolate_audio_clips:
+        isolate_audio_clip_boundaries(audio_events)
     export_audio_clips(
         samples=samples,
         sample_rate=sample_rate,
         events=audio_events,
         output_root=output / "audio" / "clips",
         clean_slime_audio=args.slime_only_audio,
+        highpass_hz=args.audio_highpass_hz,
+        lowpass_hz=args.audio_lowpass_hz,
     )
     mux_tracking_video(ffmpeg, silent_tracking, video, tracking_video)
     extract_tracking_poster(ffmpeg, tracking_video, tracking_poster)
@@ -1388,10 +1511,12 @@ def main() -> None:
     motion_path = output / "motion" / "landmarks.json"
     audio_events_path = output / "audio" / "events.json"
     rejected_audio_events_path = output / "audio" / "rejected-events.json"
+    audio_exclusions_path = output / "audio" / "exclusions.json"
     gesture_path = output / "events" / "gesture_timeline.json"
     write_json(motion_path, frames)
     write_json(audio_events_path, audio_events)
     write_json(rejected_audio_events_path, rejected_audio_events)
+    write_json(audio_exclusions_path, audio_exclusions)
     write_json(gesture_path, gestures)
 
     gesture_counts: dict[str, int] = {}
@@ -1460,6 +1585,11 @@ def main() -> None:
             "audio_event_count": len(audio_events),
             "raw_audio_event_count": raw_audio_event_count,
             "rejected_audio_event_count": len(rejected_audio_events),
+            "manual_audio_exclusion_count": sum(
+                1
+                for event in rejected_audio_events
+                if event.get("rejection_reason") == "manual_audio_exclusion"
+            ),
             "gesture_event_count": len(gestures),
             "gesture_counts": gesture_counts,
             "audio_texture_counts": texture_counts,
@@ -1479,9 +1609,14 @@ def main() -> None:
                 0.72 if args.slime_only_audio else None
             ),
             "requires_slime_gesture_alignment": args.slime_only_audio,
+            "manual_exclusions": audio_exclusions,
+            "clip_boundary_mode": (
+                "non_overlapping" if args.isolate_audio_clips else "onset_window"
+            ),
             "clip_processing": (
-                "70Hz high-pass, 16kHz low-pass, conservative spectral gate, "
-                "bounded peak normalization"
+                f"{args.audio_highpass_hz:g}Hz high-pass, "
+                f"{args.audio_lowpass_hz:g}Hz low-pass, conservative spectral "
+                "gate, bounded peak normalization"
                 if args.slime_only_audio
                 else "source amplitude with short edge fades"
             ),
@@ -1491,6 +1626,9 @@ def main() -> None:
             "audio_events": audio_events_path.relative_to(output).as_posix(),
             "rejected_audio_events": (
                 rejected_audio_events_path.relative_to(output).as_posix()
+            ),
+            "audio_exclusions": (
+                audio_exclusions_path.relative_to(output).as_posix()
             ),
             "gesture_timeline": gesture_path.relative_to(output).as_posix(),
             "tracking_video": tracking_video.relative_to(output).as_posix(),

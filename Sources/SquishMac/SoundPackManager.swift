@@ -50,6 +50,18 @@ final class SoundPackManager {
             title: "Clear Slime 3 Stretch",
             folderName: "clear-video-3-stretch",
             isUserSelectable: false
+        ),
+        SoundPack(
+            id: "pastel-clay-video-4-knead",
+            title: "Pastel Clay 4 Knead",
+            folderName: "pastel-clay-video-4-knead",
+            isUserSelectable: false
+        ),
+        SoundPack(
+            id: "pastel-clay-video-4-stretch",
+            title: "Pastel Clay 4 Stretch",
+            folderName: "pastel-clay-video-4-stretch",
+            isUserSelectable: false
         )
     ]
 
