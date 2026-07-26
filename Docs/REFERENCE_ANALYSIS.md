@@ -12,7 +12,7 @@ The analyzer samples video at 15 frames per second and uses Apple's Vision hand-
 - fingertip spread and average hand openness;
 - thumb/index pinch and a normalized pressure estimate.
 
-The audio track is decoded to mono PCM. Adaptive onset detection records RMS, peak amplitude, zero-crossing rate, crest factor, a suggested texture label, and a suggested clip range. Gesture events are inferred from motion features, then linked to the closest audio event within 300 milliseconds.
+The audio track is decoded to mono PCM. Adaptive onset detection records RMS, peak amplitude, zero-crossing rate, crest factor, a raw acoustic texture, a material-aware suggested texture, and a suggested clip range. For example, the same sharp transient can remain `brittle_crack` for wax while becoming `clay_snap` for butter/clay slime. Gesture events are inferred from motion features, then linked to the closest audio event.
 
 ## App Workflow
 
@@ -52,7 +52,7 @@ py -3.12 -m venv .venv-analysis
   --material-category "wax_shell_slime"
 ```
 
-Output is separated into `motion/landmarks.json`, `events/gesture_timeline.json`, `audio/events.json`, `audio/clips/<gesture>/`, and `overlays/tracking.mp4`.
+Output is separated into `motion/landmarks.json`, `events/gesture_timeline.json`, `audio/events.json`, `audio/clips/<gesture>/`, `overlays/tracking.mp4`, and `overlays/poster.jpg`. Frames with no detected hands remain in the motion timeline as quality evidence but are excluded from inferred gestures, preventing motion blur or an out-of-frame hand from becoming a false release event.
 
 ## Recording Recommendations
 

@@ -9,10 +9,17 @@ const labels = {
   wax_crush: "왁스 부수기",
   slime_knead: "슬라임 주무르기",
   slime_stretch: "슬라임 늘리기",
+  slime_release: "슬라임 놓기",
   brittle_crack: "단단한 깨짐",
+  clay_snap: "클레이 스냅",
   suction_pop: "흡착 팝",
   wet_friction: "젖은 마찰",
   micro_crackle: "미세 크랙",
+  soft_crackle: "부드러운 크래클",
+  slime_snap: "슬라임 스냅",
+  micro_pop: "미세 팝",
+  bubble_cluster: "버블 연속음",
+  dense_squish: "묵직한 스퀴시",
 };
 
 const elements = {};

@@ -615,7 +615,10 @@ def extract_tracking_poster(ffmpeg: Path, video: Path, output: Path) -> None:
     )
 
 
-def analyze_audio(audio_path: Path) -> tuple[np.ndarray, int, list[dict[str, Any]]]:
+def analyze_audio(
+    audio_path: Path,
+    material_category: str,
+) -> tuple[np.ndarray, int, list[dict[str, Any]]]:
     samples, sample_rate = sf.read(audio_path, always_2d=False)
     if samples.ndim > 1:
         samples = np.mean(samples, axis=1)
@@ -693,13 +696,14 @@ def analyze_audio(audio_path: Path) -> tuple[np.ndarray, int, list[dict[str, Any
         score = float(onset_score[frame_index])
         if peak < minimum_meaningful_peak:
             continue
-        texture = classify_audio_texture(
+        acoustic_texture = classify_audio_texture(
             rms=rms,
             peak=peak,
             zcr=zcr,
             centroid=centroid,
             crest=crest,
         )
+        texture = semantic_audio_texture(acoustic_texture, material_category)
         events.append(
             {
                 "id": len(events),
@@ -711,6 +715,7 @@ def analyze_audio(audio_path: Path) -> tuple[np.ndarray, int, list[dict[str, Any
                 "spectral_rolloff_hz": round(rolloff, 3),
                 "crest_factor": round(crest, 4),
                 "onset_score": round(score, 4),
+                "acoustic_texture": acoustic_texture,
                 "suggested_texture": texture,
                 "clip_start": round(max(0.0, timestamp - 0.075), 6),
                 "clip_end": round(
@@ -775,6 +780,21 @@ def classify_audio_texture(
     return "bubble_cluster"
 
 
+def semantic_audio_texture(acoustic_texture: str, material_category: str) -> str:
+    category = material_category.lower()
+    if "wax" in category or "shell" in category:
+        return acoustic_texture
+    if "butter" in category or "clay" in category:
+        return {
+            "brittle_crack": "clay_snap",
+            "micro_crackle": "soft_crackle",
+        }.get(acoustic_texture, acoustic_texture)
+    return {
+        "brittle_crack": "slime_snap",
+        "micro_crackle": "micro_pop",
+    }.get(acoustic_texture, acoustic_texture)
+
+
 def infer_gestures(
     frames: list[dict[str, Any]],
     audio_events: list[dict[str, Any]],
@@ -787,7 +807,6 @@ def infer_gestures(
     movement = np.asarray([frame["movement"] for frame in frames])
     pressure = np.asarray([frame["pressure_estimate"] for frame in frames])
     spread = np.asarray([frame["spread"] for frame in frames])
-    hand_count = np.asarray([frame["hand_count"] for frame in frames])
     pressure_change = np.abs(np.diff(pressure, prepend=pressure[0]))
     spread_change = np.abs(np.diff(spread, prepend=spread[0]))
     activity = movement * 0.55 + pressure_change * 0.30 + spread_change * 0.15
@@ -797,18 +816,28 @@ def infer_gestures(
         prominence=prominence,
         distance=max(1, int(analysis_fps * 0.14)),
     )
-    candidate_indices = set(int(index) for index in peak_indices)
+    detected_indices = [
+        index for index, frame in enumerate(frames) if frame["hand_count"] > 0
+    ]
+    candidate_indices = {
+        int(index)
+        for index in peak_indices
+        if frames[int(index)]["hand_count"] > 0
+    }
 
     for event in audio_events:
-        candidate_indices.add(
-            min(
-                range(len(frames)),
-                key=lambda index: abs(frames[index]["timestamp"] - event["timestamp"]),
-            )
+        nearest_detected = min(
+            detected_indices,
+            key=lambda index: abs(frames[index]["timestamp"] - event["timestamp"]),
+            default=None,
         )
-    for index in range(1, len(frames)):
-        if hand_count[index] == 0 and hand_count[index - 1] > 0:
-            candidate_indices.add(index)
+        if (
+            nearest_detected is not None
+            and abs(
+                frames[nearest_detected]["timestamp"] - event["timestamp"]
+            ) <= 0.40
+        ):
+            candidate_indices.add(nearest_detected)
 
     gestures: list[dict[str, Any]] = []
     last_time_by_kind: dict[str, float] = {}
@@ -818,21 +847,22 @@ def infer_gestures(
     for index in sorted(candidate_indices):
         frame = frames[index]
         timestamp = float(frame["timestamp"])
-        if timestamp < 0.30:
+        if timestamp < 0.30 or frame["hand_count"] == 0:
             continue
         nearest_audio = _nearest_audio(audio_events, timestamp, maximum_delta=0.28)
         texture = nearest_audio["suggested_texture"] if nearest_audio else None
-        previous = frames[max(0, index - 2)]
+        previous = frame
+        for previous_index in range(index - 1, -1, -1):
+            candidate = frames[previous_index]
+            if timestamp - candidate["timestamp"] > 0.40:
+                break
+            if candidate["hand_count"] > 0:
+                previous = candidate
+                break
         spread_delta = frame["spread"] - previous["spread"]
         pressure_delta = frame["pressure_estimate"] - previous["pressure_estimate"]
 
         if (
-            index > 0
-            and frame["hand_count"] == 0
-            and frames[index - 1]["hand_count"] > 0
-        ):
-            kind = "slime_release"
-        elif (
             is_wax_shell
             and texture in {"brittle_crack", "micro_crackle"}
             and frame["pressure_estimate"] >= 0.24
@@ -875,7 +905,6 @@ def infer_gestures(
             "wax_crack": 0.14,
             "wax_crush": 0.50,
             "wax_press": 0.34,
-            "slime_release": 0.20,
             "slime_stretch": 0.24,
             "slime_knead": 0.24,
             "slime_press": 0.30,
@@ -1038,7 +1067,10 @@ def main() -> None:
         target_fps=args.analysis_fps,
     )
     print("Analyzing audio events")
-    samples, sample_rate, audio_events = analyze_audio(audio_path)
+    samples, sample_rate, audio_events = analyze_audio(
+        audio_path,
+        args.material_category,
+    )
     print("Aligning motion and sound")
     gestures = infer_gestures(
         frames=frames,
@@ -1065,6 +1097,12 @@ def main() -> None:
 
     gesture_counts: dict[str, int] = {}
     texture_counts: dict[str, int] = {}
+    hand_count_distribution = {
+        str(hand_count): sum(
+            1 for frame in frames if frame["hand_count"] == hand_count
+        )
+        for hand_count in range(3)
+    }
     for gesture in gestures:
         gesture_counts[gesture["kind"]] = gesture_counts.get(gesture["kind"], 0) + 1
     for event in audio_events:
@@ -1095,6 +1133,16 @@ def main() -> None:
         "summary": {
             "frames_with_hands": sum(
                 1 for frame in frames if frame["hand_count"] > 0
+            ),
+            "hand_count_distribution": hand_count_distribution,
+            "tracking_gap_count": sum(
+                1
+                for index, frame in enumerate(frames)
+                if frame["hand_count"] == 0
+                and (
+                    index == 0
+                    or frames[index - 1]["hand_count"] > 0
+                )
             ),
             "hand_detection_coverage": round(
                 sum(1 for frame in frames if frame["hand_count"] > 0)
