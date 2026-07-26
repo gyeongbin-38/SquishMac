@@ -191,6 +191,18 @@ struct TrackpadBubbleGestureRules: Codable, Equatable, Hashable {
     let soundPackID: String?
     let gestureLabel: String
 
+    private enum CodingKeys: String, CodingKey {
+        case minimumFingerCount
+        case armSpreadThreshold
+        case minimumSealMovement
+        case minimumSealPressure
+        case minimumSpreadDrop
+        case maximumDuration
+        case cooldown
+        case soundPackID = "soundPackId"
+        case gestureLabel
+    }
+
     init(
         minimumFingerCount: Int = 5,
         armSpreadThreshold: Double = 0.60,
@@ -249,6 +261,23 @@ struct WaxInteractionRules: Codable, Equatable, Hashable {
     let crackSoundPackID: String?
     let crushSoundPackID: String?
 
+    private enum CodingKeys: String, CodingKey {
+        case minimumContactCount
+        case pressPressureThreshold
+        case crackPressureThreshold
+        case crushPressureThreshold
+        case crackMovementThreshold
+        case crackClosingThreshold
+        case crushClosingThreshold
+        case crackPressureJumpThreshold
+        case crushPressureJumpThreshold
+        case repeatedCrackImpulseThreshold
+        case repeatedCrackCooldown
+        case pressSoundPackID = "pressSoundPackId"
+        case crackSoundPackID = "crackSoundPackId"
+        case crushSoundPackID = "crushSoundPackId"
+    }
+
     init(
         minimumContactCount: Int = 2,
         pressPressureThreshold: Double = 0.30,
@@ -258,7 +287,7 @@ struct WaxInteractionRules: Codable, Equatable, Hashable {
         crackClosingThreshold: Double = 0.10,
         crushClosingThreshold: Double = 0.20,
         crackPressureJumpThreshold: Double = 0.12,
-        crushPressureJumpThreshold: Double = 0.22,
+        crushPressureJumpThreshold: Double = 0.35,
         repeatedCrackImpulseThreshold: Double = 0.10,
         repeatedCrackCooldown: TimeInterval = 0.16,
         pressSoundPackID: String? = nil,
@@ -375,6 +404,24 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
     let waxInteraction: WaxInteractionRules?
     let volumeScale: Double?
     let interactionSummary: String
+
+    private enum CodingKeys: String, CodingKey {
+        case style
+        case minimumFingerCount
+        case stretchMovementThreshold
+        case fastStretchFailureMovementThreshold
+        case fastStretchFailureResetThreshold
+        case fastStretchFailureCooldown
+        case failureSoundPackID = "failureSoundPackId"
+        case failureGestureLabel
+        case kneadSoundPackID = "kneadSoundPackId"
+        case stretchSoundPackID = "stretchSoundPackId"
+        case releaseSoundPackID = "releaseSoundPackId"
+        case bubbleGesture
+        case waxInteraction
+        case volumeScale
+        case interactionSummary
+    }
 
     init(
         style: SlimeInteractionStyle,
