@@ -41,6 +41,19 @@ struct TrackpadSessionFile: Codable, Equatable {
     let materialProfileID: String?
     let samples: [TrackpadSessionSample]
     let events: [TrackpadSessionEvent]
+
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion
+        case appVersion
+        case osVersion
+        case architecture
+        case startedAt
+        case endedAt
+        case tuning
+        case materialProfileID = "materialProfileId"
+        case samples
+        case events
+    }
 }
 
 final class TrackpadSessionRecorder {
