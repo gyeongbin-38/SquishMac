@@ -81,6 +81,37 @@ enum SlimeInteractionStyle: String, Codable, Hashable {
     case textured
 }
 
+struct CameraBubbleGestureTuning: Codable, Equatable, Hashable {
+    let minimumHandCount: Int
+    let minimumFingertipCount: Int
+    let armSpreadThreshold: Double
+    let minimumSealMovement: Double
+    let minimumDownwardTravel: Double
+    let minimumRetainedSpreadRatio: Double
+    let maximumDuration: TimeInterval
+    let cooldown: TimeInterval
+
+    init(
+        minimumHandCount: Int = 2,
+        minimumFingertipCount: Int = 8,
+        armSpreadThreshold: Double = 0.46,
+        minimumSealMovement: Double = 0.12,
+        minimumDownwardTravel: Double = 0.055,
+        minimumRetainedSpreadRatio: Double = 0.72,
+        maximumDuration: TimeInterval = 1.40,
+        cooldown: TimeInterval = 1.20
+    ) {
+        self.minimumHandCount = max(1, minimumHandCount)
+        self.minimumFingertipCount = max(2, minimumFingertipCount)
+        self.armSpreadThreshold = armSpreadThreshold.clamped(to: 0.05...1.0)
+        self.minimumSealMovement = minimumSealMovement.clamped(to: 0.01...1.0)
+        self.minimumDownwardTravel = minimumDownwardTravel.clamped(to: 0.01...1.0)
+        self.minimumRetainedSpreadRatio = minimumRetainedSpreadRatio.clamped(to: 0.25...1.0)
+        self.maximumDuration = max(0.25, maximumDuration)
+        self.cooldown = max(0.25, cooldown)
+    }
+}
+
 struct CameraGestureTuning: Codable, Equatable, Hashable {
     static let standard = CameraGestureTuning(
         response: 1.0,
@@ -89,7 +120,8 @@ struct CameraGestureTuning: Codable, Equatable, Hashable {
         kneadMovementThreshold: 0.08,
         stretchMovementThreshold: 0.24,
         stretchSpreadThreshold: 0.34,
-        pressPressureThreshold: 0.28
+        pressPressureThreshold: 0.28,
+        bubbleGesture: nil
     )
 
     static let clearVideo3 = CameraGestureTuning(
@@ -99,7 +131,8 @@ struct CameraGestureTuning: Codable, Equatable, Hashable {
         kneadMovementThreshold: 0.075,
         stretchMovementThreshold: 0.21,
         stretchSpreadThreshold: 0.30,
-        pressPressureThreshold: 0.32
+        pressPressureThreshold: 0.32,
+        bubbleGesture: CameraBubbleGestureTuning()
     )
 
     let response: Double
@@ -109,6 +142,7 @@ struct CameraGestureTuning: Codable, Equatable, Hashable {
     let stretchMovementThreshold: Double
     let stretchSpreadThreshold: Double
     let pressPressureThreshold: Double
+    let bubbleGesture: CameraBubbleGestureTuning?
 
     init(
         response: Double,
@@ -117,7 +151,8 @@ struct CameraGestureTuning: Codable, Equatable, Hashable {
         kneadMovementThreshold: Double,
         stretchMovementThreshold: Double,
         stretchSpreadThreshold: Double,
-        pressPressureThreshold: Double
+        pressPressureThreshold: Double,
+        bubbleGesture: CameraBubbleGestureTuning? = nil
     ) {
         self.response = min(max(response, 0.5), 1.75)
         self.soundDensity = min(max(soundDensity, 0.5), 2.0)
@@ -130,6 +165,41 @@ struct CameraGestureTuning: Codable, Equatable, Hashable {
         )
         self.stretchSpreadThreshold = min(max(stretchSpreadThreshold, 0.01), 1)
         self.pressPressureThreshold = min(max(pressPressureThreshold, 0.01), 1)
+        self.bubbleGesture = bubbleGesture
+    }
+}
+
+struct TrackpadBubbleGestureRules: Codable, Equatable, Hashable {
+    let minimumFingerCount: Int
+    let armSpreadThreshold: Double
+    let minimumSealMovement: Double
+    let minimumSealPressure: Double
+    let minimumSpreadDrop: Double
+    let maximumDuration: TimeInterval
+    let cooldown: TimeInterval
+    let soundPackID: String?
+    let gestureLabel: String
+
+    init(
+        minimumFingerCount: Int = 5,
+        armSpreadThreshold: Double = 0.60,
+        minimumSealMovement: Double = 0.10,
+        minimumSealPressure: Double = 0.30,
+        minimumSpreadDrop: Double = 0.16,
+        maximumDuration: TimeInterval = 1.25,
+        cooldown: TimeInterval = 1.20,
+        soundPackID: String? = nil,
+        gestureLabel: String = "Bar-pung seal"
+    ) {
+        self.minimumFingerCount = max(2, minimumFingerCount)
+        self.armSpreadThreshold = armSpreadThreshold.clamped(to: 0.05...1.0)
+        self.minimumSealMovement = minimumSealMovement.clamped(to: 0.01...1.0)
+        self.minimumSealPressure = minimumSealPressure.clamped(to: 0.01...1.0)
+        self.minimumSpreadDrop = minimumSpreadDrop.clamped(to: 0.01...1.0)
+        self.maximumDuration = max(0.25, maximumDuration)
+        self.cooldown = max(0.25, cooldown)
+        self.soundPackID = soundPackID
+        self.gestureLabel = gestureLabel
     }
 }
 
@@ -159,7 +229,11 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         stretchMovementThreshold: 0.14,
         kneadSoundPackID: "clear-video-3-knead",
         stretchSoundPackID: "clear-video-3-stretch",
-        interactionSummary: "Press with three to six fingers and use broad, controlled stretches."
+        bubbleGesture: TrackpadBubbleGestureRules(
+            soundPackID: "clear-video-3-stretch"
+        ),
+        volumeScale: 0.86,
+        interactionSummary: "Press with three to six fingers, stretch broadly, then close and press to seal a bar-pung."
     )
 
     let style: SlimeInteractionStyle
@@ -173,6 +247,8 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
     let kneadSoundPackID: String?
     let stretchSoundPackID: String?
     let releaseSoundPackID: String?
+    let bubbleGesture: TrackpadBubbleGestureRules?
+    let volumeScale: Double?
     let interactionSummary: String
 
     init(
@@ -187,6 +263,8 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         kneadSoundPackID: String? = nil,
         stretchSoundPackID: String? = nil,
         releaseSoundPackID: String? = nil,
+        bubbleGesture: TrackpadBubbleGestureRules? = nil,
+        volumeScale: Double = 1.0,
         interactionSummary: String
     ) {
         let safeStretchThreshold = min(max(stretchMovementThreshold, 0.01), 1)
@@ -207,7 +285,13 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         self.kneadSoundPackID = kneadSoundPackID
         self.stretchSoundPackID = stretchSoundPackID
         self.releaseSoundPackID = releaseSoundPackID
+        self.bubbleGesture = bubbleGesture
+        self.volumeScale = volumeScale.clamped(to: 0.1...1.0)
         self.interactionSummary = interactionSummary
+    }
+
+    var effectiveVolumeScale: Double {
+        (volumeScale ?? 1.0).clamped(to: 0.1...1.0)
     }
 
     func soundPackID(for kind: TrackpadSoundKind) -> String? {
@@ -216,6 +300,8 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
             return kneadSoundPackID
         case .slimeStretch:
             return stretchSoundPackID
+        case .slimeBubble:
+            return bubbleGesture?.soundPackID
         case .slimeRelease:
             return releaseSoundPackID
         case .slimeStretchFailure:
@@ -352,5 +438,11 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
             trackpadTuning: trackpadTuning,
             cameraTuning: cameraTuning
         )
+    }
+}
+
+private extension Comparable {
+    func clamped(to range: ClosedRange<Self>) -> Self {
+        min(max(self, range.lowerBound), range.upperBound)
     }
 }

@@ -29,6 +29,10 @@ enum AudioResponseCurve {
             packID = "slime"
             rate = Float(0.64 + safeIntensity * 0.26)
             volumeBoost = -0.04
+        case .slimeBubble:
+            packID = "bubble"
+            rate = Float(0.74 + safeIntensity * 0.28)
+            volumeBoost = 0.02
         case .slimeStretchFailure:
             packID = "pop"
             rate = Float(0.94 + safeIntensity * 0.18)
@@ -154,10 +158,13 @@ final class SoundPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
         kind: TrackpadSoundKind,
         intensity: Double,
         masterVolume: Double = 1.0,
-        soundPackIDOverride: String? = nil
+        soundPackIDOverride: String? = nil,
+        volumeScale: Double = 1.0
     ) -> Bool {
         let safeIntensity = intensity.clamped(to: 0.0...1.0)
-        let safeMasterVolume = masterVolume.clamped(to: 0.0...1.0)
+        let safeMasterVolume = (
+            masterVolume * volumeScale.clamped(to: 0.1...1.0)
+        ).clamped(to: 0.0...1.0)
         let response = AudioResponseCurve.interaction(
             kind: kind,
             intensity: safeIntensity,

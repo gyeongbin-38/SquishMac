@@ -21,6 +21,12 @@ enum GestureSoundRecipeLibrary {
                 layer("elastic-stretch", "slime", 1.0, 0.24...0.72, 0.58...0.88, 0...12, false),
                 layer("suction-thread", "squishy", 0.42, 0.08...0.30, 0.62...0.90, 25...110, true)
             ])
+        case .slimeBubble:
+            return GestureSoundRecipe(gesture: gesture, layers: [
+                layer("air-pocket-body", "bubble", 1.0, 0.34...0.82, 0.72...1.02, 0...8, false),
+                layer("membrane-seal", "slime", 0.70, 0.12...0.42, 0.62...0.88, 8...55, true),
+                layer("bubble-pop", "pop", 0.38, 0.10...0.34, 0.90...1.18, 25...120, true)
+            ])
         case .slimeStretchFailure:
             return GestureSoundRecipe(gesture: gesture, layers: [
                 layer("material-failure", "pop", 1.0, 0.58...1.0, 0.92...1.12, 0...6, false),
@@ -56,6 +62,8 @@ enum GestureSoundRecipeLibrary {
             return recipe(for: ReferenceGestureKind.slimeKnead)
         case .slimeStretch:
             return recipe(for: ReferenceGestureKind.slimeStretch)
+        case .slimeBubble:
+            return recipe(for: ReferenceGestureKind.slimeBubble)
         case .slimeStretchFailure:
             return recipe(for: ReferenceGestureKind.slimeStretchFailure)
         case .slimeRelease:

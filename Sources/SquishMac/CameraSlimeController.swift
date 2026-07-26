@@ -14,6 +14,7 @@ final class CameraSlimeController: NSObject, ObservableObject {
     @Published private(set) var movement = 0.0
     @Published private(set) var pressureEstimate = 0.0
     @Published private(set) var liveIntensity = 0.0
+    @Published private(set) var isBarPungReady = false
     @Published private(set) var fingertipPoints: [NormalizedPosePoint] = []
     @Published private(set) var lastGestureLabel = "Waiting for a gesture"
     @Published private(set) var mode: ReferenceMaterialMode = .slime
@@ -202,7 +203,8 @@ final class CameraSlimeController: NSObject, ObservableObject {
     private func publish(
         frame: HandMotionFrame,
         gesture: ReferenceGestureKind?,
-        intensity: Double
+        intensity: Double,
+        isBarPungReady: Bool
     ) {
         let points = frame.hands.flatMap { hand in
             hand.joints
@@ -214,6 +216,7 @@ final class CameraSlimeController: NSObject, ObservableObject {
         movement = frame.movement
         pressureEstimate = frame.pressureEstimate
         liveIntensity = intensity
+        self.isBarPungReady = isBarPungReady
         fingertipPoints = points
 
         guard let gesture else {
@@ -228,6 +231,7 @@ final class CameraSlimeController: NSObject, ObservableObject {
         movement = 0
         pressureEstimate = 0
         liveIntensity = 0
+        isBarPungReady = false
         fingertipPoints = []
         lastGestureLabel = "Waiting for a gesture"
     }
@@ -261,6 +265,7 @@ extension CameraSlimeController: AVCaptureVideoDataOutputSampleBufferDelegate {
             )
             let frame = featureExtractor.process(sample)
             let inferredGesture = gestureEngine.process(frame)
+            let isBarPungReady = gestureEngine.isBarPungPrepared
             let responsiveMovement = (
                 frame.movement * activeCameraTuning.response
             ).clamped(to: 0.0...1.0)
@@ -279,7 +284,8 @@ extension CameraSlimeController: AVCaptureVideoDataOutputSampleBufferDelegate {
                     label: "Camera \($0.kind.title)",
                     soundPackIDOverride: activeInteractionRules.soundPackID(
                         for: $0.kind.soundKind
-                    )
+                    ),
+                    volumeScale: activeInteractionRules.effectiveVolumeScale
                 )
             }
 
@@ -290,7 +296,8 @@ extension CameraSlimeController: AVCaptureVideoDataOutputSampleBufferDelegate {
                 self.publish(
                     frame: frame,
                     gesture: inferredGesture?.kind,
-                    intensity: intensity
+                    intensity: intensity,
+                    isBarPungReady: isBarPungReady
                 )
                 if let trigger {
                     self.onGesture?(trigger)

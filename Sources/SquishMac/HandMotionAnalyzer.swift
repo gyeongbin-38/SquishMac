@@ -141,11 +141,18 @@ final class ReferenceGestureInferenceEngine {
         case crush
     }
 
+    private struct BubblePreparation {
+        let armTime: TimeInterval
+        let startingCentroidY: Double
+        var maximumSpread: Double
+    }
+
     private let mode: ReferenceMaterialMode
     private let cameraTuning: CameraGestureTuning
     private var previousFrame: HandMotionFrame?
     private var lastTriggerTimes: [ReferenceGestureKind: TimeInterval] = [:]
     private var waxStage: WaxStage = .idle
+    private var bubblePreparation: BubblePreparation?
 
     init(
         mode: ReferenceMaterialMode,
@@ -153,6 +160,10 @@ final class ReferenceGestureInferenceEngine {
     ) {
         self.mode = mode
         self.cameraTuning = cameraTuning
+    }
+
+    var isBarPungPrepared: Bool {
+        bubblePreparation != nil
     }
 
     func process(_ frame: HandMotionFrame) -> (kind: ReferenceGestureKind, intensity: Double)? {
@@ -174,6 +185,7 @@ final class ReferenceGestureInferenceEngine {
         if let previousFrame,
            previousFrame.fingertipCount >= cameraTuning.minimumFingertipCount,
            frame.fingertipCount < 2 {
+            bubblePreparation = nil
             return trigger(
                 .slimeRelease,
                 intensity: max(0.35, previousFrame.pressureEstimate),
@@ -201,6 +213,10 @@ final class ReferenceGestureInferenceEngine {
             + frame.spread * 0.10
         ).clamped(to: 0.0...1.0)
 
+        if let bubble = processSlimeBubble(frame, intensity: intensity) {
+            return bubble
+        }
+
         let kind: ReferenceGestureKind
         if movement >= cameraTuning.stretchMovementThreshold
             && frame.spread >= cameraTuning.stretchSpreadThreshold {
@@ -220,6 +236,66 @@ final class ReferenceGestureInferenceEngine {
             cooldown: (kind == .slimePress ? 0.28 : 0.16)
                 / cameraTuning.soundDensity
         )
+    }
+
+    private func processSlimeBubble(
+        _ frame: HandMotionFrame,
+        intensity: Double
+    ) -> (kind: ReferenceGestureKind, intensity: Double)? {
+        guard let tuning = cameraTuning.bubbleGesture else {
+            bubblePreparation = nil
+            return nil
+        }
+
+        if let preparation = bubblePreparation,
+           frame.timestamp - preparation.armTime > tuning.maximumDuration {
+            bubblePreparation = nil
+        }
+
+        guard frame.handCount >= tuning.minimumHandCount,
+              frame.fingertipCount >= tuning.minimumFingertipCount else {
+            return nil
+        }
+
+        if var preparation = bubblePreparation {
+            preparation.maximumSpread = max(preparation.maximumSpread, frame.spread)
+            bubblePreparation = preparation
+
+            let downwardTravel = max(0, preparation.startingCentroidY - frame.centroidY)
+            let retainedSpread = frame.spread
+                >= preparation.maximumSpread * tuning.minimumRetainedSpreadRatio
+            let isSeal = frame.timestamp > preparation.armTime
+                && retainedSpread
+                && frame.movement >= tuning.minimumSealMovement
+                && downwardTravel >= tuning.minimumDownwardTravel
+
+            guard isSeal else {
+                return nil
+            }
+
+            let travelProgress = (
+                downwardTravel / max(tuning.minimumDownwardTravel, 0.01)
+            ).clamped(to: 0.0...1.0)
+            let bubbleIntensity = (
+                intensity * 0.68 + travelProgress * 0.32
+            ).clamped(to: 0.0...1.0)
+            bubblePreparation = nil
+            return trigger(
+                .slimeBubble,
+                intensity: bubbleIntensity,
+                timestamp: frame.timestamp,
+                cooldown: tuning.cooldown
+            )
+        }
+
+        if frame.spread >= tuning.armSpreadThreshold {
+            bubblePreparation = BubblePreparation(
+                armTime: frame.timestamp,
+                startingCentroidY: frame.centroidY,
+                maximumSpread: frame.spread
+            )
+        }
+        return nil
     }
 
     private func processWax(

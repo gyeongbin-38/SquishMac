@@ -28,6 +28,7 @@ enum TrackpadMode: String, CaseIterable, Identifiable, Hashable, Codable {
 enum TrackpadSoundKind: String, CaseIterable, Equatable, Hashable, Codable {
     case slimeKnead
     case slimeStretch
+    case slimeBubble
     case slimeStretchFailure
     case slimeRelease
     case waxPress
@@ -40,6 +41,8 @@ enum TrackpadSoundKind: String, CaseIterable, Equatable, Hashable, Codable {
             return "Slime knead"
         case .slimeStretch:
             return "Slime stretch"
+        case .slimeBubble:
+            return "Slime bar-pung"
         case .slimeStretchFailure:
             return "Stretch too fast"
         case .slimeRelease:
@@ -78,17 +81,20 @@ struct TrackpadGestureTrigger: Equatable {
     let intensity: Double
     let label: String
     let soundPackIDOverride: String?
+    let volumeScale: Double
 
     init(
         kind: TrackpadSoundKind,
         intensity: Double,
         label: String,
-        soundPackIDOverride: String? = nil
+        soundPackIDOverride: String? = nil,
+        volumeScale: Double = 1.0
     ) {
         self.kind = kind
         self.intensity = intensity
         self.label = label
         self.soundPackIDOverride = soundPackIDOverride
+        self.volumeScale = volumeScale.clamped(to: 0.1...1.0)
     }
 }
 
@@ -111,6 +117,12 @@ final class TrackpadGestureEngine {
     private var previousSpread = 0.0
     private var waxStage: WaxStage = .idle
     private var slimeStretchFailureLatched = false
+    private var slimeBubbleArmTime: TimeInterval?
+    private var slimeBubbleMaximumSpread = 0.0
+
+    var isBarPungPrepared: Bool {
+        slimeBubbleArmTime != nil
+    }
 
     func reset() {
         lastTriggerTimes.removeAll()
@@ -119,6 +131,7 @@ final class TrackpadGestureEngine {
         previousSpread = 0
         waxStage = .idle
         slimeStretchFailureLatched = false
+        resetSlimeBubble()
     }
 
     func evaluate(
@@ -178,15 +191,60 @@ final class TrackpadGestureEngine {
         let isInitialContact = previousFingerCount < minimumFingerCount
             && fingerCount >= minimumFingerCount
 
+        defer {
+            previousFingerCount = fingerCount
+            previousPressure = pressure
+            previousSpread = spread
+        }
+
         if fingerCount < minimumFingerCount
             || movement <= interactionRules.fastStretchFailureResetThreshold {
             slimeStretchFailureLatched = false
         }
 
-        defer {
-            previousFingerCount = fingerCount
-            previousPressure = pressure
-            previousSpread = spread
+        if let bubbleRules = interactionRules.bubbleGesture {
+            if let armTime = slimeBubbleArmTime,
+               timestamp - armTime > bubbleRules.maximumDuration {
+                resetSlimeBubble()
+            }
+
+            if fingerCount < bubbleRules.minimumFingerCount {
+                resetSlimeBubble()
+            } else if let armTime = slimeBubbleArmTime {
+                slimeBubbleMaximumSpread = max(slimeBubbleMaximumSpread, spread)
+                let spreadDrop = max(0, slimeBubbleMaximumSpread - spread)
+                let isSeal = timestamp > armTime
+                    && movement >= bubbleRules.minimumSealMovement
+                    && pressure >= bubbleRules.minimumSealPressure
+                    && spreadDrop >= bubbleRules.minimumSpreadDrop
+                if isSeal {
+                    let sealProgress = (
+                        spreadDrop / max(bubbleRules.minimumSpreadDrop, 0.01)
+                    ).clamped(to: 0.0...1.0)
+                    let intensity = (
+                        pressure * 0.42 + movement * 0.33 + sealProgress * 0.25
+                    ).clamped(to: 0.0...1.0)
+                    resetSlimeBubble()
+                    return triggerIfReady(
+                        kind: .slimeBubble,
+                        intensity: intensity,
+                        label: bubbleRules.gestureLabel,
+                        liveIntensity: liveIntensity,
+                        timestamp: timestamp,
+                        interval: densityAdjusted(
+                            bubbleRules.cooldown,
+                            soundDensity: soundDensity
+                        ),
+                        soundPackIDOverride: bubbleRules.soundPackID,
+                        volumeScale: interactionRules.effectiveVolumeScale
+                    )
+                }
+            } else if spread >= bubbleRules.armSpreadThreshold {
+                slimeBubbleArmTime = timestamp
+                slimeBubbleMaximumSpread = spread
+            }
+        } else {
+            resetSlimeBubble()
         }
 
         if previousFingerCount >= minimumFingerCount
@@ -199,7 +257,8 @@ final class TrackpadGestureEngine {
                 label: "Slime release",
                 liveIntensity: liveIntensity,
                 timestamp: timestamp,
-                interval: densityAdjusted(0.10, soundDensity: soundDensity)
+                interval: densityAdjusted(0.10, soundDensity: soundDensity),
+                volumeScale: interactionRules.effectiveVolumeScale
             )
         }
 
@@ -235,7 +294,8 @@ final class TrackpadGestureEngine {
                     interactionRules.fastStretchFailureCooldown,
                     soundDensity: soundDensity
                 ),
-                soundPackIDOverride: interactionRules.failureSoundPackID
+                soundPackIDOverride: interactionRules.failureSoundPackID,
+                volumeScale: interactionRules.effectiveVolumeScale
             )
             if evaluation.trigger != nil {
                 slimeStretchFailureLatched = true
@@ -256,7 +316,8 @@ final class TrackpadGestureEngine {
             liveIntensity: liveIntensity,
             timestamp: timestamp,
             interval: densityAdjusted(baseInterval, soundDensity: soundDensity),
-            soundPackIDOverride: interactionRules.soundPackID(for: kind)
+            soundPackIDOverride: interactionRules.soundPackID(for: kind),
+            volumeScale: interactionRules.effectiveVolumeScale
         )
     }
 
@@ -334,7 +395,8 @@ final class TrackpadGestureEngine {
         liveIntensity: Double,
         timestamp: TimeInterval,
         interval: TimeInterval,
-        soundPackIDOverride: String? = nil
+        soundPackIDOverride: String? = nil,
+        volumeScale: Double = 1.0
     ) -> TrackpadGestureEvaluation {
         let lastTriggerTime = lastTriggerTimes[kind] ?? -Double.infinity
         guard timestamp - lastTriggerTime >= interval else {
@@ -348,9 +410,15 @@ final class TrackpadGestureEngine {
                 kind: kind,
                 intensity: intensity,
                 label: label,
-                soundPackIDOverride: soundPackIDOverride
+                soundPackIDOverride: soundPackIDOverride,
+                volumeScale: volumeScale
             )
         )
+    }
+
+    private func resetSlimeBubble() {
+        slimeBubbleArmTime = nil
+        slimeBubbleMaximumSpread = 0
     }
 
     private func densityAdjusted(_ interval: TimeInterval, soundDensity: Double) -> TimeInterval {

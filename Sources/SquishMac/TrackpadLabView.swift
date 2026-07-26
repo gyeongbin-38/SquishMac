@@ -137,8 +137,13 @@ struct TrackpadLabView: View {
             ProgressView(value: state.liveIntensity, total: 1.0)
 
             HStack(spacing: 16) {
-                Label(state.lastGestureLabel, systemImage: "waveform")
-                    .lineLimit(1)
+                if state.isBarPungReady {
+                    Label("Bar-pung ready: close and press", systemImage: "circle.grid.cross.fill")
+                        .lineLimit(1)
+                } else {
+                    Label(state.lastGestureLabel, systemImage: "waveform")
+                        .lineLimit(1)
+                }
                 Spacer()
                 Text("Stage \(state.forceStage)")
                 Text("Peak \(String(format: "%.2f", state.peakPressure))")

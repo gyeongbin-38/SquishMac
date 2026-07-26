@@ -109,5 +109,16 @@ final class ReferenceAnalysisTests: XCTestCase {
             profile.effectiveInteractionRules.soundPackID(for: .slimeStretch),
             "clear-video-3-stretch"
         )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeBubble),
+            "clear-video-3-stretch"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.effectiveVolumeScale,
+            0.86,
+            accuracy: 0.0001
+        )
+        XCTAssertNotNil(profile.effectiveInteractionRules.bubbleGesture)
+        XCTAssertNotNil(profile.effectiveCameraTuning.bubbleGesture)
     }
 }

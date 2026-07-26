@@ -135,9 +135,15 @@ struct CameraSlimeView: View {
 
     private var controls: some View {
         HStack {
-            Label(controller.lastGestureLabel, systemImage: "waveform")
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+            if controller.isBarPungReady {
+                Label("Bar-pung ready: move both hands down", systemImage: "arrow.down.circle.fill")
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+            } else {
+                Label(controller.lastGestureLabel, systemImage: "waveform")
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
             Spacer()
             if controller.isRunning {
                 Button("Stop Camera") {

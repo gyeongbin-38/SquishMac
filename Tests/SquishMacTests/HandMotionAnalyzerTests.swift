@@ -87,6 +87,63 @@ final class HandMotionAnalyzerTests: XCTestCase {
         XCTAssertEqual(video3Engine.process(frame)?.kind, .slimeStretch)
     }
 
+    func testVideo3CameraRecognizesPreparedDownwardBarPungSeal() {
+        let engine = ReferenceGestureInferenceEngine(
+            mode: .slime,
+            cameraTuning: .clearVideo3
+        )
+
+        _ = engine.process(motionFrame(
+            timestamp: 0,
+            handCount: 2,
+            fingertipCount: 10,
+            movement: 0.08,
+            spread: 0.58,
+            pressure: 0.20,
+            centroidY: 0.66
+        ))
+        let seal = engine.process(motionFrame(
+            timestamp: 0.25,
+            handCount: 2,
+            fingertipCount: 10,
+            movement: 0.18,
+            spread: 0.53,
+            pressure: 0.30,
+            centroidY: 0.56
+        ))
+
+        XCTAssertEqual(seal?.kind, .slimeBubble)
+        XCTAssertGreaterThan(seal?.intensity ?? 0, 0.5)
+    }
+
+    func testVideo3CameraDoesNotRecognizeBarPungWithoutTwoHands() {
+        let engine = ReferenceGestureInferenceEngine(
+            mode: .slime,
+            cameraTuning: .clearVideo3
+        )
+
+        _ = engine.process(motionFrame(
+            timestamp: 0,
+            handCount: 1,
+            fingertipCount: 5,
+            movement: 0.08,
+            spread: 0.58,
+            pressure: 0.20,
+            centroidY: 0.66
+        ))
+        let downwardMotion = engine.process(motionFrame(
+            timestamp: 0.25,
+            handCount: 1,
+            fingertipCount: 5,
+            movement: 0.18,
+            spread: 0.53,
+            pressure: 0.30,
+            centroidY: 0.56
+        ))
+
+        XCTAssertNotEqual(downwardMotion?.kind, .slimeBubble)
+    }
+
     private func sample(timestamp: TimeInterval, xOffset: Double) -> HandPoseSample {
         let wrist = NormalizedPosePoint(x: 0.45 + xOffset, y: 0.45, confidence: 1)
         let joints: [HandJointName: NormalizedPosePoint] = [
@@ -109,14 +166,15 @@ final class HandMotionAnalyzerTests: XCTestCase {
         fingertipCount: Int,
         movement: Double,
         spread: Double,
-        pressure: Double
+        pressure: Double,
+        centroidY: Double = 0.5
     ) -> HandMotionFrame {
         HandMotionFrame(
             timestamp: timestamp,
             handCount: handCount,
             fingertipCount: fingertipCount,
             centroidX: 0.5,
-            centroidY: 0.5,
+            centroidY: centroidY,
             movement: movement,
             spread: spread,
             openness: 0.2,

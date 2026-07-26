@@ -17,6 +17,7 @@ final class TrackpadInteractionState: ObservableObject {
     @Published private(set) var movement: Double = 0
     @Published private(set) var spread: Double = 0
     @Published private(set) var liveIntensity: Double = 0
+    @Published private(set) var isBarPungReady = false
     @Published private(set) var touchPoints: [TrackpadTouchPoint] = []
     @Published private(set) var lastGestureLabel: String = "None"
     @Published private(set) var lastGestureDate: Date?
@@ -83,6 +84,7 @@ final class TrackpadInteractionState: ObservableObject {
         self.movement = movement.clamped(to: 0.0...1.0)
         self.spread = spread.clamped(to: 0.0...1.0)
         self.liveIntensity = evaluation.liveIntensity
+        self.isBarPungReady = engine.isBarPungPrepared
         self.touchPoints = touchPoints
         self.lastSampleDate = date
         self.maxFingerCount = max(maxFingerCount, safeFingerCount)
@@ -169,6 +171,7 @@ final class TrackpadInteractionState: ObservableObject {
         movement = 0
         spread = 0
         liveIntensity = 0
+        isBarPungReady = false
         touchPoints = []
     }
 

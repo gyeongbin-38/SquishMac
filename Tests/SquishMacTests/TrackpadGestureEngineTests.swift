@@ -276,6 +276,82 @@ final class TrackpadGestureEngineTests: XCTestCase {
         XCTAssertEqual(stretch.trigger?.soundPackIDOverride, "clear-video-3-stretch")
     }
 
+    func testVideo3BarPungRequiresWidePreparationThenClosingPress() {
+        let engine = TrackpadGestureEngine()
+
+        _ = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.34,
+            movement: 0.08,
+            spread: 0.72,
+            timestamp: 1,
+            interactionRules: .clearVideo3
+        )
+        let seal = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.52,
+            movement: 0.18,
+            spread: 0.48,
+            timestamp: 1.35,
+            interactionRules: .clearVideo3
+        )
+
+        XCTAssertEqual(seal.trigger?.kind, .slimeBubble)
+        XCTAssertEqual(seal.trigger?.label, "Bar-pung seal")
+        XCTAssertEqual(seal.trigger?.soundPackIDOverride, "clear-video-3-stretch")
+        XCTAssertEqual(seal.trigger?.volumeScale ?? 0, 0.86, accuracy: 0.0001)
+    }
+
+    func testVideo3BarPungDoesNotSealWithoutPressure() {
+        let engine = TrackpadGestureEngine()
+
+        _ = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.34,
+            movement: 0.08,
+            spread: 0.72,
+            timestamp: 1,
+            interactionRules: .clearVideo3
+        )
+        let closingWithoutPressure = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.12,
+            movement: 0.18,
+            spread: 0.48,
+            timestamp: 1.35,
+            interactionRules: .clearVideo3
+        )
+
+        XCTAssertNotEqual(closingWithoutPressure.trigger?.kind, .slimeBubble)
+    }
+
+    func testStandardSlimeDoesNotEnableBarPungStateMachine() {
+        let engine = TrackpadGestureEngine()
+
+        _ = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.34,
+            movement: 0.08,
+            spread: 0.72,
+            timestamp: 1
+        )
+        let closingPress = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.52,
+            movement: 0.18,
+            spread: 0.48,
+            timestamp: 1.35
+        )
+
+        XCTAssertNotEqual(closingPress.trigger?.kind, .slimeBubble)
+    }
+
     func testDoctorPuttyFailureRequiresMovementResetBeforeRepeating() {
         let engine = TrackpadGestureEngine()
 

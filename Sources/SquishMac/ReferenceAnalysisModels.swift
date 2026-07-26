@@ -81,6 +81,7 @@ enum ReferenceGestureKind: String, CaseIterable, Codable {
     case slimePress
     case slimeKnead
     case slimeStretch
+    case slimeBubble
     case slimeStretchFailure
     case slimeRelease
     case waxPress
@@ -95,6 +96,8 @@ enum ReferenceGestureKind: String, CaseIterable, Codable {
             return "Slime knead"
         case .slimeStretch:
             return "Slime stretch"
+        case .slimeBubble:
+            return "Slime bar-pung"
         case .slimeStretchFailure:
             return "Stretch too fast"
         case .slimeRelease:
@@ -114,6 +117,8 @@ enum ReferenceGestureKind: String, CaseIterable, Codable {
             return .slimeKnead
         case .slimeStretch:
             return .slimeStretch
+        case .slimeBubble:
+            return .slimeBubble
         case .slimeStretchFailure:
             return .slimeStretchFailure
         case .slimeRelease:

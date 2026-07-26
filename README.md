@@ -21,7 +21,8 @@ SquishMac is a Swift macOS menu bar sound toy built around a Force Touch trackpa
 - Separate material profiles and dataset directories for clear, glossy, butter, cloud, jelly, icee, floam, crunchy, and wax-shell slime.
 - Profile-driven interaction rules so each slime can define its own touch style, thresholds, and material-specific sounds.
 - Doctor Putty profile with a fast-stretch failure state and two original snap variations extracted from video 2.
-- Video 3 clear-slime profile with 40 cleaned gesture-aligned sounds, split into knead/press and stretch packs.
+- Video 3 clear-slime profile with 40 cleaned gesture-aligned sounds, split into knead/press and stretch packs and played at a profile-specific 86% gain.
+- Profile-specific bar-pung recognition: two-hand wide-sheet to downward-seal motion on camera, and a five-to-six-finger wide-spread to closing-pressure proxy on trackpad.
 - Per-material camera thresholds and trackpad response recommendations instead of sharing one input scale.
 - Live camera slime and wax interaction with on-device two-hand tracking and a virtual material overlay.
 - Optional MacBook impact detection, sensitivity, cooldown, custom sound folders, launch at login, and a daily play counter.
@@ -38,6 +39,8 @@ AppKit exposes touch identity and normalized touch position separately from the 
 - a stateful gesture model that applies response and sound-density tuning.
 
 This is aggregate interaction pressure, not an independent pressure value for every finger. Real Force Touch hardware testing is required to tune how pressure events line up with six simultaneous touches and two-thumb input.
+
+For `Clear Slime (Video 3)`, bar-pung on the trackpad is intentionally an input proxy: spread five or six fingers wide until `Bar-pung ready` appears, then close the spread while adding pressure within 1.25 seconds. The trackpad cannot observe a real vertical slime sheet or trapped air, so camera mode is the closer representation of the physical action.
 
 The in-app gesture guard can consume gestures delivered to the Squish Surface. macOS may recognize Mission Control or desktop switching before an app receives those events, so disable the relevant options in `System Settings > Trackpad > More Gestures` during full-surface testing if Spaces still changes.
 
@@ -71,7 +74,7 @@ These files are intended for hardware calibration and later comparison with owne
 
 Choose or create a material profile before analysis. Completed analyses are automatically stored under `Application Support/SquishMac/ReferenceDatasets/<material-profile>/<dataset-id>/analysis.json`, keeping tuning and sound mappings separate for each slime.
 
-`Open Camera Slime...` uses the built-in camera and Apple's on-device Vision hand-pose request. Select a slime profile to apply its camera-specific gesture thresholds and sound mappings. Camera frames are not uploaded or saved by SquishMac. The camera pressure value is a visual estimate derived from hand compression and pinch, not physical Force Touch pressure.
+`Open Camera Slime...` uses the built-in camera and Apple's on-device Vision hand-pose request. Select a slime profile to apply its camera-specific gesture thresholds and sound mappings. With `Clear Slime (Video 3)`, holding two open hands far enough apart arms bar-pung; moving both hands quickly downward while keeping the sheet broad seals it. Camera frames are not uploaded or saved by SquishMac. The camera pressure value is a visual estimate derived from hand compression and pinch, not physical Force Touch pressure.
 
 To inspect a completed analysis on Windows, start the local browser preview:
 

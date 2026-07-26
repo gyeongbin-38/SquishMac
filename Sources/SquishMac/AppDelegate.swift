@@ -306,7 +306,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             kind: trigger.kind,
             intensity: trigger.intensity,
             masterVolume: settings.masterVolume,
-            soundPackIDOverride: trigger.soundPackIDOverride
+            soundPackIDOverride: trigger.soundPackIDOverride,
+            volumeScale: trigger.volumeScale
         )
         if didPlay {
             settings.recordPlay()
@@ -431,7 +432,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch kind {
         case .waxCrack, .slimeStretchFailure:
             pattern = .levelChange
-        case .waxCrush:
+        case .waxCrush, .slimeBubble:
             pattern = .generic
         case .slimeKnead, .slimeStretch, .slimeRelease, .waxPress:
             return
