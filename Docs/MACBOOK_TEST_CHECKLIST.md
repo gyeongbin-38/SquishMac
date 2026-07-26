@@ -37,6 +37,9 @@ Confirm that all tests pass, `SquishMac.app` launches, the icon appears in the m
 
 - Place three to six fingers down gradually; confirm knead sounds begin without a burst of repeated sounds.
 - Move four or more fingers across the pad; confirm stretch sounds differ from knead sounds.
+- Select `Doctor Putty (Pastel Pink)`, move four to six fingers slowly, and confirm normal stretch sounds.
+- With Doctor Putty still selected, exceed movement `0.72`; confirm one failure snap plays and does not repeat until movement falls below `0.38`.
+- Select another slime and repeat the fast movement; confirm it remains a normal stretch without the Doctor Putty snap.
 - Hold all fingers still; confirm sound does not repeat continuously without movement or pressure change.
 - Lift only one or two fingers; confirm the release sound does not fire.
 - Lift the final fingers; confirm exactly one release sound fires.

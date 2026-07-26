@@ -61,6 +61,7 @@ final class TrackpadInteractionState: ObservableObject {
         spread: Double,
         touchPoints: [TrackpadTouchPoint],
         tuning: TrackpadTuning = .standard,
+        interactionRules: SlimeInteractionRules = .standard,
         isPressureEvent: Bool = false,
         date: Date = Date()
     ) -> TrackpadGestureTrigger? {
@@ -72,7 +73,8 @@ final class TrackpadInteractionState: ObservableObject {
             movement: movement,
             spread: spread,
             timestamp: date.timeIntervalSinceReferenceDate,
-            tuning: tuning
+            tuning: tuning,
+            interactionRules: interactionRules
         )
 
         self.fingerCount = safeFingerCount
@@ -114,8 +116,16 @@ final class TrackpadInteractionState: ObservableObject {
         return evaluation.trigger
     }
 
-    func startRecording(tuning: TrackpadTuning, at date: Date = Date()) {
-        recorder.start(tuning: tuning, at: date)
+    func startRecording(
+        tuning: TrackpadTuning,
+        materialProfileID: String? = nil,
+        at date: Date = Date()
+    ) {
+        recorder.start(
+            tuning: tuning,
+            materialProfileID: materialProfileID,
+            at: date
+        )
         syncRecordingState()
     }
 

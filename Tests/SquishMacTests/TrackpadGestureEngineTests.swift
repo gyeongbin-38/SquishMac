@@ -211,4 +211,84 @@ final class TrackpadGestureEngineTests: XCTestCase {
         XCTAssertNil(standard.trigger)
         XCTAssertEqual(responsive.trigger?.kind, .waxPress)
     }
+
+    func testDoctorPuttyFastStretchTriggersMaterialSpecificFailure() {
+        let engine = TrackpadGestureEngine()
+
+        let failure = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.42,
+            movement: 0.82,
+            spread: 0.75,
+            timestamp: 1,
+            interactionRules: .doctorPutty
+        )
+
+        XCTAssertEqual(failure.trigger?.kind, .slimeStretchFailure)
+        XCTAssertEqual(failure.trigger?.soundPackIDOverride, "doctor-putty-failure")
+        XCTAssertGreaterThanOrEqual(failure.trigger?.intensity ?? 0, 0.7)
+    }
+
+    func testGenericSlimeDoesNotUseDoctorPuttyFailureRule() {
+        let engine = TrackpadGestureEngine()
+
+        let stretch = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.42,
+            movement: 0.82,
+            spread: 0.75,
+            timestamp: 1,
+            interactionRules: .standard
+        )
+
+        XCTAssertEqual(stretch.trigger?.kind, .slimeStretch)
+        XCTAssertNil(stretch.trigger?.soundPackIDOverride)
+    }
+
+    func testDoctorPuttyFailureRequiresMovementResetBeforeRepeating() {
+        let engine = TrackpadGestureEngine()
+
+        let first = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.42,
+            movement: 0.82,
+            spread: 0.75,
+            timestamp: 1,
+            interactionRules: .doctorPutty
+        )
+        let held = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.40,
+            movement: 0.90,
+            spread: 0.80,
+            timestamp: 2,
+            interactionRules: .doctorPutty
+        )
+        _ = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.35,
+            movement: 0.20,
+            spread: 0.72,
+            timestamp: 2.2,
+            interactionRules: .doctorPutty
+        )
+        let next = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 6,
+            pressure: 0.42,
+            movement: 0.84,
+            spread: 0.82,
+            timestamp: 3,
+            interactionRules: .doctorPutty
+        )
+
+        XCTAssertEqual(first.trigger?.kind, .slimeStretchFailure)
+        XCTAssertNotEqual(held.trigger?.kind, .slimeStretchFailure)
+        XCTAssertEqual(next.trigger?.kind, .slimeStretchFailure)
+    }
 }

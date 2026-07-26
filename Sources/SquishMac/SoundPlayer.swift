@@ -29,6 +29,10 @@ enum AudioResponseCurve {
             packID = "slime"
             rate = Float(0.64 + safeIntensity * 0.26)
             volumeBoost = -0.04
+        case .slimeStretchFailure:
+            packID = "pop"
+            rate = Float(0.94 + safeIntensity * 0.18)
+            volumeBoost = 0.08
         case .slimeRelease:
             packID = "pop"
             rate = Float(0.92 + safeIntensity * 0.24)
@@ -149,7 +153,8 @@ final class SoundPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
     func playInteractionSound(
         kind: TrackpadSoundKind,
         intensity: Double,
-        masterVolume: Double = 1.0
+        masterVolume: Double = 1.0,
+        soundPackIDOverride: String? = nil
     ) -> Bool {
         let safeIntensity = intensity.clamped(to: 0.0...1.0)
         let safeMasterVolume = masterVolume.clamped(to: 0.0...1.0)
@@ -158,11 +163,12 @@ final class SoundPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
             intensity: safeIntensity,
             masterVolume: safeMasterVolume
         )
-        let urls = packManager.soundURLs(for: response.packID, customDirectoryPath: nil)
+        let primaryPackID = soundPackIDOverride ?? response.packID
+        let urls = packManager.soundURLs(for: primaryPackID, customDirectoryPath: nil)
         let rateVariation = Float.random(in: -0.025...0.025)
         let didPlayPrimary = playRandomURL(
             urls,
-            key: response.packID,
+            key: primaryPackID,
             volume: response.volume,
             rate: (response.rate + rateVariation).clamped(to: 0.5...1.5)
         )

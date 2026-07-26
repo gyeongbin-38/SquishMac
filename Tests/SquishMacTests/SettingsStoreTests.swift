@@ -53,6 +53,7 @@ final class SettingsStoreTests: XCTestCase {
         store.trackpadMode = .twoThumbWaxCrush
         store.trackpadResponse = 1.4
         store.trackpadSoundDensity = 1.6
+        store.selectedSlimeMaterialProfileID = "clear"
         store.isHapticFeedbackEnabled = false
         store.isSystemGestureGuardEnabled = false
 
@@ -61,8 +62,25 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(restored.trackpadMode, .twoThumbWaxCrush)
         XCTAssertEqual(restored.trackpadResponse, 1.4, accuracy: 0.0001)
         XCTAssertEqual(restored.trackpadSoundDensity, 1.6, accuracy: 0.0001)
+        XCTAssertEqual(restored.selectedSlimeMaterialProfileID, "clear")
         XCTAssertFalse(restored.isHapticFeedbackEnabled)
         XCTAssertFalse(restored.isSystemGestureGuardEnabled)
+    }
+
+    func testUnknownSlimeProfileFallsBackToDoctorPutty() {
+        let defaults = makeDefaults()
+        defaults.set("missing-slime", forKey: "settings.selectedSlimeMaterialProfileID")
+
+        let store = SettingsStore(defaults: defaults)
+
+        XCTAssertEqual(
+            store.selectedSlimeMaterialProfileID,
+            SlimeMaterialProfile.defaultSlimeProfileID
+        )
+        XCTAssertEqual(
+            store.selectedSlimeMaterialProfile.interactionRules,
+            SlimeInteractionRules.doctorPutty
+        )
     }
 
     private func makeDefaults() -> UserDefaults {

@@ -35,6 +35,11 @@ Each profile is stored separately under:
 
 Built-in categories include clear, thick and glossy, butter/clay, cloud, jelly, icee, floam/bead, crunchy, and wax-shell slime. Custom profiles allow two slimes in the same category to retain different tuning and sound behavior.
 
+Specific products can refine a broad category with profile-only interaction
+rules. The Doctor Putty profile remains in the butter/clay category but defines
+a fast-stretch failure threshold, its own failure sound pack, and controlled
+stretch guidance. Those rules do not affect other butter/clay slimes.
+
 For command-line or collaborative analysis, place local footage under `ReferenceVideos/` and exported data under `AnalysisOutput/`. Both directories are ignored by Git so personal footage is not pushed to the public repository.
 
 ## Detailed Offline Extraction

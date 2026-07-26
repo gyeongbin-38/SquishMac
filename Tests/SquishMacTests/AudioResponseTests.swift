@@ -12,6 +12,14 @@ final class AudioResponseTests: XCTestCase {
             "pop"
         )
         XCTAssertEqual(
+            AudioResponseCurve.interaction(
+                kind: .slimeStretchFailure,
+                intensity: 0.5,
+                masterVolume: 1
+            ).packID,
+            "pop"
+        )
+        XCTAssertEqual(
             AudioResponseCurve.interaction(kind: .waxPress, intensity: 0.5, masterVolume: 1).packID,
             "squishy"
         )

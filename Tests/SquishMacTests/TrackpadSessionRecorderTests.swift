@@ -7,7 +7,11 @@ final class TrackpadSessionRecorderTests: XCTestCase {
         let start = Date(timeIntervalSince1970: 1_000)
         let trigger = TrackpadGestureTrigger(kind: .slimeKnead, intensity: 0.7, label: "Knead")
 
-        recorder.start(tuning: TrackpadTuning(response: 1.2, soundDensity: 0.8), at: start)
+        recorder.start(
+            tuning: TrackpadTuning(response: 1.2, soundDensity: 0.8),
+            materialProfileID: "doctor-putty-pink",
+            at: start
+        )
         recorder.append(
             mode: .sixFingerSlime,
             fingerCount: 6,
@@ -25,7 +29,8 @@ final class TrackpadSessionRecorderTests: XCTestCase {
         let data = try recorder.encodedSession()
         let session = try TrackpadSessionRecorder.decoder().decode(TrackpadSessionFile.self, from: data)
 
-        XCTAssertEqual(session.schemaVersion, 1)
+        XCTAssertEqual(session.schemaVersion, 2)
+        XCTAssertEqual(session.materialProfileID, "doctor-putty-pink")
         XCTAssertEqual(session.samples.count, 1)
         XCTAssertEqual(session.events.count, 1)
         XCTAssertEqual(session.samples[0].relativeTime, 0.25, accuracy: 0.0001)

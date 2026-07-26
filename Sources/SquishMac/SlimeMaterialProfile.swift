@@ -42,6 +42,103 @@ enum SlimeMaterialCategory: String, CaseIterable, Identifiable, Codable {
     var referenceMode: ReferenceMaterialMode {
         self == .waxShell ? .wax : .slime
     }
+
+    var defaultInteractionRules: SlimeInteractionRules {
+        switch self {
+        case .butterClay:
+            return SlimeInteractionRules(
+                style: .densePutty,
+                minimumFingerCount: 3,
+                stretchMovementThreshold: 0.18,
+                interactionSummary: "Knead with steady pressure and stretch at a controlled speed."
+            )
+        case .cloud:
+            return SlimeInteractionRules(
+                style: .softDrizzle,
+                minimumFingerCount: 3,
+                stretchMovementThreshold: 0.14,
+                interactionSummary: "Use broad, slow pulls and light pressure."
+            )
+        case .floam, .crunchy:
+            return SlimeInteractionRules(
+                style: .textured,
+                minimumFingerCount: 3,
+                stretchMovementThreshold: 0.20,
+                interactionSummary: "Press and fold to emphasize the textured inclusions."
+            )
+        case .waxShell:
+            return .standard
+        case .clear, .thickGlossy, .jelly, .icee, .other:
+            return .standard
+        }
+    }
+}
+
+enum SlimeInteractionStyle: String, Codable, Hashable {
+    case elastic
+    case densePutty
+    case softDrizzle
+    case textured
+}
+
+struct SlimeInteractionRules: Codable, Equatable, Hashable {
+    static let standard = SlimeInteractionRules(
+        style: .elastic,
+        minimumFingerCount: 3,
+        stretchMovementThreshold: 0.16,
+        interactionSummary: "Knead, press, and stretch with three to six fingers."
+    )
+
+    static let doctorPutty = SlimeInteractionRules(
+        style: .densePutty,
+        minimumFingerCount: 3,
+        stretchMovementThreshold: 0.16,
+        fastStretchFailureMovementThreshold: 0.72,
+        fastStretchFailureResetThreshold: 0.38,
+        fastStretchFailureCooldown: 0.90,
+        failureSoundPackID: "doctor-putty-failure",
+        failureGestureLabel: "Doctor Putty snapped: stretch too fast",
+        interactionSummary: "Stretch slowly. Pulling too fast breaks the putty and plays a failure snap."
+    )
+
+    let style: SlimeInteractionStyle
+    let minimumFingerCount: Int
+    let stretchMovementThreshold: Double
+    let fastStretchFailureMovementThreshold: Double?
+    let fastStretchFailureResetThreshold: Double
+    let fastStretchFailureCooldown: TimeInterval
+    let failureSoundPackID: String?
+    let failureGestureLabel: String
+    let interactionSummary: String
+
+    init(
+        style: SlimeInteractionStyle,
+        minimumFingerCount: Int,
+        stretchMovementThreshold: Double,
+        fastStretchFailureMovementThreshold: Double? = nil,
+        fastStretchFailureResetThreshold: Double = 0.38,
+        fastStretchFailureCooldown: TimeInterval = 0.90,
+        failureSoundPackID: String? = nil,
+        failureGestureLabel: String = "Stretch too fast",
+        interactionSummary: String
+    ) {
+        let safeStretchThreshold = min(max(stretchMovementThreshold, 0.01), 1)
+        let safeFailureThreshold = fastStretchFailureMovementThreshold.map {
+            min(max($0, safeStretchThreshold), 1)
+        }
+        self.style = style
+        self.minimumFingerCount = max(1, minimumFingerCount)
+        self.stretchMovementThreshold = safeStretchThreshold
+        self.fastStretchFailureMovementThreshold = safeFailureThreshold
+        self.fastStretchFailureResetThreshold = min(
+            max(fastStretchFailureResetThreshold, 0),
+            safeFailureThreshold ?? 1
+        )
+        self.fastStretchFailureCooldown = max(0.1, fastStretchFailureCooldown)
+        self.failureSoundPackID = failureSoundPackID
+        self.failureGestureLabel = failureGestureLabel
+        self.interactionSummary = interactionSummary
+    }
 }
 
 struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
@@ -52,14 +149,53 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
     let coreTexture: String
     let notes: String
     let isBuiltIn: Bool
+    let interactionRules: SlimeInteractionRules?
+
+    init(
+        id: String,
+        displayName: String,
+        category: SlimeMaterialCategory,
+        outerTexture: String,
+        coreTexture: String,
+        notes: String,
+        isBuiltIn: Bool,
+        interactionRules: SlimeInteractionRules? = nil
+    ) {
+        self.id = id
+        self.displayName = displayName
+        self.category = category
+        self.outerTexture = outerTexture
+        self.coreTexture = coreTexture
+        self.notes = notes
+        self.isBuiltIn = isBuiltIn
+        self.interactionRules = interactionRules
+    }
 
     var referenceMode: ReferenceMaterialMode {
         category.referenceMode
     }
 
+    var effectiveInteractionRules: SlimeInteractionRules {
+        interactionRules ?? category.defaultInteractionRules
+    }
+
+    static let defaultSlimeProfileID = "doctor-putty-pink"
+
+    static var runtimeSlimeProfiles: [SlimeMaterialProfile] {
+        builtIn.filter { $0.category != .waxShell }
+    }
+
     static let builtIn: [SlimeMaterialProfile] = [
         profile("clear", "Clear Slime", .clear, core: "clear elastic gel"),
         profile("thick-glossy", "Thick & Glossy Slime", .thickGlossy, core: "dense glossy slime"),
+        profile(
+            "doctor-putty-pink",
+            "Doctor Putty (Pastel Pink)",
+            .butterClay,
+            core: "dense stretchy low-gloss putty",
+            notes: "Video 2 reference. Fast stretching causes a material-specific failure snap.",
+            interactionRules: .doctorPutty
+        ),
         profile("butter-clay", "Butter / Clay Slime", .butterClay, core: "soft matte clay slime"),
         profile("cloud", "Cloud Slime", .cloud, core: "fluffy drizzling cloud slime"),
         profile("jelly", "Jelly Slime", .jelly, core: "wet jelly-textured slime"),
@@ -89,7 +225,8 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
         _ category: SlimeMaterialCategory,
         outer: String = "",
         core: String,
-        notes: String = ""
+        notes: String = "",
+        interactionRules: SlimeInteractionRules? = nil
     ) -> SlimeMaterialProfile {
         SlimeMaterialProfile(
             id: id,
@@ -98,7 +235,8 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
             outerTexture: outer,
             coreTexture: core,
             notes: notes,
-            isBuiltIn: true
+            isBuiltIn: true,
+            interactionRules: interactionRules
         )
     }
 }

@@ -66,4 +66,26 @@ final class ReferenceAnalysisTests: XCTestCase {
         XCTAssertEqual(decoded, analysis)
         XCTAssertEqual(decoded.gestureEvents.first?.audioEventIndex, 0)
     }
+
+    func testDoctorPuttyKeepsMaterialSpecificInteractionRules() throws {
+        let profile = try XCTUnwrap(
+            SlimeMaterialProfile.builtIn.first { $0.id == "doctor-putty-pink" }
+        )
+
+        XCTAssertEqual(profile.category, .butterClay)
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.fastStretchFailureMovementThreshold,
+            0.72
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.failureSoundPackID,
+            "doctor-putty-failure"
+        )
+        XCTAssertNil(
+            SlimeMaterialProfile.builtIn
+                .first { $0.id == "butter-clay" }?
+                .effectiveInteractionRules
+                .fastStretchFailureMovementThreshold
+        )
+    }
 }

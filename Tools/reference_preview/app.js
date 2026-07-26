@@ -16,6 +16,8 @@ const labels = {
   wet_friction: "젖은 마찰",
   micro_crackle: "미세 크랙",
   soft_crackle: "부드러운 크래클",
+  putty_soft_crackle: "퍼티 부드러운 크래클",
+  stretch_too_fast_failure: "과속 늘리기 실패",
   slime_snap: "슬라임 스냅",
   micro_pop: "미세 팝",
   bubble_cluster: "버블 연속음",
@@ -150,12 +152,17 @@ function populateSummary() {
   const { dataset } = state;
   const material = dataset.material_profile || {};
   const summary = dataset.summary || {};
-
-  elements.materialName.textContent = material.display_name || material.id || "분류 미정";
-  elements.materialDescription.textContent = [
+  const interactionRules = material.interaction_rules || {};
+  const textureDescription = [
     material.outer_texture,
     material.core_texture,
   ].filter(Boolean).join(" + ") || material.notes || "재질 설명 없음";
+  const failureThreshold = interactionRules.fast_stretch_failure_movement_threshold;
+
+  elements.materialName.textContent = material.display_name || material.id || "분류 미정";
+  elements.materialDescription.textContent = failureThreshold == null
+    ? textureDescription
+    : `${textureDescription} · 과속 늘리기 실패 기준 ${Math.round(failureThreshold * 100)}%`;
   elements.durationStat.textContent = formatClock(state.duration);
   elements.coverageStat.textContent = formatPercent(summary.hand_detection_coverage || 0);
   elements.gestureStat.textContent = `${summary.gesture_event_count || state.gestures.length}개`;

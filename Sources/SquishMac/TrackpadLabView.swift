@@ -21,9 +21,14 @@ struct TrackpadLabView: View {
                 }
                 .pickerStyle(.segmented)
 
+                if state.mode == .sixFingerSlime {
+                    materialProfilePicker
+                }
+
                 TrackpadTouchSurface(
                     state: state,
                     tuning: settings.trackpadTuning,
+                    interactionRules: settings.selectedSlimeMaterialProfile.effectiveInteractionRules,
                     onGesture: onGesture
                 )
                 .frame(height: 300)
@@ -45,12 +50,15 @@ struct TrackpadLabView: View {
             }
             .padding(20)
         }
-        .frame(width: 620, height: 740)
+        .frame(width: 620, height: 790)
         .onAppear {
             state.mode = settings.trackpadMode
         }
         .onChange(of: settings.trackpadMode) { newMode in
             state.mode = newMode
+        }
+        .onChange(of: settings.selectedSlimeMaterialProfileID) { _ in
+            state.cancelCurrentGesture()
         }
     }
 
@@ -83,6 +91,22 @@ struct TrackpadLabView: View {
 
             Toggle("On", isOn: $settings.isEnabled)
                 .toggleStyle(.switch)
+        }
+    }
+
+    private var materialProfilePicker: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Picker("Slime material", selection: $settings.selectedSlimeMaterialProfileID) {
+                ForEach(SlimeMaterialProfile.runtimeSlimeProfiles) { profile in
+                    Text(profile.displayName).tag(profile.id)
+                }
+            }
+            .pickerStyle(.menu)
+
+            Text(settings.selectedSlimeMaterialProfile.effectiveInteractionRules.interactionSummary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -187,7 +211,12 @@ struct TrackpadLabView: View {
                     .buttonStyle(.borderedProminent)
                 } else {
                     Button("Record") {
-                        state.startRecording(tuning: settings.trackpadTuning)
+                        state.startRecording(
+                            tuning: settings.trackpadTuning,
+                            materialProfileID: state.mode == .sixFingerSlime
+                                ? settings.selectedSlimeMaterialProfileID
+                                : nil
+                        )
                     }
                 }
 
@@ -246,12 +275,14 @@ struct TrackpadLabView: View {
 private struct TrackpadTouchSurface: NSViewRepresentable {
     let state: TrackpadInteractionState
     let tuning: TrackpadTuning
+    let interactionRules: SlimeInteractionRules
     let onGesture: (TrackpadGestureTrigger) -> Void
 
     func makeNSView(context: Context) -> TrackpadTouchNSView {
         let view = TrackpadTouchNSView()
         view.state = state
         view.tuning = tuning
+        view.interactionRules = interactionRules
         view.onGesture = onGesture
         view.configurePressure(for: state.mode)
         return view
@@ -260,6 +291,7 @@ private struct TrackpadTouchSurface: NSViewRepresentable {
     func updateNSView(_ nsView: TrackpadTouchNSView, context: Context) {
         nsView.state = state
         nsView.tuning = tuning
+        nsView.interactionRules = interactionRules
         nsView.onGesture = onGesture
         nsView.configurePressure(for: state.mode)
         nsView.needsDisplay = true
@@ -269,6 +301,7 @@ private struct TrackpadTouchSurface: NSViewRepresentable {
 private final class TrackpadTouchNSView: NSView {
     var state: TrackpadInteractionState?
     var tuning: TrackpadTuning = .standard
+    var interactionRules: SlimeInteractionRules = .standard
     var onGesture: ((TrackpadGestureTrigger) -> Void)?
 
     private var inputAccumulator = TrackpadInputAccumulator()
@@ -471,6 +504,7 @@ private final class TrackpadTouchNSView: NSView {
             spread: frame.spread,
             touchPoints: frame.touchPoints,
             tuning: tuning,
+            interactionRules: interactionRules,
             isPressureEvent: isPressureEvent
         )
         needsDisplay = true

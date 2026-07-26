@@ -5,12 +5,20 @@ struct SoundPack: Identifiable, Hashable {
     let title: String
     let folderName: String
     let isCustom: Bool
+    let isUserSelectable: Bool
 
-    init(id: String, title: String, folderName: String, isCustom: Bool = false) {
+    init(
+        id: String,
+        title: String,
+        folderName: String,
+        isCustom: Bool = false,
+        isUserSelectable: Bool = true
+    ) {
         self.id = id
         self.title = title
         self.folderName = folderName
         self.isCustom = isCustom
+        self.isUserSelectable = isUserSelectable
     }
 }
 
@@ -24,7 +32,13 @@ final class SoundPackManager {
         SoundPack(id: "slime", title: "Slime Pack", folderName: "slime"),
         SoundPack(id: "squishy", title: "Squishy Pack", folderName: "squishy"),
         SoundPack(id: "pop", title: "Pop Pack", folderName: "pop"),
-        SoundPack(id: "wax", title: "Wax Squish Pack", folderName: "wax")
+        SoundPack(id: "wax", title: "Wax Squish Pack", folderName: "wax"),
+        SoundPack(
+            id: "doctor-putty-failure",
+            title: "Doctor Putty Failure",
+            folderName: "doctor-putty-failure",
+            isUserSelectable: false
+        )
     ]
 
     static let customPack = SoundPack(
@@ -35,7 +49,8 @@ final class SoundPackManager {
     )
 
     func availablePacks(includeCustom: Bool = true) -> [SoundPack] {
-        includeCustom ? Self.packs + [Self.customPack] : Self.packs
+        let selectablePacks = Self.packs.filter(\.isUserSelectable)
+        return includeCustom ? selectablePacks + [Self.customPack] : selectablePacks
     }
 
     func pack(for id: String) -> SoundPack {

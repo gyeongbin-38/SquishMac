@@ -274,7 +274,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             )
 
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 620, height: 740),
+                contentRect: NSRect(x: 0, y: 0, width: 620, height: 790),
                 styleMask: [.titled, .closable, .miniaturizable],
                 backing: .buffered,
                 defer: false
@@ -305,7 +305,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let didPlay = soundPlayer.playInteractionSound(
             kind: trigger.kind,
             intensity: trigger.intensity,
-            masterVolume: settings.masterVolume
+            masterVolume: settings.masterVolume,
+            soundPackIDOverride: trigger.soundPackIDOverride
         )
         if didPlay {
             settings.recordPlay()
@@ -428,7 +429,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let pattern: NSHapticFeedbackManager.FeedbackPattern
         switch kind {
-        case .waxCrack:
+        case .waxCrack, .slimeStretchFailure:
             pattern = .levelChange
         case .waxCrush:
             pattern = .generic

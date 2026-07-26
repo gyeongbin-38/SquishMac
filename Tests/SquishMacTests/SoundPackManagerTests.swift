@@ -24,6 +24,21 @@ final class SoundPackManagerTests: XCTestCase {
         XCTAssertTrue(urls.isEmpty)
     }
 
+    func testDoctorPuttyFailurePackIsProfileOnly() {
+        let manager = SoundPackManager()
+
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "doctor-putty-failure",
+                customDirectoryPath: nil
+            ),
+            3
+        )
+        XCTAssertFalse(
+            manager.availablePacks().contains { $0.id == "doctor-putty-failure" }
+        )
+    }
+
     func testCustomFolderSearchesRecursivelyForSupportedAudioFiles() throws {
         let manager = SoundPackManager()
         let root = FileManager.default.temporaryDirectory

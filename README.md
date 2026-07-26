@@ -19,6 +19,8 @@ SquishMac is a Swift macOS menu bar sound toy built around a Force Touch trackpa
 - Versioned JSON recording of trackpad samples and recognized gesture events.
 - Local reference-video analysis with Vision fingertip tracking, audio-onset detection, gesture/audio alignment, and learned tuning suggestions.
 - Separate material profiles and dataset directories for clear, glossy, butter, cloud, jelly, icee, floam, crunchy, and wax-shell slime.
+- Profile-driven interaction rules so each slime can define its own touch style, thresholds, and material-specific sounds.
+- Doctor Putty profile with a fast-stretch failure state and three original snap variations extracted from video 2.
 - Live camera slime and wax interaction with on-device two-hand tracking and a virtual material overlay.
 - Optional MacBook impact detection, sensitivity, cooldown, custom sound folders, launch at login, and a daily play counter.
 - Generated placeholder WAV files for Bubble, Slime, Squishy, Pop, and Wax packs.
@@ -57,7 +59,7 @@ open .build/SquishMac.app
 
 ## Recording Sessions
 
-The Squish Surface can record up to 36,000 input samples and export a JSON file. Each sample contains relative time, mode, finger count, pressure, Force Touch stage, movement, spread, intensity, and normalized touch coordinates. Recognized sound gestures are stored as a separate event list.
+The Squish Surface can record up to 36,000 input samples and export a JSON file. Each session stores the selected material profile ID. Every sample contains relative time, mode, finger count, pressure, Force Touch stage, movement, spread, intensity, and normalized touch coordinates. Recognized sound gestures are stored as a separate event list.
 
 These files are intended for hardware calibration and later comparison with owned or licensed reference videos. See [Trackpad recording format](Docs/TRACKPAD_RECORDING_FORMAT.md).
 
@@ -90,9 +92,10 @@ Sources/SquishMac/Resources/Sounds/slime
 Sources/SquishMac/Resources/Sounds/squishy
 Sources/SquishMac/Resources/Sounds/pop
 Sources/SquishMac/Resources/Sounds/wax
+Sources/SquishMac/Resources/Sounds/doctor-putty-failure
 ```
 
-The included sounds are generated development placeholders. Replace them with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
+The general sound packs are generated development placeholders. The Doctor Putty failure pack contains three short clips derived from the user-provided video 2 and is only selected by that material profile. Replace placeholders with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
 
 ## Project Layout
 

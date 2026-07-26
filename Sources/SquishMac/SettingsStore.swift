@@ -58,6 +58,21 @@ final class SettingsStore: ObservableObject {
         didSet { defaults.set(trackpadMode.rawValue, forKey: Keys.trackpadMode) }
     }
 
+    @Published var selectedSlimeMaterialProfileID: String {
+        didSet {
+            let validIDs = Set(SlimeMaterialProfile.runtimeSlimeProfiles.map(\.id))
+            guard validIDs.contains(selectedSlimeMaterialProfileID) else {
+                selectedSlimeMaterialProfileID = SlimeMaterialProfile.defaultSlimeProfileID
+                defaults.set(
+                    SlimeMaterialProfile.defaultSlimeProfileID,
+                    forKey: Keys.selectedSlimeMaterialProfileID
+                )
+                return
+            }
+            defaults.set(selectedSlimeMaterialProfileID, forKey: Keys.selectedSlimeMaterialProfileID)
+        }
+    }
+
     @Published var trackpadResponse: Double {
         didSet {
             let safeValue = trackpadResponse.clamped(to: Self.trackpadResponseRange)
@@ -131,6 +146,11 @@ final class SettingsStore: ObservableObject {
         self.trackpadMode = TrackpadMode(
             rawValue: defaults.string(forKey: Keys.trackpadMode) ?? ""
         ) ?? .sixFingerSlime
+        let storedSlimeProfileID = defaults.string(forKey: Keys.selectedSlimeMaterialProfileID)
+            ?? SlimeMaterialProfile.defaultSlimeProfileID
+        self.selectedSlimeMaterialProfileID = SlimeMaterialProfile.runtimeSlimeProfiles.contains {
+            $0.id == storedSlimeProfileID
+        } ? storedSlimeProfileID : SlimeMaterialProfile.defaultSlimeProfileID
         self.trackpadResponse = (defaults.object(forKey: Keys.trackpadResponse) as? Double ?? 1.0)
             .clamped(to: Self.trackpadResponseRange)
         self.trackpadSoundDensity = (defaults.object(forKey: Keys.trackpadSoundDensity) as? Double ?? 1.0)
@@ -150,6 +170,12 @@ final class SettingsStore: ObservableObject {
 
     var trackpadTuning: TrackpadTuning {
         TrackpadTuning(response: trackpadResponse, soundDensity: trackpadSoundDensity)
+    }
+
+    var selectedSlimeMaterialProfile: SlimeMaterialProfile {
+        SlimeMaterialProfile.runtimeSlimeProfiles.first {
+            $0.id == selectedSlimeMaterialProfileID
+        } ?? SlimeMaterialProfile.runtimeSlimeProfiles[0]
     }
 
     var customSoundDirectoryDisplayName: String {
@@ -193,7 +219,12 @@ final class SettingsStore: ObservableObject {
     }
 
     private static var validSoundPackIDs: Set<String> {
-        Set(SoundPackManager.packs.map(\.id) + [SoundPackManager.customPackID])
+        Set(
+            SoundPackManager.packs
+                .filter(\.isUserSelectable)
+                .map(\.id)
+                + [SoundPackManager.customPackID]
+        )
     }
 
     private static func todayKey(date: Date = Date()) -> String {
@@ -214,6 +245,7 @@ private enum Keys {
     static let cooldown = "settings.cooldown"
     static let masterVolume = "settings.masterVolume"
     static let trackpadMode = "settings.trackpadMode"
+    static let selectedSlimeMaterialProfileID = "settings.selectedSlimeMaterialProfileID"
     static let trackpadResponse = "settings.trackpadResponse"
     static let trackpadSoundDensity = "settings.trackpadSoundDensity"
     static let selectedSoundPackID = "settings.selectedSoundPackID"

@@ -38,6 +38,7 @@ struct TrackpadSessionFile: Codable, Equatable {
     let startedAt: Date
     let endedAt: Date
     let tuning: TrackpadTuning
+    let materialProfileID: String?
     let samples: [TrackpadSessionSample]
     let events: [TrackpadSessionEvent]
 }
@@ -52,6 +53,7 @@ final class TrackpadSessionRecorder {
     private var startedAt: Date?
     private var endedAt: Date?
     private var tuning: TrackpadTuning = .standard
+    private var materialProfileID: String?
 
     init(maximumSampleCount: Int = 36_000) {
         self.maximumSampleCount = max(1, maximumSampleCount)
@@ -61,12 +63,17 @@ final class TrackpadSessionRecorder {
         !samples.isEmpty
     }
 
-    func start(tuning: TrackpadTuning, at date: Date = Date()) {
+    func start(
+        tuning: TrackpadTuning,
+        materialProfileID: String? = nil,
+        at date: Date = Date()
+    ) {
         samples.removeAll(keepingCapacity: true)
         events.removeAll(keepingCapacity: true)
         startedAt = date
         endedAt = nil
         self.tuning = tuning
+        self.materialProfileID = materialProfileID
         isAtCapacity = false
         isRecording = true
     }
@@ -87,6 +94,7 @@ final class TrackpadSessionRecorder {
         events.removeAll(keepingCapacity: false)
         startedAt = nil
         endedAt = nil
+        materialProfileID = nil
     }
 
     func append(
@@ -138,13 +146,14 @@ final class TrackpadSessionRecorder {
         }
 
         let file = TrackpadSessionFile(
-            schemaVersion: 1,
+            schemaVersion: 2,
             appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "development",
             osVersion: ProcessInfo.processInfo.operatingSystemVersionString,
             architecture: Self.architecture,
             startedAt: startedAt,
             endedAt: endedAt ?? Date(),
             tuning: tuning,
+            materialProfileID: materialProfileID,
             samples: samples,
             events: events
         )

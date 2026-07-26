@@ -1,6 +1,6 @@
 # Trackpad Recording Format
 
-SquishMac exports UTF-8 JSON with `schema_version: 1`. Property names use snake case and dates use ISO 8601.
+SquishMac exports UTF-8 JSON with `schema_version: 2`. Property names use snake case and dates use ISO 8601.
 
 ## Top-Level Fields
 
@@ -12,6 +12,7 @@ SquishMac exports UTF-8 JSON with `schema_version: 1`. Property names use snake 
 | `architecture` | Usually `arm64` on supported MacBooks |
 | `started_at`, `ended_at` | Session wall-clock bounds |
 | `tuning` | Response and sound density active at recording start |
+| `material_profile_id` | Selected slime profile, or `null` for non-slime sessions |
 | `samples` | Ordered raw and derived trackpad observations |
 | `events` | Ordered recognized slime and wax gestures |
 
@@ -38,11 +39,16 @@ Each event contains `relative_time`, `kind`, and normalized `intensity`. Current
 ```text
 slimeKnead
 slimeStretch
+slimeStretchFailure
 slimeRelease
 waxPress
 waxCrack
 waxCrush
 ```
+
+`slimeStretchFailure` is emitted only when the selected material profile defines
+a fast-stretch failure threshold. For example, Doctor Putty uses this event for
+the snap produced when the material is pulled too quickly.
 
 ## Reference Video Alignment
 

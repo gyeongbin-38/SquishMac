@@ -69,6 +69,8 @@ enum ReferenceAudioTexture: String, CaseIterable, Codable {
     case wetFriction
     case bubbleCluster
     case suctionPop
+    case puttySoftCrackle
+    case stretchTooFastFailure
     case softCompression
     case brittleCrack
     case crushBody
@@ -79,6 +81,7 @@ enum ReferenceGestureKind: String, CaseIterable, Codable {
     case slimePress
     case slimeKnead
     case slimeStretch
+    case slimeStretchFailure
     case slimeRelease
     case waxPress
     case waxCrack
@@ -92,6 +95,8 @@ enum ReferenceGestureKind: String, CaseIterable, Codable {
             return "Slime knead"
         case .slimeStretch:
             return "Slime stretch"
+        case .slimeStretchFailure:
+            return "Stretch too fast"
         case .slimeRelease:
             return "Slime release"
         case .waxPress:
@@ -109,6 +114,8 @@ enum ReferenceGestureKind: String, CaseIterable, Codable {
             return .slimeKnead
         case .slimeStretch:
             return .slimeStretch
+        case .slimeStretchFailure:
+            return .slimeStretchFailure
         case .slimeRelease:
             return .slimeRelease
         case .waxPress:

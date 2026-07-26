@@ -618,6 +618,7 @@ def extract_tracking_poster(ffmpeg: Path, video: Path, output: Path) -> None:
 def analyze_audio(
     audio_path: Path,
     material_category: str,
+    material_id: str,
 ) -> tuple[np.ndarray, int, list[dict[str, Any]]]:
     samples, sample_rate = sf.read(audio_path, always_2d=False)
     if samples.ndim > 1:
@@ -703,7 +704,11 @@ def analyze_audio(
             centroid=centroid,
             crest=crest,
         )
-        texture = semantic_audio_texture(acoustic_texture, material_category)
+        texture = semantic_audio_texture(
+            acoustic_texture,
+            material_category,
+            material_id,
+        )
         events.append(
             {
                 "id": len(events),
@@ -780,8 +785,17 @@ def classify_audio_texture(
     return "bubble_cluster"
 
 
-def semantic_audio_texture(acoustic_texture: str, material_category: str) -> str:
+def semantic_audio_texture(
+    acoustic_texture: str,
+    material_category: str,
+    material_id: str,
+) -> str:
     category = material_category.lower()
+    if material_id.lower() == "doctor-putty-pink":
+        return {
+            "brittle_crack": "stretch_too_fast_failure",
+            "micro_crackle": "putty_soft_crackle",
+        }.get(acoustic_texture, acoustic_texture)
     if "wax" in category or "shell" in category:
         return acoustic_texture
     if "butter" in category or "clay" in category:
@@ -870,6 +884,12 @@ def infer_gestures(
         ):
             kind = "wax_crack"
         elif (
+            texture == "stretch_too_fast_failure"
+            and nearest_audio is not None
+            and abs(nearest_audio["timestamp"] - timestamp) <= 0.16
+        ):
+            kind = "stretch_too_fast_failure"
+        elif (
             is_wax_shell
             and frame["pressure_estimate"] >= 0.72
             and (
@@ -906,6 +926,7 @@ def infer_gestures(
             "wax_crush": 0.50,
             "wax_press": 0.34,
             "slime_stretch": 0.24,
+            "stretch_too_fast_failure": 0.60,
             "slime_knead": 0.24,
             "slime_press": 0.30,
         }
@@ -921,6 +942,8 @@ def infer_gestures(
             + frame["pressure_estimate"] * 0.46
             + min(frame["fingertip_count"], 10) / 10.0 * 0.18
         )
+        if kind == "stretch_too_fast_failure":
+            intensity = max(0.70, intensity)
         gestures.append(
             {
                 "id": len(gestures),
@@ -1025,6 +1048,9 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--outer-texture", default="")
     parser.add_argument("--core-texture", default="")
     parser.add_argument("--notes", default="")
+    parser.add_argument("--fast-stretch-failure-threshold", type=float)
+    parser.add_argument("--failure-sound-pack-id")
+    parser.add_argument("--interaction-summary", default="")
     parser.add_argument("--analysis-fps", type=float, default=15.0)
     parser.add_argument("--model", type=Path)
     parser.add_argument("--ffmpeg")
@@ -1070,6 +1096,7 @@ def main() -> None:
     samples, sample_rate, audio_events = analyze_audio(
         audio_path,
         args.material_category,
+        args.material_id,
     )
     print("Aligning motion and sound")
     gestures = infer_gestures(
@@ -1122,6 +1149,15 @@ def main() -> None:
             "outer_texture": args.outer_texture,
             "core_texture": args.core_texture,
             "notes": args.notes,
+            "interaction_rules": {
+                "fast_stretch_failure_movement_threshold": (
+                    round(clamp(args.fast_stretch_failure_threshold), 6)
+                    if args.fast_stretch_failure_threshold is not None
+                    else None
+                ),
+                "failure_sound_pack_id": args.failure_sound_pack_id,
+                "interaction_summary": args.interaction_summary,
+            },
         },
         "source": {
             "file_name": video.name,
