@@ -40,6 +40,8 @@ Confirm that all tests pass, `SquishMac.app` launches, the icon appears in the m
 - Select `Doctor Putty (Pastel Pink)`, move four to six fingers slowly, and confirm normal stretch sounds.
 - With Doctor Putty still selected, exceed movement `0.72`; confirm one failure snap plays and does not repeat until movement falls below `0.38`.
 - Select another slime and repeat the fast movement; confirm it remains a normal stretch without the Doctor Putty snap.
+- Select `Clear Slime (Video 3)` and confirm knead/press and stretch gestures use audibly different source pools.
+- Confirm the profile-adjusted values show approximately `0.96x` response and `1.08x` sound density before user multipliers.
 - Hold all fingers still; confirm sound does not repeat continuously without movement or pressure change.
 - Lift only one or two fingers; confirm the release sound does not fire.
 - Lift the final fingers; confirm exactly one release sound fires.
@@ -83,6 +85,7 @@ Do not repeatedly hit the display, hinge, or enclosure. The impact feature shoul
 ## 9. Camera Slime
 
 - Open `Open Camera Slime...` and grant camera permission.
+- Select `Clear Slime (Video 3)` and confirm the camera readout shows a stretch threshold near `21%`.
 - Confirm the preview starts and up to ten fingertip points follow two visible hands.
 - Confirm no frames, landmarks, or recordings are written to disk without an explicit export.
 - Test Slime with three to ten visible fingertips and confirm press, knead, stretch, and release sounds.

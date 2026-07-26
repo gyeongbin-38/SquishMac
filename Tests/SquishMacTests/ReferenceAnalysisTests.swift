@@ -88,4 +88,26 @@ final class ReferenceAnalysisTests: XCTestCase {
                 .fastStretchFailureMovementThreshold
         )
     }
+
+    func testVideo3ClearSlimeKeepsInputSpecificTuningAndSoundMappings() throws {
+        let profile = try XCTUnwrap(
+            SlimeMaterialProfile.builtIn.first { $0.id == "clear-video-3" }
+        )
+
+        XCTAssertEqual(profile.category, .clear)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.response, 0.96)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.soundDensity, 1.08)
+        XCTAssertEqual(
+            profile.effectiveCameraTuning.stretchMovementThreshold,
+            0.21
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeKnead),
+            "clear-video-3-knead"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeStretch),
+            "clear-video-3-stretch"
+        )
+    }
 }

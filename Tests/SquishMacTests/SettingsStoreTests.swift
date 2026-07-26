@@ -83,6 +83,20 @@ final class SettingsStoreTests: XCTestCase {
         )
     }
 
+    func testProfileTrackpadTuningIsAppliedAsAUserAdjustableMultiplier() throws {
+        let store = SettingsStore(defaults: makeDefaults())
+        store.trackpadResponse = 1.10
+        store.trackpadSoundDensity = 0.90
+        let profile = try XCTUnwrap(
+            SlimeMaterialProfile.builtIn.first { $0.id == "clear-video-3" }
+        )
+
+        let tuning = store.trackpadTuning(for: profile)
+
+        XCTAssertEqual(tuning.response, 1.056, accuracy: 0.0001)
+        XCTAssertEqual(tuning.soundDensity, 0.972, accuracy: 0.0001)
+    }
+
     private func makeDefaults() -> UserDefaults {
         let suiteName = "SquishMacTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

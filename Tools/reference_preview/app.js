@@ -163,6 +163,14 @@ function populateSummary() {
   elements.materialDescription.textContent = failureThreshold == null
     ? textureDescription
     : `${textureDescription} · 과속 늘리기 실패 기준 ${Math.round(failureThreshold * 100)}%`;
+  const cameraTuning = dataset.input_tuning?.camera;
+  const trackpadTuning = dataset.input_tuning?.trackpad;
+  if (cameraTuning && trackpadTuning) {
+    elements.materialDescription.textContent += ` / ${[
+      `Camera stretch ${Math.round(cameraTuning.stretch_movement_threshold * 100)}%`,
+      `Trackpad stretch ${Math.round(trackpadTuning.stretch_movement_threshold * 100)}%`,
+    ].join(" / ")}`;
+  }
   elements.durationStat.textContent = formatClock(state.duration);
   elements.coverageStat.textContent = formatPercent(summary.hand_detection_coverage || 0);
   elements.gestureStat.textContent = `${summary.gesture_event_count || state.gestures.length}개`;

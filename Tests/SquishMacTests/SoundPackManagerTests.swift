@@ -39,6 +39,31 @@ final class SoundPackManagerTests: XCTestCase {
         )
     }
 
+    func testVideo3ClearSlimePacksAreGestureSpecificAndProfileOnly() {
+        let manager = SoundPackManager()
+
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "clear-video-3-knead",
+                customDirectoryPath: nil
+            ),
+            34
+        )
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "clear-video-3-stretch",
+                customDirectoryPath: nil
+            ),
+            6
+        )
+        XCTAssertFalse(
+            manager.availablePacks().contains {
+                $0.id == "clear-video-3-knead"
+                    || $0.id == "clear-video-3-stretch"
+            }
+        )
+    }
+
     func testCustomFolderSearchesRecursivelyForSupportedAudioFiles() throws {
         let manager = SoundPackManager()
         let root = FileManager.default.temporaryDirectory

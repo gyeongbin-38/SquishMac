@@ -21,6 +21,8 @@ SquishMac is a Swift macOS menu bar sound toy built around a Force Touch trackpa
 - Separate material profiles and dataset directories for clear, glossy, butter, cloud, jelly, icee, floam, crunchy, and wax-shell slime.
 - Profile-driven interaction rules so each slime can define its own touch style, thresholds, and material-specific sounds.
 - Doctor Putty profile with a fast-stretch failure state and two original snap variations extracted from video 2.
+- Video 3 clear-slime profile with 40 cleaned gesture-aligned sounds, split into knead/press and stretch packs.
+- Per-material camera thresholds and trackpad response recommendations instead of sharing one input scale.
 - Live camera slime and wax interaction with on-device two-hand tracking and a virtual material overlay.
 - Optional MacBook impact detection, sensitivity, cooldown, custom sound folders, launch at login, and a daily play counter.
 - Generated placeholder WAV files for Bubble, Slime, Squishy, Pop, and Wax packs.
@@ -69,7 +71,7 @@ These files are intended for hardware calibration and later comparison with owne
 
 Choose or create a material profile before analysis. Completed analyses are automatically stored under `Application Support/SquishMac/ReferenceDatasets/<material-profile>/<dataset-id>/analysis.json`, keeping tuning and sound mappings separate for each slime.
 
-`Open Camera Slime...` uses the built-in camera and Apple's on-device Vision hand-pose request. Camera frames are not uploaded or saved by SquishMac. The camera pressure value is a visual estimate derived from hand compression and pinch, not physical Force Touch pressure.
+`Open Camera Slime...` uses the built-in camera and Apple's on-device Vision hand-pose request. Select a slime profile to apply its camera-specific gesture thresholds and sound mappings. Camera frames are not uploaded or saved by SquishMac. The camera pressure value is a visual estimate derived from hand compression and pinch, not physical Force Touch pressure.
 
 To inspect a completed analysis on Windows, start the local browser preview:
 
@@ -93,9 +95,11 @@ Sources/SquishMac/Resources/Sounds/squishy
 Sources/SquishMac/Resources/Sounds/pop
 Sources/SquishMac/Resources/Sounds/wax
 Sources/SquishMac/Resources/Sounds/doctor-putty-failure
+Sources/SquishMac/Resources/Sounds/clear-video-3-knead
+Sources/SquishMac/Resources/Sounds/clear-video-3-stretch
 ```
 
-The general sound packs are generated development placeholders. The Doctor Putty failure pack contains two short clips derived from the user-provided video 2 and is only selected by that material profile. Replace placeholders with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
+The general sound packs are generated development placeholders. The Doctor Putty failure pack contains two short clips derived from user-provided video 2. The clear-video-3 packs contain 34 knead/press clips and 6 stretch clips selected by hand-motion alignment, screened for voice-like audio, and conservatively cleaned. These packs are profile-only. Replace placeholders with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
 
 ## Project Layout
 

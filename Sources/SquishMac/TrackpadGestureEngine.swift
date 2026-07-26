@@ -54,7 +54,7 @@ enum TrackpadSoundKind: String, CaseIterable, Equatable, Hashable, Codable {
     }
 }
 
-struct TrackpadTuning: Equatable, Codable {
+struct TrackpadTuning: Equatable, Hashable, Codable {
     static let standard = TrackpadTuning(response: 1.0, soundDensity: 1.0)
 
     let response: Double
@@ -63,6 +63,13 @@ struct TrackpadTuning: Equatable, Codable {
     init(response: Double, soundDensity: Double) {
         self.response = response.clamped(to: 0.5...1.75)
         self.soundDensity = soundDensity.clamped(to: 0.5...2.0)
+    }
+
+    func applying(profile recommendation: TrackpadTuning) -> TrackpadTuning {
+        TrackpadTuning(
+            response: response * recommendation.response,
+            soundDensity: soundDensity * recommendation.soundDensity
+        )
     }
 }
 
@@ -248,7 +255,8 @@ final class TrackpadGestureEngine {
             label: label,
             liveIntensity: liveIntensity,
             timestamp: timestamp,
-            interval: densityAdjusted(baseInterval, soundDensity: soundDensity)
+            interval: densityAdjusted(baseInterval, soundDensity: soundDensity),
+            soundPackIDOverride: interactionRules.soundPackID(for: kind)
         )
     }
 

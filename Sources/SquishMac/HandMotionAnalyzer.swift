@@ -142,12 +142,17 @@ final class ReferenceGestureInferenceEngine {
     }
 
     private let mode: ReferenceMaterialMode
+    private let cameraTuning: CameraGestureTuning
     private var previousFrame: HandMotionFrame?
     private var lastTriggerTimes: [ReferenceGestureKind: TimeInterval] = [:]
     private var waxStage: WaxStage = .idle
 
-    init(mode: ReferenceMaterialMode) {
+    init(
+        mode: ReferenceMaterialMode,
+        cameraTuning: CameraGestureTuning = .standard
+    ) {
         self.mode = mode
+        self.cameraTuning = cameraTuning
     }
 
     func process(_ frame: HandMotionFrame) -> (kind: ReferenceGestureKind, intensity: Double)? {
@@ -167,7 +172,7 @@ final class ReferenceGestureInferenceEngine {
         _ frame: HandMotionFrame
     ) -> (kind: ReferenceGestureKind, intensity: Double)? {
         if let previousFrame,
-           previousFrame.fingertipCount >= 3,
+           previousFrame.fingertipCount >= cameraTuning.minimumFingertipCount,
            frame.fingertipCount < 2 {
             return trigger(
                 .slimeRelease,
@@ -177,23 +182,30 @@ final class ReferenceGestureInferenceEngine {
             )
         }
 
-        guard frame.fingertipCount >= 3 else {
+        guard frame.fingertipCount >= cameraTuning.minimumFingertipCount else {
             return nil
         }
 
+        let movement = (
+            frame.movement * cameraTuning.response
+        ).clamped(to: 0.0...1.0)
+        let pressure = (
+            frame.pressureEstimate * cameraTuning.response
+        ).clamped(to: 0.0...1.0)
         let intensity = (
             Double(min(frame.fingertipCount, 10)) / 10.0 * 0.25
-            + frame.movement * 0.35
-            + frame.pressureEstimate * 0.30
+            + movement * 0.35
+            + pressure * 0.30
             + frame.spread * 0.10
         ).clamped(to: 0.0...1.0)
 
         let kind: ReferenceGestureKind
-        if frame.movement >= 0.24 && frame.spread >= 0.34 {
+        if movement >= cameraTuning.stretchMovementThreshold
+            && frame.spread >= cameraTuning.stretchSpreadThreshold {
             kind = .slimeStretch
-        } else if frame.movement >= 0.08 {
+        } else if movement >= cameraTuning.kneadMovementThreshold {
             kind = .slimeKnead
-        } else if frame.pressureEstimate >= 0.28 {
+        } else if pressure >= cameraTuning.pressPressureThreshold {
             kind = .slimePress
         } else {
             return nil
@@ -203,7 +215,8 @@ final class ReferenceGestureInferenceEngine {
             kind,
             intensity: intensity,
             timestamp: frame.timestamp,
-            cooldown: kind == .slimePress ? 0.28 : 0.16
+            cooldown: (kind == .slimePress ? 0.28 : 0.16)
+                / cameraTuning.soundDensity
         )
     }
 

@@ -81,6 +81,58 @@ enum SlimeInteractionStyle: String, Codable, Hashable {
     case textured
 }
 
+struct CameraGestureTuning: Codable, Equatable, Hashable {
+    static let standard = CameraGestureTuning(
+        response: 1.0,
+        soundDensity: 1.0,
+        minimumFingertipCount: 3,
+        kneadMovementThreshold: 0.08,
+        stretchMovementThreshold: 0.24,
+        stretchSpreadThreshold: 0.34,
+        pressPressureThreshold: 0.28
+    )
+
+    static let clearVideo3 = CameraGestureTuning(
+        response: 0.95,
+        soundDensity: 1.07,
+        minimumFingertipCount: 3,
+        kneadMovementThreshold: 0.075,
+        stretchMovementThreshold: 0.21,
+        stretchSpreadThreshold: 0.30,
+        pressPressureThreshold: 0.32
+    )
+
+    let response: Double
+    let soundDensity: Double
+    let minimumFingertipCount: Int
+    let kneadMovementThreshold: Double
+    let stretchMovementThreshold: Double
+    let stretchSpreadThreshold: Double
+    let pressPressureThreshold: Double
+
+    init(
+        response: Double,
+        soundDensity: Double,
+        minimumFingertipCount: Int,
+        kneadMovementThreshold: Double,
+        stretchMovementThreshold: Double,
+        stretchSpreadThreshold: Double,
+        pressPressureThreshold: Double
+    ) {
+        self.response = min(max(response, 0.5), 1.75)
+        self.soundDensity = min(max(soundDensity, 0.5), 2.0)
+        self.minimumFingertipCount = max(1, minimumFingertipCount)
+        let safeKneadThreshold = min(max(kneadMovementThreshold, 0.01), 1)
+        self.kneadMovementThreshold = safeKneadThreshold
+        self.stretchMovementThreshold = min(
+            max(stretchMovementThreshold, safeKneadThreshold),
+            1
+        )
+        self.stretchSpreadThreshold = min(max(stretchSpreadThreshold, 0.01), 1)
+        self.pressPressureThreshold = min(max(pressPressureThreshold, 0.01), 1)
+    }
+}
+
 struct SlimeInteractionRules: Codable, Equatable, Hashable {
     static let standard = SlimeInteractionRules(
         style: .elastic,
@@ -101,6 +153,15 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         interactionSummary: "Stretch slowly. Pulling too fast breaks the putty and plays a failure snap."
     )
 
+    static let clearVideo3 = SlimeInteractionRules(
+        style: .elastic,
+        minimumFingerCount: 3,
+        stretchMovementThreshold: 0.14,
+        kneadSoundPackID: "clear-video-3-knead",
+        stretchSoundPackID: "clear-video-3-stretch",
+        interactionSummary: "Press with three to six fingers and use broad, controlled stretches."
+    )
+
     let style: SlimeInteractionStyle
     let minimumFingerCount: Int
     let stretchMovementThreshold: Double
@@ -109,6 +170,9 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
     let fastStretchFailureCooldown: TimeInterval
     let failureSoundPackID: String?
     let failureGestureLabel: String
+    let kneadSoundPackID: String?
+    let stretchSoundPackID: String?
+    let releaseSoundPackID: String?
     let interactionSummary: String
 
     init(
@@ -120,6 +184,9 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         fastStretchFailureCooldown: TimeInterval = 0.90,
         failureSoundPackID: String? = nil,
         failureGestureLabel: String = "Stretch too fast",
+        kneadSoundPackID: String? = nil,
+        stretchSoundPackID: String? = nil,
+        releaseSoundPackID: String? = nil,
         interactionSummary: String
     ) {
         let safeStretchThreshold = min(max(stretchMovementThreshold, 0.01), 1)
@@ -137,7 +204,25 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         self.fastStretchFailureCooldown = max(0.1, fastStretchFailureCooldown)
         self.failureSoundPackID = failureSoundPackID
         self.failureGestureLabel = failureGestureLabel
+        self.kneadSoundPackID = kneadSoundPackID
+        self.stretchSoundPackID = stretchSoundPackID
+        self.releaseSoundPackID = releaseSoundPackID
         self.interactionSummary = interactionSummary
+    }
+
+    func soundPackID(for kind: TrackpadSoundKind) -> String? {
+        switch kind {
+        case .slimeKnead:
+            return kneadSoundPackID
+        case .slimeStretch:
+            return stretchSoundPackID
+        case .slimeRelease:
+            return releaseSoundPackID
+        case .slimeStretchFailure:
+            return failureSoundPackID
+        case .waxPress, .waxCrack, .waxCrush:
+            return nil
+        }
     }
 }
 
@@ -150,6 +235,8 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
     let notes: String
     let isBuiltIn: Bool
     let interactionRules: SlimeInteractionRules?
+    let trackpadTuning: TrackpadTuning?
+    let cameraTuning: CameraGestureTuning?
 
     init(
         id: String,
@@ -159,7 +246,9 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
         coreTexture: String,
         notes: String,
         isBuiltIn: Bool,
-        interactionRules: SlimeInteractionRules? = nil
+        interactionRules: SlimeInteractionRules? = nil,
+        trackpadTuning: TrackpadTuning? = nil,
+        cameraTuning: CameraGestureTuning? = nil
     ) {
         self.id = id
         self.displayName = displayName
@@ -169,6 +258,8 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
         self.notes = notes
         self.isBuiltIn = isBuiltIn
         self.interactionRules = interactionRules
+        self.trackpadTuning = trackpadTuning
+        self.cameraTuning = cameraTuning
     }
 
     var referenceMode: ReferenceMaterialMode {
@@ -179,6 +270,14 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
         interactionRules ?? category.defaultInteractionRules
     }
 
+    var effectiveTrackpadTuning: TrackpadTuning {
+        trackpadTuning ?? .standard
+    }
+
+    var effectiveCameraTuning: CameraGestureTuning {
+        cameraTuning ?? .standard
+    }
+
     static let defaultSlimeProfileID = "doctor-putty-pink"
 
     static var runtimeSlimeProfiles: [SlimeMaterialProfile] {
@@ -187,6 +286,17 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
 
     static let builtIn: [SlimeMaterialProfile] = [
         profile("clear", "Clear Slime", .clear, core: "clear elastic gel"),
+        profile(
+            "clear-video-3",
+            "Clear Slime (Video 3)",
+            .clear,
+            outer: "transparent glossy surface with trapped micro-bubbles",
+            core: "clear elastic gel with wet folds and bubble pockets",
+            notes: "Video 3 reference. Product name is not yet confirmed.",
+            interactionRules: .clearVideo3,
+            trackpadTuning: TrackpadTuning(response: 0.96, soundDensity: 1.08),
+            cameraTuning: .clearVideo3
+        ),
         profile("thick-glossy", "Thick & Glossy Slime", .thickGlossy, core: "dense glossy slime"),
         profile(
             "doctor-putty-pink",
@@ -226,7 +336,9 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
         outer: String = "",
         core: String,
         notes: String = "",
-        interactionRules: SlimeInteractionRules? = nil
+        interactionRules: SlimeInteractionRules? = nil,
+        trackpadTuning: TrackpadTuning? = nil,
+        cameraTuning: CameraGestureTuning? = nil
     ) -> SlimeMaterialProfile {
         SlimeMaterialProfile(
             id: id,
@@ -236,7 +348,9 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
             coreTexture: core,
             notes: notes,
             isBuiltIn: true,
-            interactionRules: interactionRules
+            interactionRules: interactionRules,
+            trackpadTuning: trackpadTuning,
+            cameraTuning: cameraTuning
         )
     }
 }

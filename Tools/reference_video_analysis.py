@@ -20,7 +20,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import soundfile as sf
-from scipy.signal import find_peaks
+from scipy.signal import butter, find_peaks, istft, sosfiltfilt, stft
 
 
 HAND_MODEL_URL = (
@@ -633,6 +633,7 @@ def analyze_audio(
     zcr_values = np.zeros(frame_count)
     centroid_values = np.zeros(frame_count)
     rolloff_values = np.zeros(frame_count)
+    flatness_values = np.zeros(frame_count)
     flux_values = np.zeros(frame_count)
     previous_spectrum: np.ndarray | None = None
     frequencies = np.fft.rfftfreq(frame_size, 1.0 / sample_rate)
@@ -647,6 +648,10 @@ def analyze_audio(
         )
         spectrum = np.abs(np.fft.rfft(frame * window))
         total = float(np.sum(spectrum)) + 1e-12
+        power = spectrum * spectrum + 1e-18
+        flatness_values[index] = float(
+            np.exp(np.mean(np.log(power))) / np.mean(power)
+        )
         centroid_values[index] = float(np.sum(spectrum * frequencies) / total)
         cumulative = np.cumsum(spectrum)
         rolloff_index = min(
@@ -693,6 +698,9 @@ def analyze_audio(
         zcr = float(np.mean(zcr_values[local_start:local_end]))
         centroid = float(np.mean(centroid_values[local_start:local_end]))
         rolloff = float(np.mean(rolloff_values[local_start:local_end]))
+        spectral_flatness = float(
+            np.mean(flatness_values[local_start:local_end])
+        )
         crest = peak / max(rms, 1e-9)
         score = float(onset_score[frame_index])
         if peak < minimum_meaningful_peak:
@@ -718,8 +726,17 @@ def analyze_audio(
                 "zero_crossing_rate": round(zcr, 7),
                 "spectral_centroid_hz": round(centroid, 3),
                 "spectral_rolloff_hz": round(rolloff, 3),
+                "spectral_flatness": round(spectral_flatness, 7),
                 "crest_factor": round(crest, 4),
                 "onset_score": round(score, 4),
+                "voice_likelihood": round(
+                    estimate_voice_likelihood(
+                        samples,
+                        int(sample_rate),
+                        timestamp,
+                    ),
+                    6,
+                ),
                 "acoustic_texture": acoustic_texture,
                 "suggested_texture": texture,
                 "clip_start": round(max(0.0, timestamp - 0.075), 6),
@@ -763,6 +780,95 @@ def _robust_scale(values: np.ndarray) -> np.ndarray:
     median = float(np.median(values))
     deviation = float(np.median(np.abs(values - median)))
     return np.maximum((values - median) / max(deviation * 1.4826, 1e-8), 0.0)
+
+
+def estimate_voice_likelihood(
+    samples: np.ndarray,
+    sample_rate: int,
+    timestamp: float,
+) -> float:
+    start = max(0, int((timestamp - 0.04) * sample_rate))
+    end = min(len(samples), int((timestamp + 0.34) * sample_rate))
+    segment = np.asarray(samples[start:end], dtype=np.float64)
+    frame_size = max(64, int(sample_rate * 0.030))
+    hop_size = max(32, int(sample_rate * 0.010))
+    if len(segment) < frame_size:
+        return 0.0
+
+    minimum_lag = max(1, int(sample_rate / 400))
+    maximum_lag = min(frame_size - 2, int(sample_rate / 80))
+    periodicities: list[float] = []
+    active_frames = 0
+    voiced_frames = 0
+
+    for offset in range(0, len(segment) - frame_size + 1, hop_size):
+        frame = segment[offset : offset + frame_size]
+        frame = frame - float(np.mean(frame))
+        rms = math.sqrt(float(np.mean(frame * frame)))
+        if rms < 0.0015:
+            continue
+        active_frames += 1
+        correlation = np.correlate(frame, frame, mode="full")[frame_size - 1 :]
+        denominator = max(float(correlation[0]), 1e-12)
+        periodicity = float(
+            np.max(correlation[minimum_lag : maximum_lag + 1])
+            / denominator
+        )
+        periodicity = clamp(periodicity)
+        periodicities.append(periodicity)
+        if periodicity >= 0.48:
+            voiced_frames += 1
+
+    if not periodicities:
+        return 0.0
+    periodicity_high = percentile(periodicities, 0.75)
+    sustained_ratio = voiced_frames / max(active_frames, 1)
+    return clamp(periodicity_high * 0.68 + sustained_ratio * 0.32)
+
+
+def select_slime_only_audio(
+    events: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    accepted: list[dict[str, Any]] = []
+    rejected: list[dict[str, Any]] = []
+
+    for event in events:
+        is_slime_gesture = str(event.get("gesture_kind") or "").startswith("slime_")
+        voice_likelihood = float(event.get("voice_likelihood") or 0.0)
+        crest = float(event.get("crest_factor") or 0.0)
+        flatness = float(event.get("spectral_flatness") or 0.0)
+        transient_score = clamp((crest - 2.0) / 7.0)
+        noise_texture_score = clamp(flatness / 0.08)
+        slime_likelihood = clamp(
+            (0.58 if is_slime_gesture else 0.0)
+            + transient_score * 0.24
+            + noise_texture_score * 0.18
+            - voice_likelihood * 0.42
+        )
+        event["slime_likelihood"] = round(slime_likelihood, 6)
+
+        rejection_reason: str | None = None
+        if not is_slime_gesture:
+            rejection_reason = "not_aligned_with_slime_gesture"
+        elif voice_likelihood >= 0.72:
+            rejection_reason = "possible_voice"
+        elif slime_likelihood < 0.44:
+            rejection_reason = "low_slime_likelihood"
+
+        if rejection_reason is None:
+            event["selection_status"] = "accepted"
+            accepted.append(event)
+        else:
+            event["selection_status"] = "rejected"
+            event["rejection_reason"] = rejection_reason
+            event["clip_path"] = None
+            rejected.append(event)
+
+    for index, event in enumerate(accepted):
+        event["id"] = index
+    for index, event in enumerate(rejected):
+        event["id"] = index
+    return accepted, rejected
 
 
 def classify_audio_texture(
@@ -996,6 +1102,7 @@ def export_audio_clips(
     sample_rate: int,
     events: list[dict[str, Any]],
     output_root: Path,
+    clean_slime_audio: bool = False,
 ) -> None:
     if output_root.exists():
         shutil.rmtree(output_root)
@@ -1011,6 +1118,8 @@ def export_audio_clips(
         start = int(event["clip_start"] * sample_rate)
         end = int(event["clip_end"] * sample_rate)
         clip = np.array(samples[start:end], dtype=np.float64, copy=True)
+        if clean_slime_audio:
+            clip = clean_slime_clip(clip, sample_rate)
         fade_size = min(int(sample_rate * 0.006), len(clip) // 2)
         if fade_size > 0:
             fade = np.linspace(0.0, 1.0, fade_size)
@@ -1018,6 +1127,60 @@ def export_audio_clips(
             clip[-fade_size:] *= fade[::-1]
         sf.write(output, clip, sample_rate, subtype="PCM_16")
         event["clip_path"] = output.relative_to(output_root.parent.parent).as_posix()
+
+
+def clean_slime_clip(
+    clip: np.ndarray,
+    sample_rate: int,
+) -> np.ndarray:
+    if len(clip) < 32:
+        return clip
+
+    clip = np.asarray(clip, dtype=np.float64)
+    clip = clip - float(np.mean(clip))
+    highpass = butter(2, 70, btype="highpass", fs=sample_rate, output="sos")
+    lowpass_frequency = min(16000, sample_rate * 0.45)
+    lowpass = butter(
+        2,
+        lowpass_frequency,
+        btype="lowpass",
+        fs=sample_rate,
+        output="sos",
+    )
+    filtered = sosfiltfilt(highpass, clip)
+    filtered = sosfiltfilt(lowpass, filtered)
+
+    frequencies, times, spectrum = stft(
+        filtered,
+        fs=sample_rate,
+        nperseg=1024,
+        noverlap=768,
+        boundary="zeros",
+    )
+    del frequencies
+    magnitude = np.abs(spectrum)
+    phase = np.exp(1j * np.angle(spectrum))
+    noise_columns = max(1, min(magnitude.shape[1], int(0.05 * sample_rate / 256)))
+    noise_floor = np.median(magnitude[:, :noise_columns], axis=1, keepdims=True)
+    cleaned_magnitude = np.maximum(
+        magnitude - noise_floor * 1.15,
+        magnitude * 0.10,
+    )
+    _, cleaned = istft(
+        cleaned_magnitude * phase,
+        fs=sample_rate,
+        nperseg=1024,
+        noverlap=768,
+        input_onesided=True,
+    )
+    cleaned = np.asarray(cleaned[: len(clip)], dtype=np.float64)
+    if len(cleaned) < len(clip):
+        cleaned = np.pad(cleaned, (0, len(clip) - len(cleaned)))
+
+    peak = float(np.max(np.abs(cleaned)))
+    if peak > 1e-8:
+        cleaned *= min(18.0, 0.72 / peak)
+    return np.clip(cleaned, -0.85, 0.85)
 
 
 def learned_profile(frames: list[dict[str, Any]]) -> dict[str, float]:
@@ -1037,6 +1200,87 @@ def learned_profile(frames: list[dict[str, Any]]) -> dict[str, float]:
     }
 
 
+def input_specific_tuning(
+    frames: list[dict[str, Any]],
+    material_category: str,
+) -> dict[str, dict[str, Any]]:
+    detected = [frame for frame in frames if frame["hand_count"] > 0]
+    movement = [float(frame["movement"]) for frame in detected]
+    pressure = [float(frame["pressure_estimate"]) for frame in detected]
+    spread = [float(frame["spread"]) for frame in detected]
+    movement_high = percentile(movement, 0.90)
+    pressure_median = percentile(pressure, 0.50)
+
+    camera_response = clamp(
+        1.15 - pressure_median * 0.35,
+        0.65,
+        1.55,
+    )
+    camera_sound_density = clamp(
+        0.8 + movement_high * 0.65,
+        0.65,
+        1.65,
+    )
+    camera_knead = clamp(
+        percentile(movement, 0.25) * 0.85,
+        0.055,
+        0.12,
+    )
+    camera_stretch = clamp(
+        percentile(movement, 0.70) * 0.92,
+        0.16,
+        0.32,
+    )
+    camera_spread = clamp(
+        percentile(spread, 0.60),
+        0.24,
+        0.42,
+    )
+    camera_press = clamp(
+        percentile(pressure, 0.25) * 0.94,
+        0.26,
+        0.46,
+    )
+
+    category = material_category.lower()
+    if "clear" in category or "jelly" in category:
+        trackpad_stretch = 0.14
+        trackpad_response = 0.96
+        trackpad_sound_density = 1.08
+    elif "butter" in category or "clay" in category:
+        trackpad_stretch = 0.18
+        trackpad_response = 0.90
+        trackpad_sound_density = 0.92
+    else:
+        trackpad_stretch = 0.16
+        trackpad_response = 1.0
+        trackpad_sound_density = 1.0
+
+    return {
+        "camera": {
+            "calibration_basis": "video_landmark_percentiles",
+            "response": round(camera_response, 6),
+            "sound_density": round(camera_sound_density, 6),
+            "minimum_fingertip_count": 3,
+            "knead_movement_threshold": round(camera_knead, 6),
+            "stretch_movement_threshold": round(camera_stretch, 6),
+            "stretch_spread_threshold": round(camera_spread, 6),
+            "press_pressure_threshold": round(camera_press, 6),
+        },
+        "trackpad": {
+            "calibration_basis": (
+                "material_prior_pending_force_touch_session"
+            ),
+            "response": trackpad_response,
+            "sound_density": trackpad_sound_density,
+            "minimum_finger_count": 3,
+            "knead_movement_threshold": 0.025,
+            "stretch_movement_threshold": trackpad_stretch,
+            "minimum_live_intensity": 0.28,
+        },
+    }
+
+
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--video", required=True, type=Path)
@@ -1052,6 +1296,14 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--failure-sound-pack-id")
     parser.add_argument("--interaction-summary", default="")
     parser.add_argument("--analysis-fps", type=float, default=15.0)
+    parser.add_argument(
+        "--slime-only-audio",
+        action="store_true",
+        help=(
+            "Keep only audio aligned with slime gestures and reject candidates "
+            "with high voice likelihood."
+        ),
+    )
     parser.add_argument("--model", type=Path)
     parser.add_argument("--ffmpeg")
     return parser.parse_args()
@@ -1063,6 +1315,11 @@ def main() -> None:
     output = args.output.resolve()
     if not video.is_file():
         raise FileNotFoundError(video)
+    if args.slime_only_audio and (
+        "wax" in args.material_category.lower()
+        or "shell" in args.material_category.lower()
+    ):
+        raise ValueError("--slime-only-audio cannot be used for wax material")
 
     ffmpeg = find_ffmpeg(args.ffmpeg)
     requested_model = (
@@ -1105,11 +1362,24 @@ def main() -> None:
         material_category=args.material_category,
         analysis_fps=args.analysis_fps,
     )
+    raw_audio_event_count = len(audio_events)
+    rejected_audio_events: list[dict[str, Any]] = []
+    if args.slime_only_audio:
+        audio_events, rejected_audio_events = select_slime_only_audio(
+            audio_events
+        )
+        gestures = infer_gestures(
+            frames=frames,
+            audio_events=audio_events,
+            material_category=args.material_category,
+            analysis_fps=args.analysis_fps,
+        )
     export_audio_clips(
         samples=samples,
         sample_rate=sample_rate,
         events=audio_events,
         output_root=output / "audio" / "clips",
+        clean_slime_audio=args.slime_only_audio,
     )
     mux_tracking_video(ffmpeg, silent_tracking, video, tracking_video)
     extract_tracking_poster(ffmpeg, tracking_video, tracking_poster)
@@ -1117,9 +1387,11 @@ def main() -> None:
 
     motion_path = output / "motion" / "landmarks.json"
     audio_events_path = output / "audio" / "events.json"
+    rejected_audio_events_path = output / "audio" / "rejected-events.json"
     gesture_path = output / "events" / "gesture_timeline.json"
     write_json(motion_path, frames)
     write_json(audio_events_path, audio_events)
+    write_json(rejected_audio_events_path, rejected_audio_events)
     write_json(gesture_path, gestures)
 
     gesture_counts: dict[str, int] = {}
@@ -1137,7 +1409,7 @@ def main() -> None:
         texture_counts[texture] = texture_counts.get(texture, 0) + 1
 
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "dataset_id": f"{args.material_id}__{video.stem}",
         "material_profile": {
             "id": args.material_id,
@@ -1186,14 +1458,40 @@ def main() -> None:
                 6,
             ),
             "audio_event_count": len(audio_events),
+            "raw_audio_event_count": raw_audio_event_count,
+            "rejected_audio_event_count": len(rejected_audio_events),
             "gesture_event_count": len(gestures),
             "gesture_counts": gesture_counts,
             "audio_texture_counts": texture_counts,
         },
         "learned_profile": learned_profile(frames),
+        "input_tuning": input_specific_tuning(
+            frames,
+            args.material_category,
+        ),
+        "audio_selection": {
+            "mode": (
+                "slime_only_cross_modal"
+                if args.slime_only_audio
+                else "all_detected_onsets"
+            ),
+            "voice_rejection_threshold": (
+                0.72 if args.slime_only_audio else None
+            ),
+            "requires_slime_gesture_alignment": args.slime_only_audio,
+            "clip_processing": (
+                "70Hz high-pass, 16kHz low-pass, conservative spectral gate, "
+                "bounded peak normalization"
+                if args.slime_only_audio
+                else "source amplitude with short edge fades"
+            ),
+        },
         "artifacts": {
             "motion_frames": motion_path.relative_to(output).as_posix(),
             "audio_events": audio_events_path.relative_to(output).as_posix(),
+            "rejected_audio_events": (
+                rejected_audio_events_path.relative_to(output).as_posix()
+            ),
             "gesture_timeline": gesture_path.relative_to(output).as_posix(),
             "tracking_video": tracking_video.relative_to(output).as_posix(),
             "tracking_poster": tracking_poster.relative_to(output).as_posix(),

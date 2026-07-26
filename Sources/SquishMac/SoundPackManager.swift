@@ -38,6 +38,18 @@ final class SoundPackManager {
             title: "Doctor Putty Failure",
             folderName: "doctor-putty-failure",
             isUserSelectable: false
+        ),
+        SoundPack(
+            id: "clear-video-3-knead",
+            title: "Clear Slime 3 Knead",
+            folderName: "clear-video-3-knead",
+            isUserSelectable: false
+        ),
+        SoundPack(
+            id: "clear-video-3-stretch",
+            title: "Clear Slime 3 Stretch",
+            folderName: "clear-video-3-stretch",
+            isUserSelectable: false
         )
     ]
 

@@ -10,14 +10,21 @@ struct CameraSlimeView: View {
         VStack(alignment: .leading, spacing: 14) {
             header
             modePicker
+            if controller.mode == .slime {
+                materialProfilePicker
+            }
             cameraSurface
             liveMetrics
             controls
         }
         .padding(18)
-        .frame(width: 760, height: 680)
+        .frame(width: 760, height: 740)
         .onAppear {
+            controller.setMaterialProfile(settings.selectedSlimeMaterialProfile)
             controller.start()
+        }
+        .onChange(of: settings.selectedSlimeMaterialProfileID) { _ in
+            controller.setMaterialProfile(settings.selectedSlimeMaterialProfile)
         }
         .onDisappear {
             controller.stop()
@@ -51,6 +58,32 @@ struct CameraSlimeView: View {
             }
         }
         .pickerStyle(.segmented)
+    }
+
+    private var materialProfilePicker: some View {
+        HStack(spacing: 12) {
+            Picker(
+                "Slime",
+                selection: $settings.selectedSlimeMaterialProfileID
+            ) {
+                ForEach(SlimeMaterialProfile.runtimeSlimeProfiles) { profile in
+                    Text(profile.displayName).tag(profile.id)
+                }
+            }
+            .pickerStyle(.menu)
+
+            let tuning = settings.selectedSlimeMaterialProfile.effectiveCameraTuning
+            Text(
+                String(
+                    format: "Camera %.2fx / stretch %.0f%%",
+                    tuning.response,
+                    tuning.stretchMovementThreshold * 100
+                )
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .monospacedDigit()
+        }
     }
 
     private var cameraSurface: some View {

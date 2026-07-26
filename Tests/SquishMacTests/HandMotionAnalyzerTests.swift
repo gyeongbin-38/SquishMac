@@ -68,6 +68,25 @@ final class HandMotionAnalyzerTests: XCTestCase {
         XCTAssertEqual(crush?.kind, .waxCrush)
     }
 
+    func testCameraTuningCanRecognizeVideo3StretchWithoutChangingStandardProfile() {
+        let standardEngine = ReferenceGestureInferenceEngine(mode: .slime)
+        let video3Engine = ReferenceGestureInferenceEngine(
+            mode: .slime,
+            cameraTuning: .clearVideo3
+        )
+        let frame = motionFrame(
+            timestamp: 0,
+            handCount: 1,
+            fingertipCount: 5,
+            movement: 0.22,
+            spread: 0.32,
+            pressure: 0.20
+        )
+
+        XCTAssertEqual(standardEngine.process(frame)?.kind, .slimeKnead)
+        XCTAssertEqual(video3Engine.process(frame)?.kind, .slimeStretch)
+    }
+
     private func sample(timestamp: TimeInterval, xOffset: Double) -> HandPoseSample {
         let wrist = NormalizedPosePoint(x: 0.45 + xOffset, y: 0.45, confidence: 1)
         let joints: [HandJointName: NormalizedPosePoint] = [

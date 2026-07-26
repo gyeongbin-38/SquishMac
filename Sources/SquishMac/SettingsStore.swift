@@ -172,6 +172,10 @@ final class SettingsStore: ObservableObject {
         TrackpadTuning(response: trackpadResponse, soundDensity: trackpadSoundDensity)
     }
 
+    func trackpadTuning(for profile: SlimeMaterialProfile) -> TrackpadTuning {
+        trackpadTuning.applying(profile: profile.effectiveTrackpadTuning)
+    }
+
     var selectedSlimeMaterialProfile: SlimeMaterialProfile {
         SlimeMaterialProfile.runtimeSlimeProfiles.first {
             $0.id == selectedSlimeMaterialProfileID

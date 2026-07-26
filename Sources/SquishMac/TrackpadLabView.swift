@@ -27,7 +27,9 @@ struct TrackpadLabView: View {
 
                 TrackpadTouchSurface(
                     state: state,
-                    tuning: settings.trackpadTuning,
+                    tuning: settings.trackpadTuning(
+                        for: settings.selectedSlimeMaterialProfile
+                    ),
                     interactionRules: settings.selectedSlimeMaterialProfile.effectiveInteractionRules,
                     onGesture: onGesture
                 )
@@ -107,6 +109,19 @@ struct TrackpadLabView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+
+            let tuning = settings.trackpadTuning(
+                for: settings.selectedSlimeMaterialProfile
+            )
+            Text(
+                String(
+                    format: "Profile-adjusted response %.2fx, sound density %.2fx",
+                    tuning.response,
+                    tuning.soundDensity
+                )
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
     }
 
@@ -212,7 +227,9 @@ struct TrackpadLabView: View {
                 } else {
                     Button("Record") {
                         state.startRecording(
-                            tuning: settings.trackpadTuning,
+                            tuning: settings.trackpadTuning(
+                                for: settings.selectedSlimeMaterialProfile
+                            ),
                             materialProfileID: state.mode == .sixFingerSlime
                                 ? settings.selectedSlimeMaterialProfileID
                                 : nil

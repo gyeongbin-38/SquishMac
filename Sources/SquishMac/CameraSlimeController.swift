@@ -36,6 +36,10 @@ final class CameraSlimeController: NSObject, ObservableObject {
     private var isStarting = false
     private var featureExtractor = HandMotionFeatureExtractor()
     private var gestureEngine = ReferenceGestureInferenceEngine(mode: .slime)
+    private var selectedCameraTuning = CameraGestureTuning.standard
+    private var selectedInteractionRules = SlimeInteractionRules.standard
+    private var activeCameraTuning = CameraGestureTuning.standard
+    private var activeInteractionRules = SlimeInteractionRules.standard
     private var lastAnalyzedTime = -Double.infinity
 
     func start() {
@@ -93,9 +97,36 @@ final class CameraSlimeController: NSObject, ObservableObject {
             return
         }
         self.mode = mode
+        let tuning = selectedCameraTuning
+        let rules = selectedInteractionRules
         visionQueue.async { [weak self] in
             self?.featureExtractor.reset()
-            self?.gestureEngine = ReferenceGestureInferenceEngine(mode: mode)
+            self?.activeCameraTuning = tuning
+            self?.activeInteractionRules = mode == .slime ? rules : .standard
+            self?.gestureEngine = ReferenceGestureInferenceEngine(
+                mode: mode,
+                cameraTuning: tuning
+            )
+            self?.lastAnalyzedTime = -Double.infinity
+        }
+        clearPublishedTracking()
+    }
+
+    func setMaterialProfile(_ profile: SlimeMaterialProfile) {
+        selectedCameraTuning = profile.effectiveCameraTuning
+        selectedInteractionRules = profile.effectiveInteractionRules
+        let tuning = selectedCameraTuning
+        let rules = selectedInteractionRules
+        let mode = self.mode
+
+        visionQueue.async { [weak self] in
+            self?.featureExtractor.reset()
+            self?.activeCameraTuning = tuning
+            self?.activeInteractionRules = mode == .slime ? rules : .standard
+            self?.gestureEngine = ReferenceGestureInferenceEngine(
+                mode: mode,
+                cameraTuning: tuning
+            )
             self?.lastAnalyzedTime = -Double.infinity
         }
         clearPublishedTracking()
@@ -168,18 +199,16 @@ final class CameraSlimeController: NSObject, ObservableObject {
         isConfigured = true
     }
 
-    private func publish(frame: HandMotionFrame, gesture: ReferenceGestureKind?) {
+    private func publish(
+        frame: HandMotionFrame,
+        gesture: ReferenceGestureKind?,
+        intensity: Double
+    ) {
         let points = frame.hands.flatMap { hand in
             hand.joints
                 .filter { $0.key.isFingertip }
                 .map(\.value)
         }
-        let intensity = (
-            frame.movement * 0.38
-                + frame.pressureEstimate * 0.42
-                + Double(min(frame.fingertipCount, 10)) / 10.0 * 0.20
-        ).clamped(to: 0.0...1.0)
-
         handCount = frame.handCount
         fingertipCount = frame.fingertipCount
         movement = frame.movement
@@ -232,11 +261,25 @@ extension CameraSlimeController: AVCaptureVideoDataOutputSampleBufferDelegate {
             )
             let frame = featureExtractor.process(sample)
             let inferredGesture = gestureEngine.process(frame)
+            let responsiveMovement = (
+                frame.movement * activeCameraTuning.response
+            ).clamped(to: 0.0...1.0)
+            let responsivePressure = (
+                frame.pressureEstimate * activeCameraTuning.response
+            ).clamped(to: 0.0...1.0)
+            let intensity = (
+                responsiveMovement * 0.38
+                    + responsivePressure * 0.42
+                    + Double(min(frame.fingertipCount, 10)) / 10.0 * 0.20
+            ).clamped(to: 0.0...1.0)
             let trigger = inferredGesture.map {
                 TrackpadGestureTrigger(
                     kind: $0.kind.soundKind,
                     intensity: $0.intensity,
-                    label: "Camera \($0.kind.title)"
+                    label: "Camera \($0.kind.title)",
+                    soundPackIDOverride: activeInteractionRules.soundPackID(
+                        for: $0.kind.soundKind
+                    )
                 )
             }
 
@@ -244,7 +287,11 @@ extension CameraSlimeController: AVCaptureVideoDataOutputSampleBufferDelegate {
                 guard let self, self.isRunning else {
                     return
                 }
-                self.publish(frame: frame, gesture: inferredGesture?.kind)
+                self.publish(
+                    frame: frame,
+                    gesture: inferredGesture?.kind,
+                    intensity: intensity
+                )
                 if let trigger {
                     self.onGesture?(trigger)
                 }

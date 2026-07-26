@@ -40,6 +40,12 @@ rules. The Doctor Putty profile remains in the butter/clay category but defines
 a fast-stretch failure threshold, its own failure sound pack, and controlled
 stretch guidance. Those rules do not affect other butter/clay slimes.
 
+Video-derived profiles can also keep separate camera and trackpad tuning.
+Camera thresholds are learned from landmark movement, spread, and estimated
+pressure percentiles. Trackpad values remain material priors until a physical
+Force Touch session is recorded because camera motion and trackpad pressure do
+not share units.
+
 For command-line or collaborative analysis, place local footage under `ReferenceVideos/` and exported data under `AnalysisOutput/`. Both directories are ignored by Git so personal footage is not pushed to the public repository.
 
 ## Detailed Offline Extraction
@@ -52,12 +58,19 @@ py -3.12 -m venv .venv-analysis
 .\.venv-analysis\Scripts\python.exe Tools\reference_video_analysis.py `
   --video "ReferenceVideos\sample.mp4" `
   --output "AnalysisOutput\sample" `
-  --material-id "wax-shell-sample" `
-  --material-name "Wax Shell Sample" `
-  --material-category "wax_shell_slime"
+  --material-id "clear-sample" `
+  --material-name "Clear Slime Sample" `
+  --material-category "clear_slime" `
+  --slime-only-audio
 ```
 
 Output is separated into `motion/landmarks.json`, `events/gesture_timeline.json`, `audio/events.json`, `audio/clips/<gesture>/`, `overlays/tracking.mp4`, and `overlays/poster.jpg`. Frames with no detected hands remain in the motion timeline as quality evidence but are excluded from inferred gestures, preventing motion blur or an out-of-frame hand from becoming a false release event.
+
+For slime footage, `--slime-only-audio` requires cross-modal alignment with a
+slime gesture, records a voice-likelihood score, writes rejected candidates to
+`audio/rejected-events.json`, and applies conservative filtering to accepted
+clips. This reduces background and speech leakage without pretending that a
+heuristic filter can replace listening review.
 
 ## Recording Recommendations
 
