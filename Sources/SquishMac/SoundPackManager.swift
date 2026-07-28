@@ -92,6 +92,18 @@ final class SoundPackManager {
             title: "Aerated Clear 6 Stretch",
             folderName: "aerated-clear-video-6-stretch",
             isUserSelectable: false
+        ),
+        SoundPack(
+            id: "dense-white-clay-video-7-knead",
+            title: "Dense White Clay 7 Knead",
+            folderName: "dense-white-clay-video-7-knead",
+            isUserSelectable: false
+        ),
+        SoundPack(
+            id: "dense-white-clay-video-7-stretch",
+            title: "Dense White Clay 7 Stretch",
+            folderName: "dense-white-clay-video-7-stretch",
+            isUserSelectable: false
         )
     ]
 

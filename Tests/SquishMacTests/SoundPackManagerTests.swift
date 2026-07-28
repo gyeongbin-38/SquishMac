@@ -143,6 +143,30 @@ final class SoundPackManagerTests: XCTestCase {
         )
     }
 
+    func testVideo7DenseWhiteClayPacksAreGestureSpecificAndProfileOnly() {
+        let manager = SoundPackManager()
+
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "dense-white-clay-video-7-knead",
+                customDirectoryPath: nil
+            ),
+            20
+        )
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "dense-white-clay-video-7-stretch",
+                customDirectoryPath: nil
+            ),
+            9
+        )
+        XCTAssertFalse(
+            manager.availablePacks().contains {
+                $0.id.hasPrefix("dense-white-clay-video-7-")
+            }
+        )
+    }
+
     func testCustomFolderSearchesRecursivelyForSupportedAudioFiles() throws {
         let manager = SoundPackManager()
         let root = FileManager.default.temporaryDirectory

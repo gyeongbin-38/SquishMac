@@ -157,6 +157,17 @@ struct CameraGestureTuning: Codable, Equatable, Hashable {
         bubbleGesture: nil
     )
 
+    static let denseWhiteClayVideo7 = CameraGestureTuning(
+        response: 1.0,
+        soundDensity: 0.86,
+        minimumFingertipCount: 2,
+        kneadMovementThreshold: 0.10,
+        stretchMovementThreshold: 0.30,
+        stretchSpreadThreshold: 0.48,
+        pressPressureThreshold: 0.30,
+        bubbleGesture: nil
+    )
+
     static let aeratedClearVideo6 = CameraGestureTuning(
         response: 0.89,
         soundDensity: 0.95,
@@ -423,6 +434,18 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         interactionSummary: "Use compact pinches, controlled short pulls, folds, and firm thumb-like presses. Bar-pung is disabled for this dense putty."
     )
 
+    static let denseWhiteClayVideo7 = SlimeInteractionRules(
+        style: .densePutty,
+        minimumFingerCount: 2,
+        stretchMovementThreshold: 0.16,
+        kneadSoundPackID: "dense-white-clay-video-7-knead",
+        stretchSoundPackID: "dense-white-clay-video-7-stretch",
+        releaseSoundPackID: "dense-white-clay-video-7-stretch",
+        volumeScale: 0.66,
+        minimumSoundInterval: 0.32,
+        interactionSummary: "Press inward with two opposing contacts, make short controlled pulls with four or more contacts, and fold the dense clay slowly. Bar-pung is disabled because the reference does not form a sheet."
+    )
+
     static let aeratedClearVideo6 = SlimeInteractionRules(
         style: .elastic,
         minimumFingerCount: 2,
@@ -652,6 +675,17 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
             interactionRules: .whitePuttyVideo5,
             trackpadTuning: TrackpadTuning(response: 0.92, soundDensity: 0.88),
             cameraTuning: .whitePuttyVideo5
+        ),
+        profile(
+            "dense-white-clay-slime-video-7",
+            "Dense White Clay Slime (Video 7)",
+            .butterClay,
+            outer: "opaque white matte surface with a smooth compact body",
+            core: "dense clay-like slime with deep presses, short pulls, and rounded folds",
+            notes: "Video 7 reference. Product name is not yet confirmed, no inflated bar-pung was observed, and one low-confidence voice-like candidate was excluded.",
+            interactionRules: .denseWhiteClayVideo7,
+            trackpadTuning: TrackpadTuning(response: 1.0, soundDensity: 0.86),
+            cameraTuning: .denseWhiteClayVideo7
         ),
         profile(
             "pastel-wax-shell-video-4",

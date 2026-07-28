@@ -637,4 +637,87 @@ final class TrackpadGestureEngineTests: XCTestCase {
             "aerated-clear-video-6-stretch"
         )
     }
+
+    func testVideo7DenseWhiteClayRoutesTwoFingerPressAndFourFingerFold() {
+        let pressEngine = TrackpadGestureEngine()
+        let foldEngine = TrackpadGestureEngine()
+
+        let press = pressEngine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 2,
+            pressure: 0.72,
+            movement: 0.04,
+            spread: 0.18,
+            timestamp: 1,
+            interactionRules: .denseWhiteClayVideo7
+        )
+        let fold = foldEngine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 4,
+            pressure: 0.45,
+            movement: 0.18,
+            spread: 0.58,
+            timestamp: 1,
+            interactionRules: .denseWhiteClayVideo7
+        )
+
+        XCTAssertEqual(press.trigger?.kind, .slimeKnead)
+        XCTAssertEqual(
+            press.trigger?.soundPackIDOverride,
+            "dense-white-clay-video-7-knead"
+        )
+        XCTAssertEqual(fold.trigger?.kind, .slimeStretch)
+        XCTAssertEqual(
+            fold.trigger?.soundPackIDOverride,
+            "dense-white-clay-video-7-stretch"
+        )
+        XCTAssertEqual(fold.trigger?.volumeScale ?? 0, 0.66, accuracy: 0.0001)
+    }
+
+    func testVideo7DenseWhiteClaySuppressesEarlyReleaseChatter() {
+        let engine = TrackpadGestureEngine()
+        _ = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 2,
+            pressure: 0.72,
+            movement: 0.04,
+            spread: 0.18,
+            timestamp: 1,
+            interactionRules: .denseWhiteClayVideo7
+        )
+        let earlyRelease = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 0,
+            pressure: 0,
+            movement: 0,
+            spread: 0,
+            timestamp: 1.20,
+            interactionRules: .denseWhiteClayVideo7
+        )
+        _ = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 2,
+            pressure: 0.66,
+            movement: 0.04,
+            spread: 0.18,
+            timestamp: 1.25,
+            interactionRules: .denseWhiteClayVideo7
+        )
+        let release = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 0,
+            pressure: 0,
+            movement: 0,
+            spread: 0,
+            timestamp: 1.60,
+            interactionRules: .denseWhiteClayVideo7
+        )
+
+        XCTAssertNil(earlyRelease.trigger)
+        XCTAssertEqual(release.trigger?.kind, .slimeRelease)
+        XCTAssertEqual(
+            release.trigger?.soundPackIDOverride,
+            "dense-white-clay-video-7-stretch"
+        )
+    }
 }

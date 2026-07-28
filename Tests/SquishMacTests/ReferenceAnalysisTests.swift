@@ -239,4 +239,46 @@ final class ReferenceAnalysisTests: XCTestCase {
         XCTAssertNil(profile.effectiveInteractionRules.bubbleGesture)
         XCTAssertNil(profile.effectiveCameraTuning.bubbleGesture)
     }
+
+    func testVideo7DenseWhiteClayKeepsCalmDenseTuningAndMappings() throws {
+        let profile = try XCTUnwrap(
+            SlimeMaterialProfile.builtIn.first {
+                $0.id == "dense-white-clay-slime-video-7"
+            }
+        )
+
+        XCTAssertEqual(profile.category, .butterClay)
+        XCTAssertEqual(profile.effectiveInteractionRules.minimumFingerCount, 2)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.response, 1.0)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.soundDensity, 0.86)
+        XCTAssertEqual(
+            profile.effectiveCameraTuning.stretchMovementThreshold,
+            0.30,
+            accuracy: 0.0001
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeKnead),
+            "dense-white-clay-video-7-knead"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeStretch),
+            "dense-white-clay-video-7-stretch"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeRelease),
+            "dense-white-clay-video-7-stretch"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.effectiveVolumeScale,
+            0.66,
+            accuracy: 0.0001
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.effectiveMinimumSoundInterval,
+            0.32,
+            accuracy: 0.0001
+        )
+        XCTAssertNil(profile.effectiveInteractionRules.bubbleGesture)
+        XCTAssertNil(profile.effectiveCameraTuning.bubbleGesture)
+    }
 }
