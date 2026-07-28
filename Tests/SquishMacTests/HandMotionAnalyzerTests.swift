@@ -322,6 +322,44 @@ final class HandMotionAnalyzerTests: XCTestCase {
         XCTAssertFalse(engine.isBarPungPrepared)
     }
 
+    func testVideo8CameraSeparatesPinchFromSpacedJellyPull() {
+        let engine = ReferenceGestureInferenceEngine(
+            mode: .slime,
+            cameraTuning: .pinkGummyJellyVideo8,
+            interactionRules: .pinkGummyJellyVideo8
+        )
+
+        let compactPinch = engine.process(motionFrame(
+            timestamp: 0,
+            handCount: 2,
+            fingertipCount: 4,
+            movement: 0.10,
+            spread: 0.24,
+            pressure: 0.45
+        ))
+        let earlyPull = engine.process(motionFrame(
+            timestamp: 0.20,
+            handCount: 2,
+            fingertipCount: 8,
+            movement: 0.21,
+            spread: 0.32,
+            pressure: 0.30
+        ))
+        let spacedPull = engine.process(motionFrame(
+            timestamp: 0.31,
+            handCount: 2,
+            fingertipCount: 8,
+            movement: 0.21,
+            spread: 0.32,
+            pressure: 0.30
+        ))
+
+        XCTAssertEqual(compactPinch?.kind, .slimeKnead)
+        XCTAssertNil(earlyPull)
+        XCTAssertEqual(spacedPull?.kind, .slimeStretch)
+        XCTAssertFalse(engine.isBarPungPrepared)
+    }
+
     private func sample(timestamp: TimeInterval, xOffset: Double) -> HandPoseSample {
         let wrist = NormalizedPosePoint(x: 0.45 + xOffset, y: 0.45, confidence: 1)
         let joints: [HandJointName: NormalizedPosePoint] = [

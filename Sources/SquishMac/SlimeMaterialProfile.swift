@@ -168,6 +168,17 @@ struct CameraGestureTuning: Codable, Equatable, Hashable {
         bubbleGesture: nil
     )
 
+    static let pinkGummyJellyVideo8 = CameraGestureTuning(
+        response: 0.91,
+        soundDensity: 0.94,
+        minimumFingertipCount: 2,
+        kneadMovementThreshold: 0.073017,
+        stretchMovementThreshold: 0.190874,
+        stretchSpreadThreshold: 0.307321,
+        pressPressureThreshold: 0.371956,
+        bubbleGesture: nil
+    )
+
     static let aeratedClearVideo6 = CameraGestureTuning(
         response: 0.89,
         soundDensity: 0.95,
@@ -446,6 +457,18 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         interactionSummary: "Press inward with two opposing contacts, make short controlled pulls with four or more contacts, and fold the dense clay slowly. Bar-pung is disabled because the reference does not form a sheet."
     )
 
+    static let pinkGummyJellyVideo8 = SlimeInteractionRules(
+        style: .elastic,
+        minimumFingerCount: 2,
+        stretchMovementThreshold: 0.14,
+        kneadSoundPackID: "pink-gummy-jelly-video-8-knead",
+        stretchSoundPackID: "pink-gummy-jelly-video-8-stretch",
+        releaseSoundPackID: "pink-gummy-jelly-video-8-stretch",
+        volumeScale: 0.68,
+        minimumSoundInterval: 0.30,
+        interactionSummary: "Pinch and pop the sticky jelly with two or more contacts, then use four or more contacts for controlled long or short pulls, twists, and folds. Bar-pung is disabled because the reference does not inflate one."
+    )
+
     static let aeratedClearVideo6 = SlimeInteractionRules(
         style: .elastic,
         minimumFingerCount: 2,
@@ -701,6 +724,17 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
         profile("butter-clay", "Butter / Clay Slime", .butterClay, core: "soft matte clay slime"),
         profile("cloud", "Cloud Slime", .cloud, core: "fluffy drizzling cloud slime"),
         profile("jelly", "Jelly Slime", .jelly, core: "wet jelly-textured slime"),
+        profile(
+            "pink-gummy-jelly-slime-video-8",
+            "Pink Gummy Jelly Slime (Video 8)",
+            .jelly,
+            outer: "translucent pink glossy surface",
+            core: "sticky elastic jelly with long strings, short pulls, twists, and compact folds",
+            notes: "Video 8 reference. Product name is not yet confirmed, no inflated bar-pung was observed, and all accepted sounds align with visible jelly handling.",
+            interactionRules: .pinkGummyJellyVideo8,
+            trackpadTuning: TrackpadTuning(response: 0.96, soundDensity: 0.94),
+            cameraTuning: .pinkGummyJellyVideo8
+        ),
         profile("icee", "Icee Slime", .icee, core: "snowy granular slime"),
         profile("floam", "Floam / Bead Slime", .floam, core: "slime with foam beads"),
         profile("crunchy", "Crunchy Slime", .crunchy, core: "crunchy inclusion slime"),

@@ -167,6 +167,30 @@ final class SoundPackManagerTests: XCTestCase {
         )
     }
 
+    func testVideo8PinkGummyJellyPacksAreGestureSpecificAndProfileOnly() {
+        let manager = SoundPackManager()
+
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "pink-gummy-jelly-video-8-knead",
+                customDirectoryPath: nil
+            ),
+            24
+        )
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "pink-gummy-jelly-video-8-stretch",
+                customDirectoryPath: nil
+            ),
+            6
+        )
+        XCTAssertFalse(
+            manager.availablePacks().contains {
+                $0.id.hasPrefix("pink-gummy-jelly-video-8-")
+            }
+        )
+    }
+
     func testCustomFolderSearchesRecursivelyForSupportedAudioFiles() throws {
         let manager = SoundPackManager()
         let root = FileManager.default.temporaryDirectory

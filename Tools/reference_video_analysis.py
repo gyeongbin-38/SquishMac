@@ -360,6 +360,7 @@ def track_hands(
     video: Path,
     model: Path,
     target_fps: float,
+    max_tracking_width: int | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     capture = cv2.VideoCapture(str(video))
     if not capture.isOpened():
@@ -370,6 +371,12 @@ def track_hands(
     height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
     frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
     duration = frame_count / source_fps if source_fps > 0 else 0.0
+    tracking_width = width
+    tracking_height = height
+    if max_tracking_width and width > max_tracking_width:
+        tracking_scale = max_tracking_width / width
+        tracking_width = max_tracking_width
+        tracking_height = max(1, int(round(height * tracking_scale)))
     options = mp.tasks.vision.HandLandmarkerOptions(
         base_options=mp.tasks.BaseOptions(model_asset_path=str(model)),
         running_mode=mp.tasks.vision.RunningMode.VIDEO,
@@ -400,7 +407,14 @@ def track_hands(
                     continue
                 next_sample_time += 1.0 / target_fps
 
-                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                tracking_frame = frame
+                if tracking_width != width:
+                    tracking_frame = cv2.resize(
+                        frame,
+                        (tracking_width, tracking_height),
+                        interpolation=cv2.INTER_AREA,
+                    )
+                rgb = cv2.cvtColor(tracking_frame, cv2.COLOR_BGR2RGB)
                 result = detector.detect_for_video(
                     mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb),
                     int(round(timestamp * 1000)),
@@ -441,6 +455,8 @@ def track_hands(
         "analysis_fps": target_fps,
         "width": width,
         "height": height,
+        "tracking_input_width": tracking_width,
+        "tracking_input_height": tracking_height,
         "source_frame_count": frame_count,
         "analyzed_frame_count": len(records),
         "duration": duration,
@@ -597,7 +613,8 @@ def mux_tracking_video(
             "-i", str(silent_video), "-i", str(source_video),
             "-map", "0:v:0", "-map", "1:a:0?",
             "-c:v", "libx264", "-preset", "medium", "-crf", "20",
-            "-c:a", "aac", "-b:a", "160k", "-shortest", str(output),
+            "-c:a", "aac", "-b:a", "160k", "-shortest",
+            "-movflags", "+faststart", str(output),
         ],
         check=True,
     )
@@ -1413,6 +1430,16 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--interaction-summary", default="")
     parser.add_argument("--analysis-fps", type=float, default=15.0)
     parser.add_argument(
+        "--max-tracking-width",
+        type=int,
+        default=0,
+        help=(
+            "Downscale frames wider than this value before hand inference while "
+            "keeping source audio and rendered overlays at full size "
+            "(default: disabled)."
+        ),
+    )
+    parser.add_argument(
         "--slime-only-audio",
         action="store_true",
         help=(
@@ -1469,6 +1496,8 @@ def main() -> None:
         raise ValueError(
             "--audio-lowpass-hz must be at least 100 Hz above the high-pass"
         )
+    if args.max_tracking_width and args.max_tracking_width < 320:
+        raise ValueError("--max-tracking-width must be 0 or at least 320")
 
     ffmpeg = find_ffmpeg(args.ffmpeg)
     audio_exclusions = load_audio_exclusions(
@@ -1494,6 +1523,7 @@ def main() -> None:
         video=video,
         model=model,
         target_fps=args.analysis_fps,
+        max_tracking_width=args.max_tracking_width or None,
     )
     render_tracking_video(
         source_video=video,

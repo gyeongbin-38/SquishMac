@@ -720,4 +720,87 @@ final class TrackpadGestureEngineTests: XCTestCase {
             "dense-white-clay-video-7-stretch"
         )
     }
+
+    func testVideo8PinkGummyJellyRoutesTwoFingerPopAndFourFingerPull() {
+        let popEngine = TrackpadGestureEngine()
+        let pullEngine = TrackpadGestureEngine()
+
+        let pop = popEngine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 2,
+            pressure: 0.58,
+            movement: 0.04,
+            spread: 0.20,
+            timestamp: 1,
+            interactionRules: .pinkGummyJellyVideo8
+        )
+        let pull = pullEngine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 4,
+            pressure: 0.40,
+            movement: 0.18,
+            spread: 0.62,
+            timestamp: 1,
+            interactionRules: .pinkGummyJellyVideo8
+        )
+
+        XCTAssertEqual(pop.trigger?.kind, .slimeKnead)
+        XCTAssertEqual(
+            pop.trigger?.soundPackIDOverride,
+            "pink-gummy-jelly-video-8-knead"
+        )
+        XCTAssertEqual(pull.trigger?.kind, .slimeStretch)
+        XCTAssertEqual(
+            pull.trigger?.soundPackIDOverride,
+            "pink-gummy-jelly-video-8-stretch"
+        )
+        XCTAssertEqual(pull.trigger?.volumeScale ?? 0, 0.68, accuracy: 0.0001)
+    }
+
+    func testVideo8PinkGummyJellySuppressesEarlyReleaseChatter() {
+        let engine = TrackpadGestureEngine()
+        _ = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 2,
+            pressure: 0.58,
+            movement: 0.04,
+            spread: 0.20,
+            timestamp: 1,
+            interactionRules: .pinkGummyJellyVideo8
+        )
+        let earlyRelease = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 0,
+            pressure: 0,
+            movement: 0,
+            spread: 0,
+            timestamp: 1.20,
+            interactionRules: .pinkGummyJellyVideo8
+        )
+        _ = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 2,
+            pressure: 0.54,
+            movement: 0.04,
+            spread: 0.20,
+            timestamp: 1.25,
+            interactionRules: .pinkGummyJellyVideo8
+        )
+        let release = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 0,
+            pressure: 0,
+            movement: 0,
+            spread: 0,
+            timestamp: 1.55,
+            interactionRules: .pinkGummyJellyVideo8
+        )
+
+        XCTAssertNil(earlyRelease.trigger)
+        XCTAssertEqual(release.trigger?.kind, .slimeRelease)
+        XCTAssertEqual(
+            release.trigger?.soundPackIDOverride,
+            "pink-gummy-jelly-video-8-stretch"
+        )
+    }
 }

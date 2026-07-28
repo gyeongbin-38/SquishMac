@@ -281,4 +281,46 @@ final class ReferenceAnalysisTests: XCTestCase {
         XCTAssertNil(profile.effectiveInteractionRules.bubbleGesture)
         XCTAssertNil(profile.effectiveCameraTuning.bubbleGesture)
     }
+
+    func testVideo8PinkGummyJellyKeepsLearnedTuningAndMappings() throws {
+        let profile = try XCTUnwrap(
+            SlimeMaterialProfile.builtIn.first {
+                $0.id == "pink-gummy-jelly-slime-video-8"
+            }
+        )
+
+        XCTAssertEqual(profile.category, .jelly)
+        XCTAssertEqual(profile.effectiveInteractionRules.minimumFingerCount, 2)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.response, 0.96)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.soundDensity, 0.94)
+        XCTAssertEqual(
+            profile.effectiveCameraTuning.stretchMovementThreshold,
+            0.190874,
+            accuracy: 0.000001
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeKnead),
+            "pink-gummy-jelly-video-8-knead"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeStretch),
+            "pink-gummy-jelly-video-8-stretch"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeRelease),
+            "pink-gummy-jelly-video-8-stretch"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.effectiveVolumeScale,
+            0.68,
+            accuracy: 0.0001
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.effectiveMinimumSoundInterval,
+            0.30,
+            accuracy: 0.0001
+        )
+        XCTAssertNil(profile.effectiveInteractionRules.bubbleGesture)
+        XCTAssertNil(profile.effectiveCameraTuning.bubbleGesture)
+    }
 }

@@ -104,6 +104,18 @@ final class SoundPackManager {
             title: "Dense White Clay 7 Stretch",
             folderName: "dense-white-clay-video-7-stretch",
             isUserSelectable: false
+        ),
+        SoundPack(
+            id: "pink-gummy-jelly-video-8-knead",
+            title: "Pink Gummy Jelly 8 Knead",
+            folderName: "pink-gummy-jelly-video-8-knead",
+            isUserSelectable: false
+        ),
+        SoundPack(
+            id: "pink-gummy-jelly-video-8-stretch",
+            title: "Pink Gummy Jelly 8 Stretch",
+            folderName: "pink-gummy-jelly-video-8-stretch",
+            isUserSelectable: false
         )
     ]
 

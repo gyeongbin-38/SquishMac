@@ -41,6 +41,11 @@ jobs:
             Sources/SquishMac/Resources/Sounds/dense-white-clay-video-7-stretch \
             --expected-count 29 \
             --peak-ceiling-db -10
+          python3 Tools/validate_reference_audio.py \
+            Sources/SquishMac/Resources/Sounds/pink-gummy-jelly-video-8-knead \
+            Sources/SquishMac/Resources/Sounds/pink-gummy-jelly-video-8-stretch \
+            --expected-count 30 \
+            --peak-ceiling-db -10
 
       - name: Build debug executable
         run: swift build -v

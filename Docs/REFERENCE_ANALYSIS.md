@@ -64,6 +64,12 @@ py -3.12 -m venv .venv-analysis
   --slime-only-audio
 ```
 
+For long 1080p or 4K footage, `--max-tracking-width 960` can reduce only the
+frames sent to the hand landmark model. Audio extraction and the rendered
+tracking overlay retain the source media, while normalized landmark coordinates
+remain resolution independent. Leave the option unset when fingertips occupy
+only a very small part of the frame.
+
 Output is separated into `motion/landmarks.json`, `events/gesture_timeline.json`, `audio/events.json`, `audio/clips/<gesture>/`, `overlays/tracking.mp4`, and `overlays/poster.jpg`. Frames with no detected hands remain in the motion timeline as quality evidence but are excluded from inferred gestures, preventing motion blur or an out-of-frame hand from becoming a false release event.
 
 For slime footage, `--slime-only-audio` requires cross-modal alignment with a

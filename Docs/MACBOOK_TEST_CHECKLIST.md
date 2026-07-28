@@ -49,6 +49,9 @@ Confirm that all tests pass, `SquishMac.app` launches, the icon appears in the m
 - Select `Dense White Clay Slime (Video 7)` and confirm two opposing pressure contacts use its dense press/knead pack.
 - With Video 7 selected, use four or more contacts above movement `0.16`; confirm the short-pull/fold pack plays.
 - Confirm Video 7 sounds remain material-only at 66% profile gain, are spaced by at least about 0.32 seconds, and never show `Bar-pung ready`.
+- Select `Pink Gummy Jelly Slime (Video 8)` and confirm two pressure contacts use its pinch/pop/knead pack.
+- With Video 8 selected, use four or more contacts above movement `0.14`; confirm the pull/fold pack plays.
+- Confirm Video 8 sounds remain material-only at 68% profile gain, are spaced by at least about 0.30 seconds, and never show `Bar-pung ready`.
 - Select `Clear Slime (Video 3)` and confirm knead/press and stretch gestures use audibly different source pools.
 - Confirm Video 3 sounds are slightly quieter than the same master-volume setting on a standard profile.
 - With Video 3 selected, spread five or six fingers beyond `0.60`; confirm `Bar-pung ready` appears.
@@ -110,6 +113,8 @@ Do not repeatedly hit the display, hinge, or enclosure. The impact feature shoul
 - Confirm Video 6 never enters `Bar-pung ready`, even with two open hands.
 - Select `Dense White Clay Slime (Video 7)` and confirm compact motion above `0.10` remains a press/knead while movement above `0.30` with spread above `0.48` becomes a short pull/fold.
 - Confirm Video 7 accepts a compact two-fingertip press, suppresses another sound inside about 0.32 seconds, and never enters `Bar-pung ready`.
+- Select `Pink Gummy Jelly Slime (Video 8)` and confirm compact motion above `0.073` remains a pinch/knead while movement above `0.191` with spread above `0.307` becomes a jelly pull.
+- Confirm Video 8 accepts a compact two-fingertip pinch, suppresses another sound inside about 0.30 seconds, and never enters `Bar-pung ready`.
 - With Video 3 selected, show two open hands with at least eight tracked fingertips and broad spread; confirm `Bar-pung ready` appears.
 - Within 1.4 seconds, move both hands downward quickly while keeping them broadly separated; confirm one camera bar-pung event plays.
 - Repeat with one hand or with mostly inward movement and confirm camera bar-pung does not trigger.
