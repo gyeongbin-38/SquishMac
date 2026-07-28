@@ -157,4 +157,35 @@ final class ReferenceAnalysisTests: XCTestCase {
             }
         )
     }
+
+    func testVideo5WhitePuttyKeepsDenseTuningAndSeparateSoundMappings() throws {
+        let profile = try XCTUnwrap(
+            SlimeMaterialProfile.builtIn.first {
+                $0.id == "white-dense-putty-video-5"
+            }
+        )
+
+        XCTAssertEqual(profile.category, .butterClay)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.response, 0.92)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.soundDensity, 0.88)
+        XCTAssertEqual(
+            profile.effectiveCameraTuning.stretchMovementThreshold,
+            0.32
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeKnead),
+            "white-putty-video-5-knead"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeStretch),
+            "white-putty-video-5-stretch"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.effectiveVolumeScale,
+            0.82,
+            accuracy: 0.0001
+        )
+        XCTAssertNil(profile.effectiveInteractionRules.bubbleGesture)
+        XCTAssertNil(profile.effectiveCameraTuning.bubbleGesture)
+    }
 }

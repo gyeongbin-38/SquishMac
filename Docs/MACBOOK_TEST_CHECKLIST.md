@@ -40,6 +40,8 @@ Confirm that all tests pass, `SquishMac.app` launches, the icon appears in the m
 - Select `Doctor Putty (Pastel Pink)`, move four to six fingers slowly, and confirm normal stretch sounds.
 - With Doctor Putty still selected, exceed movement `0.72`; confirm one failure snap plays and does not repeat until movement falls below `0.38`.
 - Select another slime and repeat the fast movement; confirm it remains a normal stretch without the Doctor Putty snap.
+- Select `White Dense Putty (Video 5)` and confirm compact presses use its knead pack while four-or-more-finger pulls above movement `0.20` use its short-pull pack.
+- Confirm Video 5 plays more quietly and less densely than a standard slime profile, and never shows `Bar-pung ready`.
 - Select `Clear Slime (Video 3)` and confirm knead/press and stretch gestures use audibly different source pools.
 - Confirm Video 3 sounds are slightly quieter than the same master-volume setting on a standard profile.
 - With Video 3 selected, spread five or six fingers beyond `0.60`; confirm `Bar-pung ready` appears.
@@ -96,6 +98,7 @@ Do not repeatedly hit the display, hinge, or enclosure. The impact feature shoul
 - Confirm the preview starts and up to ten fingertip points follow two visible hands.
 - Confirm no frames, landmarks, or recordings are written to disk without an explicit export.
 - Test Slime with three to ten visible fingertips and confirm press, knead, stretch, and release sounds.
+- Select `White Dense Putty (Video 5)` and confirm compact movement near `0.20` remains a knead while broad movement above `0.32` becomes a short pull.
 - With Video 3 selected, show two open hands with at least eight tracked fingertips and broad spread; confirm `Bar-pung ready` appears.
 - Within 1.4 seconds, move both hands downward quickly while keeping them broadly separated; confirm one camera bar-pung event plays.
 - Repeat with one hand or with mostly inward movement and confirm camera bar-pung does not trigger.

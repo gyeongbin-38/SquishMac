@@ -95,6 +95,30 @@ final class SoundPackManagerTests: XCTestCase {
         )
     }
 
+    func testVideo5WhitePuttyPacksAreGestureSpecificAndProfileOnly() {
+        let manager = SoundPackManager()
+
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "white-putty-video-5-knead",
+                customDirectoryPath: nil
+            ),
+            14
+        )
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "white-putty-video-5-stretch",
+                customDirectoryPath: nil
+            ),
+            6
+        )
+        XCTAssertFalse(
+            manager.availablePacks().contains {
+                $0.id.hasPrefix("white-putty-video-5-")
+            }
+        )
+    }
+
     func testCustomFolderSearchesRecursivelyForSupportedAudioFiles() throws {
         let manager = SoundPackManager()
         let root = FileManager.default.temporaryDirectory

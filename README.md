@@ -23,6 +23,7 @@ SquishMac is a Swift macOS menu bar sound toy built around a Force Touch trackpa
 - Doctor Putty profile with a fast-stretch failure state and two original snap variations extracted from video 2.
 - Video 3 clear-slime profile with 40 cleaned gesture-aligned sounds, split into knead/press and stretch packs and played at a profile-specific 86% gain.
 - Video 4 pastel wax-shell profile with 24 cleaned sounds: 18 exposed-core press sounds, five restored shell-crack sounds, and one final crush sound.
+- Video 5 white dense-putty profile with 20 voice-screened sounds, split into 14 compact knead/press sounds and six controlled short-pull sounds.
 - Profile-specific bar-pung recognition: two-hand wide-sheet to downward-seal motion on camera, and a five-to-six-finger wide-spread to closing-pressure proxy on trackpad.
 - Per-material camera thresholds and trackpad response recommendations instead of sharing one input scale.
 - Live camera slime and wax interaction with on-device two-hand tracking and a virtual material overlay.
@@ -108,9 +109,11 @@ Sources/SquishMac/Resources/Sounds/clear-video-3-stretch
 Sources/SquishMac/Resources/Sounds/pastel-wax-video-4-press
 Sources/SquishMac/Resources/Sounds/pastel-wax-video-4-crack
 Sources/SquishMac/Resources/Sounds/pastel-wax-video-4-crush
+Sources/SquishMac/Resources/Sounds/white-putty-video-5-knead
+Sources/SquishMac/Resources/Sounds/white-putty-video-5-stretch
 ```
 
-The general sound packs are generated development placeholders. The Doctor Putty failure pack contains two short clips derived from user-provided video 2. The clear-video-3 packs contain 34 knead/press clips and 6 stretch clips. Video 4 contains 18 exposed-core handling clips plus all six verified opening wax-shell transients: five progressive cracks and one final crush. The restored wax clips use isolated, non-overlapping boundaries and preserve brittle high-frequency detail. Reference-derived clips are gesture aligned, screened for voice and unrelated contact contamination, and conservatively cleaned. These packs are profile-only. Replace placeholders with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
+The general sound packs are generated development placeholders. The Doctor Putty failure pack contains two short clips derived from user-provided video 2. The clear-video-3 packs contain 34 knead/press clips and 6 stretch clips. Video 4 contains 18 exposed-core handling clips plus all six verified opening wax-shell transients: five progressive cracks and one final crush. Video 5 contains 14 compact knead/press clips and six short-pull clips from the white dense putty. The restored wax clips use isolated, non-overlapping boundaries and preserve brittle high-frequency detail. Reference-derived clips are gesture aligned, screened for voice and unrelated contact contamination, and conservatively cleaned. These packs are profile-only. Replace placeholders with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
 
 ## Project Layout
 

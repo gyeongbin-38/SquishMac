@@ -146,6 +146,17 @@ struct CameraGestureTuning: Codable, Equatable, Hashable {
         bubbleGesture: nil
     )
 
+    static let whitePuttyVideo5 = CameraGestureTuning(
+        response: 0.92,
+        soundDensity: 0.88,
+        minimumFingertipCount: 3,
+        kneadMovementThreshold: 0.12,
+        stretchMovementThreshold: 0.32,
+        stretchSpreadThreshold: 0.409636,
+        pressPressureThreshold: 0.388291,
+        bubbleGesture: nil
+    )
+
     let response: Double
     let soundDensity: Double
     let minimumFingertipCount: Int
@@ -389,6 +400,16 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         interactionSummary: "Use two opposing contacts. A light hold presses the shell, rising pressure makes repeated fine cracks, and a firm inward squeeze crushes it."
     )
 
+    static let whitePuttyVideo5 = SlimeInteractionRules(
+        style: .densePutty,
+        minimumFingerCount: 3,
+        stretchMovementThreshold: 0.20,
+        kneadSoundPackID: "white-putty-video-5-knead",
+        stretchSoundPackID: "white-putty-video-5-stretch",
+        volumeScale: 0.82,
+        interactionSummary: "Use compact pinches, controlled short pulls, folds, and firm thumb-like presses. Bar-pung is disabled for this dense putty."
+    )
+
     let style: SlimeInteractionStyle
     let minimumFingerCount: Int
     let stretchMovementThreshold: Double
@@ -574,6 +595,17 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
             core: "dense stretchy low-gloss putty",
             notes: "Video 2 reference. Fast stretching causes a material-specific failure snap.",
             interactionRules: .doctorPutty
+        ),
+        profile(
+            "white-dense-putty-video-5",
+            "White Dense Putty (Video 5)",
+            .butterClay,
+            outer: "white matte low-gloss surface",
+            core: "dense smooth putty with short elastic pulls and compact folds",
+            notes: "Video 5 reference. Product name is not yet confirmed, and no bar-pung motion was observed.",
+            interactionRules: .whitePuttyVideo5,
+            trackpadTuning: TrackpadTuning(response: 0.92, soundDensity: 0.88),
+            cameraTuning: .whitePuttyVideo5
         ),
         profile(
             "pastel-wax-shell-video-4",

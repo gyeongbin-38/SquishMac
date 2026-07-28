@@ -190,6 +190,34 @@ final class HandMotionAnalyzerTests: XCTestCase {
         XCTAssertNotEqual(downwardMotion?.kind, .slimeBubble)
     }
 
+    func testVideo5CameraRequiresAControlledShortPullForStretch() {
+        let engine = ReferenceGestureInferenceEngine(
+            mode: .slime,
+            cameraTuning: .whitePuttyVideo5,
+            interactionRules: .whitePuttyVideo5
+        )
+
+        let compactMotion = engine.process(motionFrame(
+            timestamp: 0,
+            handCount: 1,
+            fingertipCount: 5,
+            movement: 0.20,
+            spread: 0.42,
+            pressure: 0.30
+        ))
+        let shortPull = engine.process(motionFrame(
+            timestamp: 0.25,
+            handCount: 1,
+            fingertipCount: 5,
+            movement: 0.34,
+            spread: 0.43,
+            pressure: 0.28
+        ))
+
+        XCTAssertEqual(compactMotion?.kind, .slimeKnead)
+        XCTAssertEqual(shortPull?.kind, .slimeStretch)
+    }
+
     private func sample(timestamp: TimeInterval, xOffset: Double) -> HandPoseSample {
         let wrist = NormalizedPosePoint(x: 0.45 + xOffset, y: 0.45, confidence: 1)
         let joints: [HandJointName: NormalizedPosePoint] = [

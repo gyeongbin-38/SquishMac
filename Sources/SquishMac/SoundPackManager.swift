@@ -68,6 +68,18 @@ final class SoundPackManager {
             title: "Pastel Wax 4 Crush",
             folderName: "pastel-wax-video-4-crush",
             isUserSelectable: false
+        ),
+        SoundPack(
+            id: "white-putty-video-5-knead",
+            title: "White Putty 5 Knead",
+            folderName: "white-putty-video-5-knead",
+            isUserSelectable: false
+        ),
+        SoundPack(
+            id: "white-putty-video-5-stretch",
+            title: "White Putty 5 Stretch",
+            folderName: "white-putty-video-5-stretch",
+            isUserSelectable: false
         )
     ]
 

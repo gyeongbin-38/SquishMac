@@ -455,4 +455,40 @@ final class TrackpadGestureEngineTests: XCTestCase {
         XCTAssertNotEqual(held.trigger?.kind, .slimeStretchFailure)
         XCTAssertEqual(next.trigger?.kind, .slimeStretchFailure)
     }
+
+    func testVideo5WhitePuttyRoutesKneadAndShortStretchSounds() {
+        let kneadEngine = TrackpadGestureEngine()
+        let stretchEngine = TrackpadGestureEngine()
+
+        let knead = kneadEngine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 5,
+            pressure: 0.58,
+            movement: 0.08,
+            spread: 0.45,
+            timestamp: 1,
+            interactionRules: .whitePuttyVideo5
+        )
+        let stretch = stretchEngine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 5,
+            pressure: 0.42,
+            movement: 0.24,
+            spread: 0.65,
+            timestamp: 1,
+            interactionRules: .whitePuttyVideo5
+        )
+
+        XCTAssertEqual(knead.trigger?.kind, .slimeKnead)
+        XCTAssertEqual(
+            knead.trigger?.soundPackIDOverride,
+            "white-putty-video-5-knead"
+        )
+        XCTAssertEqual(stretch.trigger?.kind, .slimeStretch)
+        XCTAssertEqual(
+            stretch.trigger?.soundPackIDOverride,
+            "white-putty-video-5-stretch"
+        )
+        XCTAssertEqual(stretch.trigger?.volumeScale ?? 0, 0.82, accuracy: 0.0001)
+    }
 }
