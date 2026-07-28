@@ -1190,13 +1190,47 @@ def export_audio_clips(
                 highpass_hz=highpass_hz,
                 lowpass_hz=lowpass_hz,
             )
-        fade_size = min(int(sample_rate * 0.006), len(clip) // 2)
-        if fade_size > 0:
-            fade = np.linspace(0.0, 1.0, fade_size)
-            clip[:fade_size] *= fade
-            clip[-fade_size:] *= fade[::-1]
+            clip = polish_slime_clip(clip, sample_rate)
+        else:
+            fade_size = min(int(sample_rate * 0.006), len(clip) // 2)
+            if fade_size > 0:
+                fade = np.linspace(0.0, 1.0, fade_size)
+                clip[:fade_size] *= fade
+                clip[-fade_size:] *= fade[::-1]
         sf.write(output, clip, sample_rate, subtype="PCM_16")
         event["clip_path"] = output.relative_to(output_root.parent.parent).as_posix()
+
+
+def polish_slime_clip(
+    clip: np.ndarray,
+    sample_rate: int,
+    peak_ceiling_db: float = -10.0,
+    rms_ceiling_db: float = -32.0,
+) -> np.ndarray:
+    if len(clip) == 0:
+        return clip
+
+    polished = np.asarray(clip, dtype=np.float64).copy()
+    peak = float(np.max(np.abs(polished)))
+    rms = float(np.sqrt(np.mean(np.square(polished))))
+    peak_ceiling = 10.0 ** (peak_ceiling_db / 20.0)
+    rms_ceiling = 10.0 ** (rms_ceiling_db / 20.0)
+    gain = 1.0
+    if peak > 0:
+        gain = min(gain, peak_ceiling / peak)
+    if rms > 0:
+        gain = min(gain, rms_ceiling / rms)
+    polished *= gain
+
+    fade_in_size = min(int(sample_rate * 0.012), len(polished) // 2)
+    fade_out_size = min(int(sample_rate * 0.030), len(polished) // 2)
+    if fade_in_size > 0:
+        phase = np.linspace(0.0, np.pi / 2.0, fade_in_size)
+        polished[:fade_in_size] *= np.square(np.sin(phase))
+    if fade_out_size > 0:
+        phase = np.linspace(np.pi / 2.0, 0.0, fade_out_size)
+        polished[-fade_out_size:] *= np.square(np.sin(phase))
+    return polished
 
 
 def clean_slime_clip(

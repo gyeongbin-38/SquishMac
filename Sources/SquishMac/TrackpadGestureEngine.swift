@@ -120,6 +120,7 @@ final class TrackpadGestureEngine {
     private var slimeStretchFailureLatched = false
     private var slimeBubbleArmTime: TimeInterval?
     private var slimeBubbleMaximumSpread = 0.0
+    private var lastInteractionTriggerTime = -Double.infinity
 
     var isBarPungPrepared: Bool {
         slimeBubbleArmTime != nil
@@ -134,6 +135,7 @@ final class TrackpadGestureEngine {
         waxStage = .idle
         slimeStretchFailureLatched = false
         resetSlimeBubble()
+        lastInteractionTriggerTime = -Double.infinity
     }
 
     func evaluate(
@@ -261,6 +263,7 @@ final class TrackpadGestureEngine {
                 liveIntensity: liveIntensity,
                 timestamp: timestamp,
                 interval: densityAdjusted(0.10, soundDensity: soundDensity),
+                soundPackIDOverride: interactionRules.releaseSoundPackID,
                 volumeScale: interactionRules.effectiveVolumeScale
             )
         }
@@ -451,11 +454,14 @@ final class TrackpadGestureEngine {
         volumeScale: Double = 1.0
     ) -> TrackpadGestureEvaluation {
         let lastTriggerTime = lastTriggerTimes[kind] ?? -Double.infinity
-        guard timestamp - lastTriggerTime >= interval else {
+        let profileInterval = interactionRules.effectiveMinimumSoundInterval
+        guard timestamp - lastTriggerTime >= interval,
+              timestamp - lastInteractionTriggerTime >= profileInterval else {
             return TrackpadGestureEvaluation(liveIntensity: liveIntensity, trigger: nil)
         }
 
         lastTriggerTimes[kind] = timestamp
+        lastInteractionTriggerTime = timestamp
         return TrackpadGestureEvaluation(
             liveIntensity: liveIntensity,
             trigger: TrackpadGestureTrigger(

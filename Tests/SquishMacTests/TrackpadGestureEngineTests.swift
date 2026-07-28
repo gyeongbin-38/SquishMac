@@ -489,6 +489,69 @@ final class TrackpadGestureEngineTests: XCTestCase {
             stretch.trigger?.soundPackIDOverride,
             "white-putty-video-5-stretch"
         )
-        XCTAssertEqual(stretch.trigger?.volumeScale ?? 0, 0.82, accuracy: 0.0001)
+        XCTAssertEqual(stretch.trigger?.volumeScale ?? 0, 0.68, accuracy: 0.0001)
+    }
+
+    func testVideo5WhitePuttySpacesDifferentSoundsToAvoidChatter() {
+        let engine = TrackpadGestureEngine()
+        let knead = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 5,
+            pressure: 0.58,
+            movement: 0.08,
+            spread: 0.45,
+            timestamp: 1,
+            interactionRules: .whitePuttyVideo5
+        )
+        let earlyStretch = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 5,
+            pressure: 0.42,
+            movement: 0.24,
+            spread: 0.65,
+            timestamp: 1.20,
+            interactionRules: .whitePuttyVideo5
+        )
+        let spacedStretch = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 5,
+            pressure: 0.42,
+            movement: 0.24,
+            spread: 0.65,
+            timestamp: 1.40,
+            interactionRules: .whitePuttyVideo5
+        )
+
+        XCTAssertEqual(knead.trigger?.kind, .slimeKnead)
+        XCTAssertNil(earlyStretch.trigger)
+        XCTAssertEqual(spacedStretch.trigger?.kind, .slimeStretch)
+    }
+
+    func testVideo5WhitePuttyUsesMaterialSoundWhenFingersRelease() {
+        let engine = TrackpadGestureEngine()
+        _ = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 5,
+            pressure: 0.58,
+            movement: 0.08,
+            spread: 0.45,
+            timestamp: 1,
+            interactionRules: .whitePuttyVideo5
+        )
+        let release = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 0,
+            pressure: 0,
+            movement: 0,
+            spread: 0,
+            timestamp: 1.40,
+            interactionRules: .whitePuttyVideo5
+        )
+
+        XCTAssertEqual(release.trigger?.kind, .slimeRelease)
+        XCTAssertEqual(
+            release.trigger?.soundPackIDOverride,
+            "white-putty-video-5-stretch"
+        )
     }
 }

@@ -206,7 +206,7 @@ final class HandMotionAnalyzerTests: XCTestCase {
             pressure: 0.30
         ))
         let shortPull = engine.process(motionFrame(
-            timestamp: 0.25,
+            timestamp: 0.40,
             handCount: 1,
             fingertipCount: 5,
             movement: 0.34,
@@ -216,6 +216,43 @@ final class HandMotionAnalyzerTests: XCTestCase {
 
         XCTAssertEqual(compactMotion?.kind, .slimeKnead)
         XCTAssertEqual(shortPull?.kind, .slimeStretch)
+    }
+
+    func testVideo5CameraSpacesDifferentSoundsToAvoidChatter() {
+        let engine = ReferenceGestureInferenceEngine(
+            mode: .slime,
+            cameraTuning: .whitePuttyVideo5,
+            interactionRules: .whitePuttyVideo5
+        )
+
+        let knead = engine.process(motionFrame(
+            timestamp: 0,
+            handCount: 1,
+            fingertipCount: 5,
+            movement: 0.20,
+            spread: 0.42,
+            pressure: 0.30
+        ))
+        let earlyStretch = engine.process(motionFrame(
+            timestamp: 0.20,
+            handCount: 1,
+            fingertipCount: 5,
+            movement: 0.34,
+            spread: 0.43,
+            pressure: 0.28
+        ))
+        let spacedStretch = engine.process(motionFrame(
+            timestamp: 0.40,
+            handCount: 1,
+            fingertipCount: 5,
+            movement: 0.34,
+            spread: 0.43,
+            pressure: 0.28
+        ))
+
+        XCTAssertEqual(knead?.kind, .slimeKnead)
+        XCTAssertNil(earlyStretch)
+        XCTAssertEqual(spacedStretch?.kind, .slimeStretch)
     }
 
     private func sample(timestamp: TimeInterval, xOffset: Double) -> HandPoseSample {

@@ -406,7 +406,9 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         stretchMovementThreshold: 0.20,
         kneadSoundPackID: "white-putty-video-5-knead",
         stretchSoundPackID: "white-putty-video-5-stretch",
-        volumeScale: 0.82,
+        releaseSoundPackID: "white-putty-video-5-stretch",
+        volumeScale: 0.68,
+        minimumSoundInterval: 0.38,
         interactionSummary: "Use compact pinches, controlled short pulls, folds, and firm thumb-like presses. Bar-pung is disabled for this dense putty."
     )
 
@@ -424,6 +426,7 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
     let bubbleGesture: TrackpadBubbleGestureRules?
     let waxInteraction: WaxInteractionRules?
     let volumeScale: Double?
+    let minimumSoundInterval: TimeInterval?
     let interactionSummary: String
 
     private enum CodingKeys: String, CodingKey {
@@ -441,6 +444,7 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         case bubbleGesture
         case waxInteraction
         case volumeScale
+        case minimumSoundInterval
         case interactionSummary
     }
 
@@ -459,6 +463,7 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         bubbleGesture: TrackpadBubbleGestureRules? = nil,
         waxInteraction: WaxInteractionRules? = nil,
         volumeScale: Double = 1.0,
+        minimumSoundInterval: TimeInterval? = nil,
         interactionSummary: String
     ) {
         let safeStretchThreshold = min(max(stretchMovementThreshold, 0.01), 1)
@@ -482,11 +487,18 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         self.bubbleGesture = bubbleGesture
         self.waxInteraction = waxInteraction
         self.volumeScale = volumeScale.clamped(to: 0.1...1.0)
+        self.minimumSoundInterval = minimumSoundInterval.map {
+            $0.clamped(to: 0.0...2.0)
+        }
         self.interactionSummary = interactionSummary
     }
 
     var effectiveVolumeScale: Double {
         (volumeScale ?? 1.0).clamped(to: 0.1...1.0)
+    }
+
+    var effectiveMinimumSoundInterval: TimeInterval {
+        (minimumSoundInterval ?? 0).clamped(to: 0.0...2.0)
     }
 
     var effectiveWaxInteraction: WaxInteractionRules {

@@ -155,6 +155,7 @@ final class ReferenceGestureInferenceEngine {
     private var waxStage: WaxStage = .idle
     private var previousWaxSignal = 0.0
     private var bubblePreparation: BubblePreparation?
+    private var lastInteractionTriggerTime = -Double.infinity
 
     init(
         mode: ReferenceMaterialMode,
@@ -412,10 +413,13 @@ final class ReferenceGestureInferenceEngine {
         cooldown: TimeInterval
     ) -> (kind: ReferenceGestureKind, intensity: Double)? {
         let lastTime = lastTriggerTimes[kind] ?? -Double.infinity
-        guard timestamp - lastTime >= cooldown else {
+        let profileInterval = interactionRules.effectiveMinimumSoundInterval
+        guard timestamp - lastTime >= cooldown,
+              timestamp - lastInteractionTriggerTime >= profileInterval else {
             return nil
         }
         lastTriggerTimes[kind] = timestamp
+        lastInteractionTriggerTime = timestamp
         return (kind, intensity.clamped(to: 0.0...1.0))
     }
 }

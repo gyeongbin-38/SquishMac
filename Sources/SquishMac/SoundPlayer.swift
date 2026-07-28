@@ -9,6 +9,10 @@ struct AudioPlaybackResponse: Equatable {
 }
 
 enum AudioResponseCurve {
+    static func referencePackRate(intensity: Double) -> Float {
+        Float(0.96 + intensity.clamped(to: 0.0...1.0) * 0.06)
+    }
+
     static func interaction(
         kind: TrackpadSoundKind,
         intensity: Double,
@@ -172,15 +176,27 @@ final class SoundPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
         )
         let primaryPackID = soundPackIDOverride ?? response.packID
         let urls = packManager.soundURLs(for: primaryPackID, customDirectoryPath: nil)
-        let rateVariation = Float.random(in: -0.025...0.025)
+        let usesReferencePack = soundPackIDOverride != nil
+        let baseRate = usesReferencePack
+            ? AudioResponseCurve.referencePackRate(intensity: safeIntensity)
+            : response.rate
+        let rateVariation = Float.random(
+            in: usesReferencePack ? -0.012...0.012 : -0.025...0.025
+        )
         let didPlayPrimary = playRandomURL(
             urls,
             key: primaryPackID,
             volume: response.volume,
-            rate: (response.rate + rateVariation).clamped(to: 0.5...1.5)
+            rate: (baseRate + rateVariation).clamped(to: 0.5...1.5)
         )
         guard didPlayPrimary else {
             return false
+        }
+
+        // Reference-derived packs already contain the complete material transient.
+        // Generic layers make those recordings louder and less faithful.
+        guard !usesReferencePack else {
+            return true
         }
 
         let generation = playbackGeneration

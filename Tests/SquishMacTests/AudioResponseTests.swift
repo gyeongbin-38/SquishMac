@@ -51,6 +51,24 @@ final class AudioResponseTests: XCTestCase {
         XCTAssertEqual(halfImpact, fullImpact * 0.5, accuracy: 0.0001)
     }
 
+    func testReferencePackRateStaysCloseToRecordedPitch() {
+        XCTAssertEqual(
+            AudioResponseCurve.referencePackRate(intensity: 0),
+            0.96,
+            accuracy: 0.0001
+        )
+        XCTAssertEqual(
+            AudioResponseCurve.referencePackRate(intensity: 1),
+            1.02,
+            accuracy: 0.0001
+        )
+        XCTAssertEqual(
+            AudioResponseCurve.referencePackRate(intensity: 2),
+            1.02,
+            accuracy: 0.0001
+        )
+    }
+
     func testShuffleBagUsesEverySoundBeforeRepeating() {
         var selector = SoundVariationSelector()
         let urls = (1...5).map { URL(fileURLWithPath: "/sound-\($0).wav") }

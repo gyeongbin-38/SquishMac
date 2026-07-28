@@ -42,6 +42,7 @@ Confirm that all tests pass, `SquishMac.app` launches, the icon appears in the m
 - Select another slime and repeat the fast movement; confirm it remains a normal stretch without the Doctor Putty snap.
 - Select `White Dense Putty (Video 5)` and confirm compact presses use its knead pack while four-or-more-finger pulls above movement `0.20` use its short-pull pack.
 - Confirm Video 5 plays more quietly and less densely than a standard slime profile, and never shows `Bar-pung ready`.
+- Confirm quick knead-to-stretch changes do not chatter, generic pop layers do not appear, and consecutive sounds remain at least about 0.38 seconds apart.
 - Select `Clear Slime (Video 3)` and confirm knead/press and stretch gestures use audibly different source pools.
 - Confirm Video 3 sounds are slightly quieter than the same master-volume setting on a standard profile.
 - With Video 3 selected, spread five or six fingers beyond `0.60`; confirm `Bar-pung ready` appears.

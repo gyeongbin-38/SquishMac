@@ -181,8 +181,17 @@ final class ReferenceAnalysisTests: XCTestCase {
             "white-putty-video-5-stretch"
         )
         XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeRelease),
+            "white-putty-video-5-stretch"
+        )
+        XCTAssertEqual(
             profile.effectiveInteractionRules.effectiveVolumeScale,
-            0.82,
+            0.68,
+            accuracy: 0.0001
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.effectiveMinimumSoundInterval,
+            0.38,
             accuracy: 0.0001
         )
         XCTAssertNil(profile.effectiveInteractionRules.bubbleGesture)
