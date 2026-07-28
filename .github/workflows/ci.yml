@@ -31,6 +31,11 @@ jobs:
             Sources/SquishMac/Resources/Sounds/white-putty-video-5-stretch \
             --expected-count 20 \
             --peak-ceiling-db -10
+          python3 Tools/validate_reference_audio.py \
+            Sources/SquishMac/Resources/Sounds/aerated-clear-video-6-knead \
+            Sources/SquishMac/Resources/Sounds/aerated-clear-video-6-stretch \
+            --expected-count 42 \
+            --peak-ceiling-db -10
 
       - name: Build debug executable
         run: swift build -v

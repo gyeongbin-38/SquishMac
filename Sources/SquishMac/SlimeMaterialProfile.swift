@@ -157,6 +157,17 @@ struct CameraGestureTuning: Codable, Equatable, Hashable {
         bubbleGesture: nil
     )
 
+    static let aeratedClearVideo6 = CameraGestureTuning(
+        response: 0.89,
+        soundDensity: 0.95,
+        minimumFingertipCount: 2,
+        kneadMovementThreshold: 0.063439,
+        stretchMovementThreshold: 0.223858,
+        stretchSpreadThreshold: 0.262545,
+        pressPressureThreshold: 0.350311,
+        bubbleGesture: nil
+    )
+
     let response: Double
     let soundDensity: Double
     let minimumFingertipCount: Int
@@ -412,6 +423,18 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         interactionSummary: "Use compact pinches, controlled short pulls, folds, and firm thumb-like presses. Bar-pung is disabled for this dense putty."
     )
 
+    static let aeratedClearVideo6 = SlimeInteractionRules(
+        style: .elastic,
+        minimumFingerCount: 2,
+        stretchMovementThreshold: 0.14,
+        kneadSoundPackID: "aerated-clear-video-6-knead",
+        stretchSoundPackID: "aerated-clear-video-6-stretch",
+        releaseSoundPackID: "aerated-clear-video-6-stretch",
+        volumeScale: 0.72,
+        minimumSoundInterval: 0.24,
+        interactionSummary: "Poke trapped bubbles with two or more contacts, press and fold the aerated gel, and pull broadly to form a thin clear membrane. Bar-pung is disabled because the reference does not inflate one."
+    )
+
     let style: SlimeInteractionStyle
     let minimumFingerCount: Int
     let stretchMovementThreshold: Double
@@ -598,6 +621,17 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
             interactionRules: .clearVideo3,
             trackpadTuning: TrackpadTuning(response: 0.96, soundDensity: 1.08),
             cameraTuning: .clearVideo3
+        ),
+        profile(
+            "aerated-clear-slime-video-6",
+            "Aerated Clear Slime (Video 6)",
+            .clear,
+            outer: "transparent glossy surface densely filled with fine air bubbles",
+            core: "elastic clear gel that forms thin membranes and aerated folds",
+            notes: "Video 6 reference. Product name is not yet confirmed. One source-clipped transient was excluded, and no inflated bar-pung was observed.",
+            interactionRules: .aeratedClearVideo6,
+            trackpadTuning: TrackpadTuning(response: 0.96, soundDensity: 0.95),
+            cameraTuning: .aeratedClearVideo6
         ),
         profile("thick-glossy", "Thick & Glossy Slime", .thickGlossy, core: "dense glossy slime"),
         profile(

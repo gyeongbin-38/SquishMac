@@ -1650,7 +1650,8 @@ def main() -> None:
             "clip_processing": (
                 f"{args.audio_highpass_hz:g}Hz high-pass, "
                 f"{args.audio_lowpass_hz:g}Hz low-pass, conservative spectral "
-                "gate, bounded peak normalization"
+                "gate, -10 dBFS peak ceiling, -32 dBFS RMS ceiling, "
+                "12ms/30ms curved fades"
                 if args.slime_only_audio
                 else "source amplitude with short edge fades"
             ),

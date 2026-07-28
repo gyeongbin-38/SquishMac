@@ -24,6 +24,7 @@ SquishMac is a Swift macOS menu bar sound toy built around a Force Touch trackpa
 - Video 3 clear-slime profile with 40 cleaned gesture-aligned sounds, split into knead/press and stretch packs and played at a profile-specific 86% gain.
 - Video 4 pastel wax-shell profile with 24 cleaned sounds: 18 exposed-core press sounds, five restored shell-crack sounds, and one final crush sound.
 - Video 5 white dense-putty profile with 20 voice-screened sounds, split into 14 compact knead/press sounds and six controlled short-pull sounds.
+- Video 6 aerated clear-slime profile with 42 polished sounds: 35 bubble-poke/knead/press sounds and seven broad membrane-pull sounds.
 - Profile-specific bar-pung recognition: two-hand wide-sheet to downward-seal motion on camera, and a five-to-six-finger wide-spread to closing-pressure proxy on trackpad.
 - Per-material camera thresholds and trackpad response recommendations instead of sharing one input scale.
 - Live camera slime and wax interaction with on-device two-hand tracking and a virtual material overlay.
@@ -80,7 +81,7 @@ These files are intended for hardware calibration and later comparison with owne
 
 Choose or create a material profile before analysis. Completed analyses are automatically stored under `Application Support/SquishMac/ReferenceDatasets/<material-profile>/<dataset-id>/analysis.json`, keeping tuning and sound mappings separate for each slime.
 
-`Open Camera Slime...` uses the built-in camera and Apple's on-device Vision hand-pose request. Select a slime or wax profile to apply its camera-specific gesture thresholds and sound mappings. With `Clear Slime (Video 3)`, holding two open hands far enough apart arms bar-pung; moving both hands quickly downward while keeping the sheet broad seals it. `Pastel Wax Shell Slime (Video 4)` uses two opposing fingertips, convergence speed, pinch, and visible hand compression to infer press, repeated fine-crack, and crush stages. Camera frames are not uploaded or saved by SquishMac. The camera pressure value is a visual estimate, not physical Force Touch pressure.
+`Open Camera Slime...` uses the built-in camera and Apple's on-device Vision hand-pose request. Select a slime or wax profile to apply its camera-specific gesture thresholds and sound mappings. With `Clear Slime (Video 3)`, holding two open hands far enough apart arms bar-pung; moving both hands quickly downward while keeping the sheet broad seals it. `Aerated Clear Slime (Video 6)` separates compact bubble pokes and folds from broad membrane pulls without arming bar-pung. `Pastel Wax Shell Slime (Video 4)` uses two opposing fingertips, convergence speed, pinch, and visible hand compression to infer press, repeated fine-crack, and crush stages. Camera frames are not uploaded or saved by SquishMac. The camera pressure value is a visual estimate, not physical Force Touch pressure.
 
 To inspect a completed analysis on Windows, start the local browser preview:
 
@@ -111,9 +112,11 @@ Sources/SquishMac/Resources/Sounds/pastel-wax-video-4-crack
 Sources/SquishMac/Resources/Sounds/pastel-wax-video-4-crush
 Sources/SquishMac/Resources/Sounds/white-putty-video-5-knead
 Sources/SquishMac/Resources/Sounds/white-putty-video-5-stretch
+Sources/SquishMac/Resources/Sounds/aerated-clear-video-6-knead
+Sources/SquishMac/Resources/Sounds/aerated-clear-video-6-stretch
 ```
 
-The general sound packs are generated development placeholders. The Doctor Putty failure pack contains two short clips derived from user-provided video 2. The clear-video-3 packs contain 34 knead/press clips and 6 stretch clips. Video 4 contains 18 exposed-core handling clips plus all six verified opening wax-shell transients: five progressive cracks and one final crush. Video 5 contains 14 compact knead/press clips and six short-pull clips from the white dense putty. Its clips use a conservative peak ceiling, curved boundary fades, material-only playback, and a profile-level minimum interval to avoid abrupt or chattering playback. The restored wax clips use isolated, non-overlapping boundaries and preserve brittle high-frequency detail. Reference-derived clips are gesture aligned, screened for voice and unrelated contact contamination, and conservatively cleaned. These packs are profile-only. Replace placeholders with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
+The general sound packs are generated development placeholders. The Doctor Putty failure pack contains two short clips derived from user-provided video 2. The clear-video-3 packs contain 34 knead/press clips and 6 stretch clips. Video 4 contains 18 exposed-core handling clips plus all six verified opening wax-shell transients: five progressive cracks and one final crush. Video 5 contains 14 compact knead/press clips and six short-pull clips from the white dense putty. Video 6 contains 35 bubble-poke/knead/press clips and seven broad-pull clips; one source-clipped transient was deliberately excluded. Video 5 and Video 6 clips use a conservative peak ceiling, curved boundary fades, material-only playback, and a profile-level minimum interval to avoid abrupt or chattering playback. The restored wax clips use isolated, non-overlapping boundaries and preserve brittle high-frequency detail. Reference-derived clips are gesture aligned, screened for voice and unrelated contact contamination, and conservatively cleaned. These packs are profile-only. Replace placeholders with original or properly licensed recordings before release. A custom folder can also be selected from Settings for impact sounds.
 
 ## Project Layout
 

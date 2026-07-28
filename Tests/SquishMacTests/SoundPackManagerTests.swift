@@ -119,6 +119,30 @@ final class SoundPackManagerTests: XCTestCase {
         )
     }
 
+    func testVideo6AeratedClearPacksAreGestureSpecificAndProfileOnly() {
+        let manager = SoundPackManager()
+
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "aerated-clear-video-6-knead",
+                customDirectoryPath: nil
+            ),
+            35
+        )
+        XCTAssertEqual(
+            manager.soundCount(
+                for: "aerated-clear-video-6-stretch",
+                customDirectoryPath: nil
+            ),
+            7
+        )
+        XCTAssertFalse(
+            manager.availablePacks().contains {
+                $0.id.hasPrefix("aerated-clear-video-6-")
+            }
+        )
+    }
+
     func testCustomFolderSearchesRecursivelyForSupportedAudioFiles() throws {
         let manager = SoundPackManager()
         let root = FileManager.default.temporaryDirectory

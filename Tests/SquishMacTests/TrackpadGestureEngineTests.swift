@@ -554,4 +554,87 @@ final class TrackpadGestureEngineTests: XCTestCase {
             "white-putty-video-5-stretch"
         )
     }
+
+    func testVideo6AeratedClearRoutesTwoFingerPokeAndBroadStretch() {
+        let pokeEngine = TrackpadGestureEngine()
+        let stretchEngine = TrackpadGestureEngine()
+
+        let poke = pokeEngine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 2,
+            pressure: 0.55,
+            movement: 0.04,
+            spread: 0.22,
+            timestamp: 1,
+            interactionRules: .aeratedClearVideo6
+        )
+        let stretch = stretchEngine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 4,
+            pressure: 0.40,
+            movement: 0.18,
+            spread: 0.68,
+            timestamp: 1,
+            interactionRules: .aeratedClearVideo6
+        )
+
+        XCTAssertEqual(poke.trigger?.kind, .slimeKnead)
+        XCTAssertEqual(
+            poke.trigger?.soundPackIDOverride,
+            "aerated-clear-video-6-knead"
+        )
+        XCTAssertEqual(stretch.trigger?.kind, .slimeStretch)
+        XCTAssertEqual(
+            stretch.trigger?.soundPackIDOverride,
+            "aerated-clear-video-6-stretch"
+        )
+        XCTAssertEqual(stretch.trigger?.volumeScale ?? 0, 0.72, accuracy: 0.0001)
+    }
+
+    func testVideo6AeratedClearUsesMaterialReleaseAfterMinimumInterval() {
+        let engine = TrackpadGestureEngine()
+        _ = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 2,
+            pressure: 0.55,
+            movement: 0.04,
+            spread: 0.22,
+            timestamp: 1,
+            interactionRules: .aeratedClearVideo6
+        )
+        let earlyRelease = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 0,
+            pressure: 0,
+            movement: 0,
+            spread: 0,
+            timestamp: 1.20,
+            interactionRules: .aeratedClearVideo6
+        )
+        _ = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 2,
+            pressure: 0.55,
+            movement: 0.04,
+            spread: 0.22,
+            timestamp: 1.25,
+            interactionRules: .aeratedClearVideo6
+        )
+        let release = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 0,
+            pressure: 0,
+            movement: 0,
+            spread: 0,
+            timestamp: 1.50,
+            interactionRules: .aeratedClearVideo6
+        )
+
+        XCTAssertNil(earlyRelease.trigger)
+        XCTAssertEqual(release.trigger?.kind, .slimeRelease)
+        XCTAssertEqual(
+            release.trigger?.soundPackIDOverride,
+            "aerated-clear-video-6-stretch"
+        )
+    }
 }

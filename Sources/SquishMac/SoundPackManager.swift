@@ -80,6 +80,18 @@ final class SoundPackManager {
             title: "White Putty 5 Stretch",
             folderName: "white-putty-video-5-stretch",
             isUserSelectable: false
+        ),
+        SoundPack(
+            id: "aerated-clear-video-6-knead",
+            title: "Aerated Clear 6 Knead",
+            folderName: "aerated-clear-video-6-knead",
+            isUserSelectable: false
+        ),
+        SoundPack(
+            id: "aerated-clear-video-6-stretch",
+            title: "Aerated Clear 6 Stretch",
+            folderName: "aerated-clear-video-6-stretch",
+            isUserSelectable: false
         )
     ]
 

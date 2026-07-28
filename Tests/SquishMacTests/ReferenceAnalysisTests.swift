@@ -197,4 +197,46 @@ final class ReferenceAnalysisTests: XCTestCase {
         XCTAssertNil(profile.effectiveInteractionRules.bubbleGesture)
         XCTAssertNil(profile.effectiveCameraTuning.bubbleGesture)
     }
+
+    func testVideo6AeratedClearKeepsLearnedTuningAndSoundMappings() throws {
+        let profile = try XCTUnwrap(
+            SlimeMaterialProfile.builtIn.first {
+                $0.id == "aerated-clear-slime-video-6"
+            }
+        )
+
+        XCTAssertEqual(profile.category, .clear)
+        XCTAssertEqual(profile.effectiveInteractionRules.minimumFingerCount, 2)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.response, 0.96)
+        XCTAssertEqual(profile.effectiveTrackpadTuning.soundDensity, 0.95)
+        XCTAssertEqual(
+            profile.effectiveCameraTuning.stretchMovementThreshold,
+            0.223858,
+            accuracy: 0.000001
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeKnead),
+            "aerated-clear-video-6-knead"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeStretch),
+            "aerated-clear-video-6-stretch"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.soundPackID(for: .slimeRelease),
+            "aerated-clear-video-6-stretch"
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.effectiveVolumeScale,
+            0.72,
+            accuracy: 0.0001
+        )
+        XCTAssertEqual(
+            profile.effectiveInteractionRules.effectiveMinimumSoundInterval,
+            0.24,
+            accuracy: 0.0001
+        )
+        XCTAssertNil(profile.effectiveInteractionRules.bubbleGesture)
+        XCTAssertNil(profile.effectiveCameraTuning.bubbleGesture)
+    }
 }

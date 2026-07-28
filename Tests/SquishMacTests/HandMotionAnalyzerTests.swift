@@ -255,6 +255,35 @@ final class HandMotionAnalyzerTests: XCTestCase {
         XCTAssertEqual(spacedStretch?.kind, .slimeStretch)
     }
 
+    func testVideo6CameraDistinguishesBubblePokeFromBroadMembranePull() {
+        let engine = ReferenceGestureInferenceEngine(
+            mode: .slime,
+            cameraTuning: .aeratedClearVideo6,
+            interactionRules: .aeratedClearVideo6
+        )
+
+        let bubblePoke = engine.process(motionFrame(
+            timestamp: 0,
+            handCount: 2,
+            fingertipCount: 4,
+            movement: 0.10,
+            spread: 0.24,
+            pressure: 0.40
+        ))
+        let broadPull = engine.process(motionFrame(
+            timestamp: 0.25,
+            handCount: 2,
+            fingertipCount: 8,
+            movement: 0.24,
+            spread: 0.27,
+            pressure: 0.30
+        ))
+
+        XCTAssertEqual(bubblePoke?.kind, .slimeKnead)
+        XCTAssertEqual(broadPull?.kind, .slimeStretch)
+        XCTAssertFalse(engine.isBarPungPrepared)
+    }
+
     private func sample(timestamp: TimeInterval, xOffset: Double) -> HandPoseSample {
         let wrist = NormalizedPosePoint(x: 0.45 + xOffset, y: 0.45, confidence: 1)
         let joints: [HandJointName: NormalizedPosePoint] = [
