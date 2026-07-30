@@ -116,6 +116,42 @@ final class SoundPackManager {
             title: "Pink Gummy Jelly 8 Stretch",
             folderName: "pink-gummy-jelly-video-8-stretch",
             isUserSelectable: false
+        ),
+        SoundPack(
+            id: "white-poke-putty-video-9-body",
+            title: "White Poke Putty 9 Body",
+            folderName: "white-poke-putty-video-9-body",
+            isUserSelectable: false
+        ),
+        SoundPack(
+            id: "white-poke-putty-video-9-texture",
+            title: "White Poke Putty 9 Texture",
+            folderName: "white-poke-putty-video-9-texture",
+            isUserSelectable: false
+        ),
+        SoundPack(
+            id: "orange-glossy-video-10-pop",
+            title: "Orange Glossy 10 Pop",
+            folderName: "orange-glossy-video-10-pop",
+            isUserSelectable: false
+        ),
+        SoundPack(
+            id: "orange-glossy-video-10-snap",
+            title: "Orange Glossy 10 Snap",
+            folderName: "orange-glossy-video-10-snap",
+            isUserSelectable: false
+        ),
+        SoundPack(
+            id: "green-micro-bead-video-11-body",
+            title: "Green Micro-Bead 11 Body",
+            folderName: "green-micro-bead-video-11-body",
+            isUserSelectable: false
+        ),
+        SoundPack(
+            id: "green-micro-bead-video-11-pop",
+            title: "Green Micro-Bead 11 Pop",
+            folderName: "green-micro-bead-video-11-pop",
+            isUserSelectable: false
         )
     ]
 

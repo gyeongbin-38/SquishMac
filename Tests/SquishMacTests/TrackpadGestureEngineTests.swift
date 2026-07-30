@@ -803,4 +803,75 @@ final class TrackpadGestureEngineTests: XCTestCase {
             "pink-gummy-jelly-video-8-stretch"
         )
     }
+
+    func testVideo9DeepPokeCarriesSameMaterialTextureLayer() {
+        let engine = TrackpadGestureEngine()
+        let poke = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 2,
+            pressure: 0.72,
+            movement: 0.04,
+            spread: 0.18,
+            timestamp: 1,
+            interactionRules: .whitePokePuttyVideo9
+        )
+
+        XCTAssertEqual(poke.trigger?.kind, .slimeKnead)
+        XCTAssertEqual(
+            poke.trigger?.soundPackIDOverride,
+            "white-poke-putty-video-9-body"
+        )
+        XCTAssertEqual(
+            poke.trigger?.secondarySoundLayer?.soundPackID,
+            "white-poke-putty-video-9-texture"
+        )
+        XCTAssertEqual(poke.trigger?.volumeScale ?? 0, 0.66, accuracy: 0.0001)
+    }
+
+    func testVideo10FourFingerPullUsesGlossyPopAndSnapLayers() {
+        let engine = TrackpadGestureEngine()
+        let pull = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 4,
+            pressure: 0.40,
+            movement: 0.20,
+            spread: 0.56,
+            timestamp: 1,
+            interactionRules: .orangeGlossyVideo10
+        )
+
+        XCTAssertEqual(pull.trigger?.kind, .slimeStretch)
+        XCTAssertEqual(
+            pull.trigger?.soundPackIDOverride,
+            "orange-glossy-video-10-pop"
+        )
+        XCTAssertEqual(
+            pull.trigger?.secondarySoundLayer?.soundPackID,
+            "orange-glossy-video-10-snap"
+        )
+    }
+
+    func testVideo11TwoFingerPressRoutesBodyAndBeadPopLayers() {
+        let engine = TrackpadGestureEngine()
+        let press = engine.evaluate(
+            mode: .sixFingerSlime,
+            fingerCount: 2,
+            pressure: 0.64,
+            movement: 0.04,
+            spread: 0.14,
+            timestamp: 1,
+            interactionRules: .greenMicroBeadVideo11
+        )
+
+        XCTAssertEqual(press.trigger?.kind, .slimeKnead)
+        XCTAssertEqual(
+            press.trigger?.soundPackIDOverride,
+            "green-micro-bead-video-11-body"
+        )
+        XCTAssertEqual(
+            press.trigger?.secondarySoundLayer?.soundPackID,
+            "green-micro-bead-video-11-pop"
+        )
+        XCTAssertEqual(press.trigger?.volumeScale ?? 0, 0.62, accuracy: 0.0001)
+    }
 }

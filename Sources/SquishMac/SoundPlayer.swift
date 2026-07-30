@@ -163,7 +163,8 @@ final class SoundPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
         intensity: Double,
         masterVolume: Double = 1.0,
         soundPackIDOverride: String? = nil,
-        volumeScale: Double = 1.0
+        volumeScale: Double = 1.0,
+        secondarySoundLayer: InteractionSoundLayerRules? = nil
     ) -> Bool {
         let safeIntensity = intensity.clamped(to: 0.0...1.0)
         let safeMasterVolume = (
@@ -193,8 +194,42 @@ final class SoundPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
             return false
         }
 
-        // Reference-derived packs already contain the complete material transient.
-        // Generic layers make those recordings louder and less faithful.
+        if let secondarySoundLayer,
+           let layerPlan = secondarySoundLayer.plan(
+               intensity: safeIntensity,
+               probabilitySample: Double.random(in: 0...1),
+               delaySample: Double.random(in: 0...1)
+           ) {
+            let generation = playbackGeneration
+            let layerVolume = response.volume * Float(layerPlan.volumeScale)
+            let layerRate = (
+                baseRate
+                    + Float(layerPlan.rateOffset)
+                    + Float.random(in: -0.012...0.012)
+            ).clamped(to: 0.5...1.5)
+
+            DispatchQueue.main.asyncAfter(
+                deadline: .now() + layerPlan.delayMilliseconds / 1_000
+            ) { [weak self] in
+                guard let self, self.playbackGeneration == generation else {
+                    return
+                }
+                let layerURLs = self.packManager.soundURLs(
+                    for: layerPlan.soundPackID,
+                    customDirectoryPath: nil
+                )
+                _ = self.playRandomURL(
+                    layerURLs,
+                    key: "\(layerPlan.soundPackID):material-layer",
+                    volume: layerVolume,
+                    rate: layerRate
+                )
+            }
+            return true
+        }
+
+        // Reference-derived packs only mix with explicitly configured clips from
+        // the same material. Generic layers would change the recorded texture.
         guard !usesReferencePack else {
             return true
         }

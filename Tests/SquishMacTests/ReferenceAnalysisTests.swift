@@ -323,4 +323,28 @@ final class ReferenceAnalysisTests: XCTestCase {
         XCTAssertNil(profile.effectiveInteractionRules.bubbleGesture)
         XCTAssertNil(profile.effectiveCameraTuning.bubbleGesture)
     }
+
+    func testVideos9Through11ProfilesKeepIndependentMaterialRules() throws {
+        let profilesByID = Dictionary(
+            uniqueKeysWithValues: SlimeMaterialProfile.builtIn.map { ($0.id, $0) }
+        )
+        let white = try XCTUnwrap(profilesByID["white-poke-putty-video-9"])
+        let orange = try XCTUnwrap(profilesByID["orange-glossy-slime-video-10"])
+        let green = try XCTUnwrap(profilesByID["green-micro-bead-floam-video-11"])
+
+        XCTAssertEqual(white.category, .butterClay)
+        XCTAssertEqual(orange.category, .thickGlossy)
+        XCTAssertEqual(green.category, .floam)
+        XCTAssertEqual(white.effectiveInteractionRules.minimumFingerCount, 2)
+        XCTAssertEqual(orange.effectiveCameraTuning.minimumFingertipCount, 2)
+        XCTAssertEqual(green.effectiveInteractionRules.style, .textured)
+
+        let encoded = try JSONEncoder().encode(green)
+        let restored = try JSONDecoder().decode(SlimeMaterialProfile.self, from: encoded)
+        XCTAssertEqual(restored, green)
+        XCTAssertEqual(
+            restored.effectiveInteractionRules.kneadSecondarySoundLayer?.soundPackID,
+            "green-micro-bead-video-11-pop"
+        )
+    }
 }

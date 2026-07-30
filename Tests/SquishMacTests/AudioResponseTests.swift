@@ -83,4 +83,43 @@ final class AudioResponseTests: XCTestCase {
             firstCycle.last
         )
     }
+
+    func testMaterialLayerPlanRespectsIntensityProbabilityAndBounds() {
+        let rules = InteractionSoundLayerRules(
+            soundPackID: "material-texture",
+            minimumIntensity: 0.30,
+            probabilityAtMinimum: 0.20,
+            probabilityAtMaximum: 0.80,
+            volumeScaleAtMinimum: 0.10,
+            volumeScaleAtMaximum: 0.40,
+            minimumDelayMilliseconds: 8,
+            maximumDelayMilliseconds: 28,
+            rateOffset: 0.02
+        )
+
+        XCTAssertNil(
+            rules.plan(intensity: 0.29, probabilitySample: 0, delaySample: 0)
+        )
+        XCTAssertNil(
+            rules.plan(intensity: 0.30, probabilitySample: 0.21, delaySample: 0)
+        )
+
+        let quiet = rules.plan(
+            intensity: 0.30,
+            probabilitySample: 0.20,
+            delaySample: 0
+        )
+        XCTAssertEqual(quiet?.soundPackID, "material-texture")
+        XCTAssertEqual(quiet?.volumeScale ?? 0, 0.10, accuracy: 0.0001)
+        XCTAssertEqual(quiet?.delayMilliseconds ?? 0, 8, accuracy: 0.0001)
+
+        let strong = rules.plan(
+            intensity: 1,
+            probabilitySample: 0.80,
+            delaySample: 1
+        )
+        XCTAssertEqual(strong?.volumeScale ?? 0, 0.40, accuracy: 0.0001)
+        XCTAssertEqual(strong?.delayMilliseconds ?? 0, 28, accuracy: 0.0001)
+        XCTAssertEqual(strong?.rateOffset ?? 0, 0.02, accuracy: 0.0001)
+    }
 }

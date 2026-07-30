@@ -190,6 +190,39 @@ struct CameraGestureTuning: Codable, Equatable, Hashable {
         bubbleGesture: nil
     )
 
+    static let whitePokePuttyVideo9 = CameraGestureTuning(
+        response: 0.89,
+        soundDensity: 1.08,
+        minimumFingertipCount: 2,
+        kneadMovementThreshold: 0.12,
+        stretchMovementThreshold: 0.32,
+        stretchSpreadThreshold: 0.42,
+        pressPressureThreshold: 0.46,
+        bubbleGesture: nil
+    )
+
+    static let orangeGlossyVideo10 = CameraGestureTuning(
+        response: 0.95,
+        soundDensity: 1.04,
+        minimumFingertipCount: 2,
+        kneadMovementThreshold: 0.062054,
+        stretchMovementThreshold: 0.203659,
+        stretchSpreadThreshold: 0.370280,
+        pressPressureThreshold: 0.26,
+        bubbleGesture: nil
+    )
+
+    static let greenMicroBeadVideo11 = CameraGestureTuning(
+        response: 0.89,
+        soundDensity: 1.12,
+        minimumFingertipCount: 2,
+        kneadMovementThreshold: 0.12,
+        stretchMovementThreshold: 0.309732,
+        stretchSpreadThreshold: 0.345576,
+        pressPressureThreshold: 0.46,
+        bubbleGesture: nil
+    )
+
     let response: Double
     let soundDensity: Double
     let minimumFingertipCount: Int
@@ -383,6 +416,79 @@ struct WaxInteractionRules: Codable, Equatable, Hashable {
     }
 }
 
+struct InteractionSoundLayerPlan: Equatable {
+    let soundPackID: String
+    let volumeScale: Double
+    let delayMilliseconds: Double
+    let rateOffset: Double
+}
+
+struct InteractionSoundLayerRules: Codable, Equatable, Hashable {
+    let soundPackID: String
+    let minimumIntensity: Double
+    let probabilityAtMinimum: Double
+    let probabilityAtMaximum: Double
+    let volumeScaleAtMinimum: Double
+    let volumeScaleAtMaximum: Double
+    let minimumDelayMilliseconds: Double
+    let maximumDelayMilliseconds: Double
+    let rateOffset: Double
+
+    init(
+        soundPackID: String,
+        minimumIntensity: Double,
+        probabilityAtMinimum: Double,
+        probabilityAtMaximum: Double,
+        volumeScaleAtMinimum: Double,
+        volumeScaleAtMaximum: Double,
+        minimumDelayMilliseconds: Double,
+        maximumDelayMilliseconds: Double,
+        rateOffset: Double = 0
+    ) {
+        self.soundPackID = soundPackID
+        self.minimumIntensity = minimumIntensity.clamped(to: 0.0...1.0)
+        self.probabilityAtMinimum = probabilityAtMinimum.clamped(to: 0.0...1.0)
+        self.probabilityAtMaximum = probabilityAtMaximum.clamped(to: 0.0...1.0)
+        self.volumeScaleAtMinimum = volumeScaleAtMinimum.clamped(to: 0.0...1.0)
+        self.volumeScaleAtMaximum = volumeScaleAtMaximum.clamped(to: 0.0...1.0)
+        let minimumDelay = minimumDelayMilliseconds.clamped(to: 0.0...120.0)
+        self.minimumDelayMilliseconds = minimumDelay
+        self.maximumDelayMilliseconds = maximumDelayMilliseconds.clamped(
+            to: minimumDelay...120.0
+        )
+        self.rateOffset = rateOffset.clamped(to: -0.25...0.25)
+    }
+
+    func plan(
+        intensity: Double,
+        probabilitySample: Double,
+        delaySample: Double
+    ) -> InteractionSoundLayerPlan? {
+        let safeIntensity = intensity.clamped(to: 0.0...1.0)
+        guard safeIntensity >= minimumIntensity else {
+            return nil
+        }
+
+        let progress = ((safeIntensity - minimumIntensity) / max(0.001, 1 - minimumIntensity))
+            .clamped(to: 0.0...1.0)
+        let probability = probabilityAtMinimum
+            + (probabilityAtMaximum - probabilityAtMinimum) * progress
+        guard probabilitySample.clamped(to: 0.0...1.0) <= probability else {
+            return nil
+        }
+
+        return InteractionSoundLayerPlan(
+            soundPackID: soundPackID,
+            volumeScale: volumeScaleAtMinimum
+                + (volumeScaleAtMaximum - volumeScaleAtMinimum) * progress,
+            delayMilliseconds: minimumDelayMilliseconds
+                + (maximumDelayMilliseconds - minimumDelayMilliseconds)
+                    * delaySample.clamped(to: 0.0...1.0),
+            rateOffset: rateOffset
+        )
+    }
+}
+
 struct SlimeInteractionRules: Codable, Equatable, Hashable {
     static let standard = SlimeInteractionRules(
         style: .elastic,
@@ -481,6 +587,108 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         interactionSummary: "Poke trapped bubbles with two or more contacts, press and fold the aerated gel, and pull broadly to form a thin clear membrane. Bar-pung is disabled because the reference does not inflate one."
     )
 
+    static let whitePokePuttyVideo9 = SlimeInteractionRules(
+        style: .densePutty,
+        minimumFingerCount: 2,
+        stretchMovementThreshold: 0.18,
+        kneadSoundPackID: "white-poke-putty-video-9-body",
+        stretchSoundPackID: "white-poke-putty-video-9-texture",
+        releaseSoundPackID: "white-poke-putty-video-9-texture",
+        kneadSecondarySoundLayer: InteractionSoundLayerRules(
+            soundPackID: "white-poke-putty-video-9-texture",
+            minimumIntensity: 0.28,
+            probabilityAtMinimum: 0.16,
+            probabilityAtMaximum: 0.72,
+            volumeScaleAtMinimum: 0.18,
+            volumeScaleAtMaximum: 0.42,
+            minimumDelayMilliseconds: 9,
+            maximumDelayMilliseconds: 30,
+            rateOffset: 0.015
+        ),
+        stretchSecondarySoundLayer: InteractionSoundLayerRules(
+            soundPackID: "white-poke-putty-video-9-body",
+            minimumIntensity: 0.34,
+            probabilityAtMinimum: 0.12,
+            probabilityAtMaximum: 0.46,
+            volumeScaleAtMinimum: 0.14,
+            volumeScaleAtMaximum: 0.30,
+            minimumDelayMilliseconds: 14,
+            maximumDelayMilliseconds: 38,
+            rateOffset: -0.02
+        ),
+        volumeScale: 0.66,
+        minimumSoundInterval: 0.28,
+        interactionSummary: "Use two to six contacts for deep pokes, broad presses, short folds, and controlled pulls. Stronger pressure adds same-material clay snaps and suction detail."
+    )
+
+    static let orangeGlossyVideo10 = SlimeInteractionRules(
+        style: .elastic,
+        minimumFingerCount: 2,
+        stretchMovementThreshold: 0.16,
+        kneadSoundPackID: "orange-glossy-video-10-pop",
+        stretchSoundPackID: "orange-glossy-video-10-pop",
+        releaseSoundPackID: "orange-glossy-video-10-snap",
+        kneadSecondarySoundLayer: InteractionSoundLayerRules(
+            soundPackID: "orange-glossy-video-10-snap",
+            minimumIntensity: 0.42,
+            probabilityAtMinimum: 0.10,
+            probabilityAtMaximum: 0.58,
+            volumeScaleAtMinimum: 0.16,
+            volumeScaleAtMaximum: 0.34,
+            minimumDelayMilliseconds: 7,
+            maximumDelayMilliseconds: 24,
+            rateOffset: -0.01
+        ),
+        stretchSecondarySoundLayer: InteractionSoundLayerRules(
+            soundPackID: "orange-glossy-video-10-snap",
+            minimumIntensity: 0.48,
+            probabilityAtMinimum: 0.12,
+            probabilityAtMaximum: 0.52,
+            volumeScaleAtMinimum: 0.16,
+            volumeScaleAtMaximum: 0.32,
+            minimumDelayMilliseconds: 10,
+            maximumDelayMilliseconds: 28,
+            rateOffset: -0.015
+        ),
+        volumeScale: 0.64,
+        minimumSoundInterval: 0.26,
+        interactionSummary: "Fold and squeeze with two or more contacts, then make repeated fingertip pokes. Firm pressure adds an occasional same-material glossy snap."
+    )
+
+    static let greenMicroBeadVideo11 = SlimeInteractionRules(
+        style: .textured,
+        minimumFingerCount: 2,
+        stretchMovementThreshold: 0.16,
+        kneadSoundPackID: "green-micro-bead-video-11-body",
+        stretchSoundPackID: "green-micro-bead-video-11-pop",
+        releaseSoundPackID: "green-micro-bead-video-11-pop",
+        kneadSecondarySoundLayer: InteractionSoundLayerRules(
+            soundPackID: "green-micro-bead-video-11-pop",
+            minimumIntensity: 0.24,
+            probabilityAtMinimum: 0.18,
+            probabilityAtMaximum: 0.76,
+            volumeScaleAtMinimum: 0.16,
+            volumeScaleAtMaximum: 0.38,
+            minimumDelayMilliseconds: 6,
+            maximumDelayMilliseconds: 22,
+            rateOffset: 0.025
+        ),
+        stretchSecondarySoundLayer: InteractionSoundLayerRules(
+            soundPackID: "green-micro-bead-video-11-body",
+            minimumIntensity: 0.32,
+            probabilityAtMinimum: 0.10,
+            probabilityAtMaximum: 0.40,
+            volumeScaleAtMinimum: 0.12,
+            volumeScaleAtMaximum: 0.26,
+            minimumDelayMilliseconds: 12,
+            maximumDelayMilliseconds: 34,
+            rateOffset: -0.02
+        ),
+        volumeScale: 0.62,
+        minimumSoundInterval: 0.24,
+        interactionSummary: "Use precise two-contact pinches and short presses for the small bead slime. Higher pressure adds compact bead pops without turning into a broad impact sound."
+    )
+
     let style: SlimeInteractionStyle
     let minimumFingerCount: Int
     let stretchMovementThreshold: Double
@@ -492,6 +700,9 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
     let kneadSoundPackID: String?
     let stretchSoundPackID: String?
     let releaseSoundPackID: String?
+    let kneadSecondarySoundLayer: InteractionSoundLayerRules?
+    let stretchSecondarySoundLayer: InteractionSoundLayerRules?
+    let releaseSecondarySoundLayer: InteractionSoundLayerRules?
     let bubbleGesture: TrackpadBubbleGestureRules?
     let waxInteraction: WaxInteractionRules?
     let volumeScale: Double?
@@ -510,6 +721,9 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         case kneadSoundPackID = "kneadSoundPackId"
         case stretchSoundPackID = "stretchSoundPackId"
         case releaseSoundPackID = "releaseSoundPackId"
+        case kneadSecondarySoundLayer
+        case stretchSecondarySoundLayer
+        case releaseSecondarySoundLayer
         case bubbleGesture
         case waxInteraction
         case volumeScale
@@ -529,6 +743,9 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         kneadSoundPackID: String? = nil,
         stretchSoundPackID: String? = nil,
         releaseSoundPackID: String? = nil,
+        kneadSecondarySoundLayer: InteractionSoundLayerRules? = nil,
+        stretchSecondarySoundLayer: InteractionSoundLayerRules? = nil,
+        releaseSecondarySoundLayer: InteractionSoundLayerRules? = nil,
         bubbleGesture: TrackpadBubbleGestureRules? = nil,
         waxInteraction: WaxInteractionRules? = nil,
         volumeScale: Double = 1.0,
@@ -553,6 +770,9 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
         self.kneadSoundPackID = kneadSoundPackID
         self.stretchSoundPackID = stretchSoundPackID
         self.releaseSoundPackID = releaseSoundPackID
+        self.kneadSecondarySoundLayer = kneadSecondarySoundLayer
+        self.stretchSecondarySoundLayer = stretchSecondarySoundLayer
+        self.releaseSecondarySoundLayer = releaseSecondarySoundLayer
         self.bubbleGesture = bubbleGesture
         self.waxInteraction = waxInteraction
         self.volumeScale = volumeScale.clamped(to: 0.1...1.0)
@@ -588,6 +808,19 @@ struct SlimeInteractionRules: Codable, Equatable, Hashable {
             return failureSoundPackID
         case .waxPress, .waxCrack, .waxCrush:
             return effectiveWaxInteraction.soundPackID(for: kind)
+        }
+    }
+
+    func secondarySoundLayer(for kind: TrackpadSoundKind) -> InteractionSoundLayerRules? {
+        switch kind {
+        case .slimeKnead:
+            return kneadSecondarySoundLayer
+        case .slimeStretch:
+            return stretchSecondarySoundLayer
+        case .slimeRelease:
+            return releaseSecondarySoundLayer
+        case .slimeBubble, .slimeStretchFailure, .waxPress, .waxCrack, .waxCrush:
+            return nil
         }
     }
 }
@@ -734,6 +967,39 @@ struct SlimeMaterialProfile: Identifiable, Codable, Equatable, Hashable {
             interactionRules: .pinkGummyJellyVideo8,
             trackpadTuning: TrackpadTuning(response: 0.96, soundDensity: 0.94),
             cameraTuning: .pinkGummyJellyVideo8
+        ),
+        profile(
+            "white-poke-putty-video-9",
+            "White Poke Putty (Video 9)",
+            .butterClay,
+            outer: "opaque white matte surface with a smooth dense skin",
+            core: "dense putty with deep fingertip pockets, short folds, and suction recovery",
+            notes: "Video 9 reference. Product name is not yet confirmed, and all accepted sounds align with visible material handling.",
+            interactionRules: .whitePokePuttyVideo9,
+            trackpadTuning: TrackpadTuning(response: 0.90, soundDensity: 0.92),
+            cameraTuning: .whitePokePuttyVideo9
+        ),
+        profile(
+            "orange-glossy-slime-video-10",
+            "Orange Glossy Slime (Video 10)",
+            .thickGlossy,
+            outer: "opaque orange glossy surface with sparse dark inclusions",
+            core: "dense glossy slime shaped by folds, squeezes, and repeated fingertip pokes",
+            notes: "Video 10 reference. Product name is not yet confirmed, and all accepted sounds align with visible material handling.",
+            interactionRules: .orangeGlossyVideo10,
+            trackpadTuning: TrackpadTuning(response: 1.0, soundDensity: 1.0),
+            cameraTuning: .orangeGlossyVideo10
+        ),
+        profile(
+            "green-micro-bead-floam-video-11",
+            "Green Micro-Bead Floam (Video 11)",
+            .floam,
+            outer: "small translucent green body with visible bead-like inclusions",
+            core: "compact textured gel that responds to precise pinches and short presses",
+            notes: "Video 11 reference. Product name is not yet confirmed. Classification was finalized as Floam / Bead after frame review.",
+            interactionRules: .greenMicroBeadVideo11,
+            trackpadTuning: TrackpadTuning(response: 1.0, soundDensity: 1.0),
+            cameraTuning: .greenMicroBeadVideo11
         ),
         profile("icee", "Icee Slime", .icee, core: "snowy granular slime"),
         profile("floam", "Floam / Bead Slime", .floam, core: "slime with foam beads"),

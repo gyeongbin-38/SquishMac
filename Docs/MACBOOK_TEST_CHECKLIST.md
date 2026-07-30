@@ -52,6 +52,12 @@ Confirm that all tests pass, `SquishMac.app` launches, the icon appears in the m
 - Select `Pink Gummy Jelly Slime (Video 8)` and confirm two pressure contacts use its pinch/pop/knead pack.
 - With Video 8 selected, use four or more contacts above movement `0.14`; confirm the pull/fold pack plays.
 - Confirm Video 8 sounds remain material-only at 68% profile gain, are spaced by at least about 0.30 seconds, and never show `Bar-pung ready`.
+- Select `White Poke Putty (Video 9)` and confirm two-contact deep presses use quiet body friction while firmer presses sometimes add a clay snap or suction detail.
+- With Video 9 selected, use four or more contacts above movement `0.18`; confirm the texture pool becomes primary, total gain remains controlled near 66%, and events stay about 0.28 seconds apart.
+- Select `Orange Glossy Slime (Video 10)` and confirm two-contact pokes use micro-pops; increase pressure and confirm firm snaps appear occasionally rather than on every press.
+- Confirm Video 10 remains controlled near 64% profile gain and events stay about 0.26 seconds apart.
+- Select `Green Micro-Bead Floam (Video 11)` and confirm precise two-contact presses use body friction plus pressure-dependent bead details.
+- With Video 11 selected, use four or more contacts above movement `0.16`; confirm bead pops become primary and events stay about 0.24 seconds apart.
 - Select `Clear Slime (Video 3)` and confirm knead/press and stretch gestures use audibly different source pools.
 - Confirm Video 3 sounds are slightly quieter than the same master-volume setting on a standard profile.
 - With Video 3 selected, spread five or six fingers beyond `0.60`; confirm `Bar-pung ready` appears.
@@ -115,6 +121,10 @@ Do not repeatedly hit the display, hinge, or enclosure. The impact feature shoul
 - Confirm Video 7 accepts a compact two-fingertip press, suppresses another sound inside about 0.32 seconds, and never enters `Bar-pung ready`.
 - Select `Pink Gummy Jelly Slime (Video 8)` and confirm compact motion above `0.073` remains a pinch/knead while movement above `0.191` with spread above `0.307` becomes a jelly pull.
 - Confirm Video 8 accepts a compact two-fingertip pinch, suppresses another sound inside about 0.30 seconds, and never enters `Bar-pung ready`.
+- Select Video 9 and confirm a two-fingertip compact press is accepted near pressure estimate `0.46`, while a pull needs movement near `0.32` and spread near `0.42`.
+- Select Video 10 and confirm compact pokes begin near movement `0.062`; a pull needs movement near `0.204` and spread near `0.370`.
+- Select Video 11 and confirm precise two-fingertip presses work for the small material; a pull needs movement near `0.310` and spread near `0.346`.
+- For Videos 9-11, confirm stronger estimated pressure increases texture detail without clipping, abrupt jumps, generic impact sounds, or more than two simultaneous material layers.
 - With Video 3 selected, show two open hands with at least eight tracked fingertips and broad spread; confirm `Bar-pung ready` appears.
 - Within 1.4 seconds, move both hands downward quickly while keeping them broadly separated; confirm one camera bar-pung event plays.
 - Repeat with one hand or with mostly inward movement and confirm camera bar-pung does not trigger.

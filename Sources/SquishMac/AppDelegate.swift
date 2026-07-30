@@ -307,7 +307,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             intensity: trigger.intensity,
             masterVolume: settings.masterVolume,
             soundPackIDOverride: trigger.soundPackIDOverride,
-            volumeScale: trigger.volumeScale
+            volumeScale: trigger.volumeScale,
+            secondarySoundLayer: trigger.secondarySoundLayer
         )
         if didPlay {
             settings.recordPlay()

@@ -287,7 +287,10 @@ extension CameraSlimeController: AVCaptureVideoDataOutputSampleBufferDelegate {
                     soundPackIDOverride: activeInteractionRules.soundPackID(
                         for: $0.kind.soundKind
                     ),
-                    volumeScale: activeInteractionRules.effectiveVolumeScale
+                    volumeScale: activeInteractionRules.effectiveVolumeScale,
+                    secondarySoundLayer: activeInteractionRules.secondarySoundLayer(
+                        for: $0.kind.soundKind
+                    )
                 )
             }
 

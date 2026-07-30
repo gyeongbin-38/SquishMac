@@ -82,19 +82,22 @@ struct TrackpadGestureTrigger: Equatable {
     let label: String
     let soundPackIDOverride: String?
     let volumeScale: Double
+    let secondarySoundLayer: InteractionSoundLayerRules?
 
     init(
         kind: TrackpadSoundKind,
         intensity: Double,
         label: String,
         soundPackIDOverride: String? = nil,
-        volumeScale: Double = 1.0
+        volumeScale: Double = 1.0,
+        secondarySoundLayer: InteractionSoundLayerRules? = nil
     ) {
         self.kind = kind
         self.intensity = intensity
         self.label = label
         self.soundPackIDOverride = soundPackIDOverride
         self.volumeScale = volumeScale.clamped(to: 0.1...1.0)
+        self.secondarySoundLayer = secondarySoundLayer
     }
 }
 
@@ -267,7 +270,10 @@ final class TrackpadGestureEngine {
                 timestamp: timestamp,
                 interval: densityAdjusted(0.10, soundDensity: soundDensity),
                 soundPackIDOverride: interactionRules.releaseSoundPackID,
-                volumeScale: interactionRules.effectiveVolumeScale
+                volumeScale: interactionRules.effectiveVolumeScale,
+                secondarySoundLayer: interactionRules.secondarySoundLayer(
+                    for: .slimeRelease
+                )
             )
         }
 
@@ -326,7 +332,8 @@ final class TrackpadGestureEngine {
             timestamp: timestamp,
             interval: densityAdjusted(baseInterval, soundDensity: soundDensity),
             soundPackIDOverride: interactionRules.soundPackID(for: kind),
-            volumeScale: interactionRules.effectiveVolumeScale
+            volumeScale: interactionRules.effectiveVolumeScale,
+            secondarySoundLayer: interactionRules.secondarySoundLayer(for: kind)
         )
     }
 
@@ -454,7 +461,8 @@ final class TrackpadGestureEngine {
         timestamp: TimeInterval,
         interval: TimeInterval,
         soundPackIDOverride: String? = nil,
-        volumeScale: Double = 1.0
+        volumeScale: Double = 1.0,
+        secondarySoundLayer: InteractionSoundLayerRules? = nil
     ) -> TrackpadGestureEvaluation {
         let lastTriggerTime = lastTriggerTimes[kind] ?? -Double.infinity
         guard timestamp - lastTriggerTime >= interval,
@@ -471,7 +479,8 @@ final class TrackpadGestureEngine {
                 intensity: intensity,
                 label: label,
                 soundPackIDOverride: soundPackIDOverride,
-                volumeScale: volumeScale
+                volumeScale: volumeScale,
+                secondarySoundLayer: secondarySoundLayer
             )
         )
     }

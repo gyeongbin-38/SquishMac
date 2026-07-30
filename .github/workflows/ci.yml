@@ -46,6 +46,15 @@ jobs:
             Sources/SquishMac/Resources/Sounds/pink-gummy-jelly-video-8-stretch \
             --expected-count 30 \
             --peak-ceiling-db -10
+          python3 Tools/validate_reference_audio.py \
+            Sources/SquishMac/Resources/Sounds/white-poke-putty-video-9-body \
+            Sources/SquishMac/Resources/Sounds/white-poke-putty-video-9-texture \
+            Sources/SquishMac/Resources/Sounds/orange-glossy-video-10-pop \
+            Sources/SquishMac/Resources/Sounds/orange-glossy-video-10-snap \
+            Sources/SquishMac/Resources/Sounds/green-micro-bead-video-11-body \
+            Sources/SquishMac/Resources/Sounds/green-micro-bead-video-11-pop \
+            --expected-count 61 \
+            --peak-ceiling-db -10
 
       - name: Build debug executable
         run: swift build -v

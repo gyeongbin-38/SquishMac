@@ -191,6 +191,30 @@ final class SoundPackManagerTests: XCTestCase {
         )
     }
 
+    func testVideos9Through11UseProfileOnlyMaterialLayers() {
+        let manager = SoundPackManager()
+        let expectedCounts = [
+            "white-poke-putty-video-9-body": 13,
+            "white-poke-putty-video-9-texture": 17,
+            "orange-glossy-video-10-pop": 7,
+            "orange-glossy-video-10-snap": 2,
+            "green-micro-bead-video-11-body": 6,
+            "green-micro-bead-video-11-pop": 16
+        ]
+
+        for (packID, expectedCount) in expectedCounts {
+            XCTAssertEqual(
+                manager.soundCount(for: packID, customDirectoryPath: nil),
+                expectedCount,
+                "Unexpected sound count for \(packID)"
+            )
+            XCTAssertFalse(
+                manager.availablePacks().contains { $0.id == packID },
+                "\(packID) must remain profile-only"
+            )
+        }
+    }
+
     func testCustomFolderSearchesRecursivelyForSupportedAudioFiles() throws {
         let manager = SoundPackManager()
         let root = FileManager.default.temporaryDirectory
