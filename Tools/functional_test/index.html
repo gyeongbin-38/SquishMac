@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SquishMac Functional Test</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <header>
+      <h1>SquishMac Functional Test</h1>
+      <p id="status" role="status">Loading sound packs...</p>
+    </header>
+
+    <main>
+      <section class="configuration" aria-labelledby="configurationTitle">
+        <h2 id="configurationTitle">Configuration</h2>
+        <div class="control-grid">
+          <label>
+            Mode
+            <select id="mode">
+              <option value="sixFingerSlime">6-Finger Slime</option>
+              <option value="twoThumbWaxCrush">2-Thumb Wax Crush</option>
+            </select>
+          </label>
+          <label>
+            Material
+            <select id="material"></select>
+          </label>
+          <label>
+            Scenario
+            <select id="scenario"></select>
+          </label>
+          <button id="runScenario" type="button">Run scenario</button>
+        </div>
+        <p id="profileSummary"></p>
+      </section>
+
+      <section class="input-workspace" aria-labelledby="inputTitle">
+        <div>
+          <h2 id="inputTitle">Simulated Input</h2>
+          <div id="touchSurface" class="touch-surface" aria-label="Simulated touch surface">
+            <div id="touchPoints"></div>
+          </div>
+        </div>
+
+        <div class="input-controls">
+          <label>
+            <span>Finger count</span>
+            <input id="fingerCount" type="range" min="0" max="6" step="1" value="0">
+            <output id="fingerCountValue">0</output>
+          </label>
+          <label>
+            <span>Pressure</span>
+            <input id="pressure" type="range" min="0" max="1" step="0.01" value="0">
+            <output id="pressureValue">0.00</output>
+          </label>
+          <label>
+            <span>Movement</span>
+            <input id="movement" type="range" min="0" max="1" step="0.01" value="0">
+            <output id="movementValue">0.00</output>
+          </label>
+          <label>
+            <span>Spread</span>
+            <input id="spread" type="range" min="0" max="1" step="0.01" value="0.50">
+            <output id="spreadValue">0.50</output>
+          </label>
+          <label>
+            <span>Response</span>
+            <input id="response" type="range" min="0.5" max="1.75" step="0.01" value="1">
+            <output id="responseValue">1.00</output>
+          </label>
+          <label>
+            <span>Sound density</span>
+            <input id="soundDensity" type="range" min="0.5" max="2" step="0.01" value="1">
+            <output id="soundDensityValue">1.00</output>
+          </label>
+          <div class="command-row">
+            <button id="evaluate" type="button">Evaluate frame</button>
+            <button id="resetEngine" type="button">Reset engine</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="audio-controls" aria-labelledby="audioTitle">
+        <h2 id="audioTitle">Audio</h2>
+        <label class="inline-control">
+          <input id="soundEnabled" type="checkbox" checked>
+          Sound enabled
+        </label>
+        <label class="volume-control">
+          <span>Master volume</span>
+          <input id="masterVolume" type="range" min="0" max="1" step="0.01" value="0.75">
+          <output id="masterVolumeValue">0.75</output>
+        </label>
+        <button id="stopAudio" type="button">Stop audio</button>
+      </section>
+
+      <section class="diagnostics" aria-labelledby="diagnosticsTitle">
+        <h2 id="diagnosticsTitle">Diagnostics</h2>
+        <dl>
+          <div><dt>Live intensity</dt><dd id="liveIntensity">0.000</dd></div>
+          <div><dt>Last gesture</dt><dd id="lastGesture">None</dd></div>
+          <div><dt>Sound pack</dt><dd id="lastPack">-</dd></div>
+          <div><dt>Gesture count</dt><dd id="gestureCount">0</dd></div>
+          <div><dt>Bar-pung</dt><dd id="barPungState">idle</dd></div>
+        </dl>
+        <progress id="intensityMeter" max="1" value="0"></progress>
+      </section>
+
+      <section class="recording" aria-labelledby="recordingTitle">
+        <h2 id="recordingTitle">Session Recording</h2>
+        <p id="recordingState">empty</p>
+        <div class="command-row">
+          <button id="startRecording" type="button">Start</button>
+          <button id="stopRecording" type="button">Stop</button>
+          <button id="clearRecording" type="button">Clear</button>
+          <button id="exportRecording" type="button">Export JSON</button>
+        </div>
+      </section>
+
+      <section class="event-history" aria-labelledby="eventsTitle">
+        <h2 id="eventsTitle">Gesture Events</h2>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Timestamp</th>
+                <th scope="col">Kind</th>
+                <th scope="col">Pack</th>
+                <th scope="col">Intensity</th>
+              </tr>
+            </thead>
+            <tbody id="eventLog"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>

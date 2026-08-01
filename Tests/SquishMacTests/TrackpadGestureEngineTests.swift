@@ -874,4 +874,41 @@ final class TrackpadGestureEngineTests: XCTestCase {
         )
         XCTAssertEqual(press.trigger?.volumeScale ?? 0, 0.62, accuracy: 0.0001)
     }
+
+    func testChangingTrackpadModeClearsDiagnosticsAndGestureCooldown() {
+        let state = TrackpadInteractionState()
+        let start = Date(timeIntervalSinceReferenceDate: 1)
+
+        let slime = state.update(
+            fingerCount: 6,
+            pressure: 0.45,
+            forceStage: 1,
+            movement: 0.08,
+            spread: 0.8,
+            touchPoints: [],
+            date: start
+        )
+
+        XCTAssertEqual(slime?.kind, .slimeKnead)
+        XCTAssertEqual(state.gestureCount, 1)
+
+        state.mode = .twoThumbWaxCrush
+
+        XCTAssertEqual(state.fingerCount, 0)
+        XCTAssertEqual(state.gestureCount, 0)
+        XCTAssertEqual(state.lastGestureLabel, "None")
+
+        let wax = state.update(
+            fingerCount: 2,
+            pressure: 0.82,
+            forceStage: 2,
+            movement: 0.15,
+            spread: 0.25,
+            touchPoints: [],
+            date: start.addingTimeInterval(0.01)
+        )
+
+        XCTAssertEqual(wax?.kind, .waxCrush)
+        XCTAssertEqual(state.gestureCount, 1)
+    }
 }

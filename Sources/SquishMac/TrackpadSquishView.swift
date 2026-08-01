@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-struct TrackpadLabView: View {
+struct TrackpadSquishView: View {
     @ObservedObject var state: TrackpadInteractionState
     @ObservedObject var settings: SettingsStore
 
@@ -82,7 +82,7 @@ struct TrackpadLabView: View {
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Squish Surface")
+                Text("Trackpad Squish")
                     .font(.title2.weight(.semibold))
 
                 HStack(spacing: 6) {

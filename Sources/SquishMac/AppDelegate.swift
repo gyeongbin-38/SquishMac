@@ -31,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.handleImpact(impact)
         }
 
+        openTrackpadSquish()
     }
 
     private func bindSettings() {
@@ -138,7 +139,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsItem.target = self
         menu.addItem(settingsItem)
 
-        let trackpadItem = NSMenuItem(title: "Open Squish Surface...", action: #selector(openTrackpadLab), keyEquivalent: "t")
+        let trackpadItem = NSMenuItem(title: "Open Trackpad Squish...", action: #selector(openTrackpadSquish), keyEquivalent: "t")
         trackpadItem.target = self
         menu.addItem(trackpadItem)
 
@@ -257,9 +258,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    @objc private func openTrackpadLab() {
+    @objc private func openTrackpadSquish() {
         if trackpadWindow == nil {
-            let view = TrackpadLabView(
+            let view = TrackpadSquishView(
                 state: trackpadState,
                 settings: settings,
                 onGesture: { [weak self] trigger in
@@ -279,7 +280,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "SquishMac Squish Surface"
+            window.title = "SquishMac Trackpad Squish"
             window.contentViewController = NSHostingController(rootView: view)
             window.center()
             window.isReleasedWhenClosed = false

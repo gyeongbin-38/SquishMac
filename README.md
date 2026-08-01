@@ -39,7 +39,7 @@ SquishMac is a Swift macOS menu bar sound toy built around a Force Touch trackpa
 
 ## Trackpad Input Model
 
-Open `Open Squish Surface...` from the menu bar. The window must be active because public AppKit touch events are delivered to the active responder surface.
+The Trackpad Squish window opens when the app starts. You can reopen it from `Open Trackpad Squish...` in the menu bar. The window must be active because public AppKit touch events are delivered to the active responder surface.
 
 AppKit exposes touch identity and normalized touch position separately from the pressure event stream. SquishMac therefore combines:
 
@@ -74,6 +74,35 @@ open .build/SquishMac.app
 ```
 
 `Info.plist` has `LSUIElement=true`, so the packaged app does not show a Dock icon.
+
+## Cross-Platform Functional Test
+
+Windows and other non-macOS systems can run a browser-based functional harness
+without Swift or Xcode. It ports the trackpad gesture state machine and built-in
+material profiles, plays the bundled sounds, simulates pressure and multi-touch
+metrics, runs representative gesture scenarios, and exports schema v2 session
+recordings.
+
+Requirements: Python 3, a modern browser, and Node.js only when running the
+automated parity tests.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File Scripts/RunFunctionalTest.ps1
+```
+
+The script opens `http://127.0.0.1:8775/` and selects another nearby port when
+that port is busy. Run the engine and recording tests with:
+
+```powershell
+node --test Tools/functional_test/engine.test.mjs
+python Tools/test_functional_test_server.py
+```
+
+This harness validates gesture classification, material-specific thresholds,
+sound routing and layering, cooldowns, tuning, and recording export. Physical
+Force Touch pressure, real AppKit touch identities, haptics, system gesture
+suppression, Core Motion, login items, and Apple Vision hand tracking still
+require the macOS application and supported hardware.
 
 ## Recording Sessions
 
@@ -146,7 +175,7 @@ Sources/SquishMac/
   SettingsView.swift                general settings UI
   TrackpadGestureEngine.swift       slime and wax state machines
   TrackpadInteractionState.swift    live diagnostics and recording state
-  TrackpadLabView.swift             AppKit touch surface and SwiftUI controls
+  TrackpadSquishView.swift          AppKit touch surface and SwiftUI controls
   TrackpadSessionRecorder.swift     versioned JSON session export
   TrackpadTouchMetrics.swift        identity-based movement and spread
   CameraSlimeController.swift       camera capture and live Vision tracking
@@ -158,6 +187,8 @@ Sources/SquishMac/
   ReferenceDatasetLibrary.swift     profile-separated local dataset storage
 Tools/
   reference_video_analysis.py       offline MediaPipe motion/audio extraction
+  functional_test/                  cross-platform browser test harness
+  functional_test_server.py         local sound and harness server
 ```
 
 ## Validation and Distribution

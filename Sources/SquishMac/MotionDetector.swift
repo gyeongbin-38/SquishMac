@@ -108,16 +108,26 @@ final class MotionDetector: ObservableObject {
     }
 
     func resetCalibration() {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in
+                self?.resetCalibration()
+            }
+            return
+        }
+
         analyzer.reset()
         lastMeterPublishTime = -Double.infinity
-
-        DispatchQueue.main.async {
-            self.currentStrength = 0
-            self.lastSampleDate = nil
-        }
+        currentStrength = 0
+        lastSampleDate = nil
     }
 
     private func process(_ sample: AccelerationVector) {
+        DispatchQueue.main.async { [weak self] in
+            self?.processOnMain(sample)
+        }
+    }
+
+    private func processOnMain(_ sample: AccelerationVector) {
         guard settings.isEnabled else {
             return
         }
@@ -133,22 +143,17 @@ final class MotionDetector: ObservableObject {
         let shouldPublishMeter = timestamp - lastMeterPublishTime >= meterPublishInterval
         if shouldPublishMeter {
             lastMeterPublishTime = timestamp
+            currentStrength = result.currentStrength
+            lastSampleDate = now
         }
 
-        DispatchQueue.main.async {
-            if shouldPublishMeter {
-                self.currentStrength = result.currentStrength
-                self.lastSampleDate = now
-            }
-
-            guard let impactStrength = result.impactStrength else {
-                return
-            }
-
-            self.lastStrength = impactStrength
-            self.lastImpactDate = now
-            self.onImpact?(MotionImpact(strength: impactStrength, timestamp: now))
+        guard let impactStrength = result.impactStrength else {
+            return
         }
+
+        lastStrength = impactStrength
+        lastImpactDate = now
+        onImpact?(MotionImpact(strength: impactStrength, timestamp: now))
     }
 
     private static func makeBestSource() -> AccelerometerSource? {

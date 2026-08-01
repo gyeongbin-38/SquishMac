@@ -6,8 +6,7 @@ final class TrackpadInteractionState: ObservableObject {
             guard mode != oldValue else {
                 return
             }
-            engine.reset()
-            clearLiveInput()
+            reset()
         }
     }
 

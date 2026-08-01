@@ -1,0 +1,274 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+  line-height: 1.4;
+  background: Canvas;
+  color: CanvasText;
+}
+
+* {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+
+body {
+  margin: 0;
+}
+
+header,
+main {
+  width: min(1120px, calc(100% - 32px));
+  margin-inline: auto;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  padding-block: 20px 12px;
+  border-bottom: 1px solid GrayText;
+}
+
+h1,
+h2,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: 1.5rem;
+}
+
+h2 {
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 0;
+  padding-bottom: 32px;
+}
+
+section {
+  padding: 18px 0;
+  border-bottom: 1px solid GrayText;
+}
+
+section:nth-child(odd) {
+  padding-right: 20px;
+}
+
+section:nth-child(even) {
+  padding-left: 20px;
+  border-left: 1px solid GrayText;
+}
+
+.configuration,
+.input-workspace,
+.event-history {
+  grid-column: 1 / -1;
+  padding-inline: 0;
+  border-left: 0;
+}
+
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.85rem;
+}
+
+select,
+button,
+input {
+  font: inherit;
+}
+
+select,
+button {
+  min-height: 36px;
+  border: 1px solid GrayText;
+  border-radius: 4px;
+  background: Canvas;
+  color: CanvasText;
+}
+
+button {
+  padding-inline: 12px;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+#profileSummary {
+  margin-top: 12px;
+  color: GrayText;
+}
+
+.input-workspace {
+  display: grid;
+  grid-template-columns: minmax(360px, 1.5fr) minmax(300px, 1fr);
+  gap: 24px;
+}
+
+.touch-surface {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 2px solid GrayText;
+  border-radius: 4px;
+  background:
+    linear-gradient(90deg, transparent 49.8%, GrayText 50%, transparent 50.2%),
+    linear-gradient(transparent 49.8%, GrayText 50%, transparent 50.2%);
+  touch-action: none;
+  user-select: none;
+}
+
+.touch-point {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  border: 2px solid CanvasText;
+  border-radius: 50%;
+  background: Highlight;
+}
+
+.input-controls {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.input-controls label,
+.volume-control {
+  grid-template-columns: 105px minmax(0, 1fr) 48px;
+  align-items: center;
+}
+
+output {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.command-row,
+.audio-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.audio-controls {
+  align-content: flex-start;
+}
+
+.audio-controls h2 {
+  width: 100%;
+}
+
+.inline-control {
+  display: flex;
+  align-items: center;
+}
+
+.volume-control {
+  flex: 1 1 260px;
+}
+
+.diagnostics dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+}
+
+.diagnostics dl div {
+  min-width: 0;
+}
+
+dt {
+  color: GrayText;
+  font-size: 0.75rem;
+}
+
+dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+
+progress {
+  width: 100%;
+  margin-top: 12px;
+}
+
+#status.error {
+  color: #d52b1e;
+}
+
+.recording p {
+  margin-bottom: 12px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+th,
+td {
+  padding: 8px;
+  border-bottom: 1px solid GrayText;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 760px) {
+  header {
+    display: block;
+  }
+
+  header p {
+    margin-top: 8px;
+  }
+
+  main,
+  .input-workspace {
+    display: block;
+  }
+
+  section,
+  section:nth-child(odd),
+  section:nth-child(even) {
+    padding-inline: 0;
+    border-left: 0;
+  }
+
+  .control-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .touch-surface {
+    min-height: 240px;
+    margin-bottom: 18px;
+  }
+}
